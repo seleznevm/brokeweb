@@ -107,6 +107,20 @@ python3 -m tools.pine_reference.compare --reference reference.csv --python pytho
 
 ## Проверки реализации
 
-161 Python regression/integration test прошёл, включая округление сравнений, десятичную границу T1, видимость native plots, NA/missing data, historical REST timestamps и пересчёт старых checkpoints. Эти тесты дополняют реальное сравнение CSV, но не заменяют недостающие reference. Эксплуатационные проверки и ограничения: [implementation_report.md](implementation_report.md).
+173 Python regression/integration test прошёл, включая округление сравнений, десятичную границу T1, видимость native plots, NA/missing data, historical REST timestamps и пересчёт старых checkpoints. Эти тесты дополняют реальное сравнение CSV, но не заменяют недостающие reference. Эксплуатационные проверки и ограничения: [implementation_report.md](implementation_report.md).
 
 Docker обновлён: 7 контейнеров healthy, 4/4 инструмента пересчитаны версией `1.15.2-interpreter.2` с прежним `history_start`. Приложение HEALTHY; шесть страниц проверены без JavaScript errors. Краткий результат: [deployment.json](../reports/deployment.json).
+
+## Строгая проверка полного reference
+
+`tools.pine_reference.compare` теперь проверяет наличие каждой колонки с обеих сторон: отсутствие Python-сигнала не считается нулём. Значения сигналов должны быть 0/1 или JSON bool; пустые, ошибочные и нечисловые значения приводят к FAIL. Для численных метрик NA допустим, но NA mismatch — FAIL; полностью пустая метрика получает NOT_OBSERVED и сохраняет общий UNVERIFIED.
+
+Дубликаты comparison keys и неоднозначная принадлежность инструменту отклоняются. Анонимный CSV допустим только для одного Python-инструмента. Сначала резервируются точные timestamp matches, затем для realtime применяется ближайшее свободное наблюдение в пределах 1500 ms. Сопоставление one-to-one; неиспользованные Python-записи внутри окна reference означают FAIL. Прогрев до окна сравнения не считается лишним наблюдением. Поля `bar_start` и `event_time` заданы в миллисекундах; TradingView `time` поддерживает Unix seconds. ISO-время требует timezone.
+
+В отчёте отдельно указаны отсутствующие колонки reference/Python, NA mismatch, недопустимые значения, численные пары, positive event coverage и первые расхождения с timestamp. `agreement_percent` — точное равенство наблюдений, включая совпадающие NA, а PASS численных метрик по-прежнему определяется прежними допусками. Все проценты находятся в диапазоне 0–100.
+
+CLI по умолчанию пишет `reports/full-parity.json`, сохраняя отчёт проверенных обычных CSV отдельно. Запись атомарная; входные файлы нельзя использовать как output. Ошибка формата создаёт INVALID_INPUT и возвращает ненулевой exit code, поэтому старый PASS не остаётся результатом неудавшегося запуска.
+
+Проверены **173 Python tests**, включая **25 parity tests**. Повторное сравнение сохранённых Python observations со всеми семью реальными CSV не изменило результаты: 2993 свечи, 124 положительные метки, observed PASS / full UNVERIFIED. [Проверки comparator](../reports/comparator-validation.json). Новых TradingView reference для внутренних оценок или intrabar этим не создано.
+
+Те же 25 parity tests прошли внутри Docker. API обновлён, все 7 сервисов healthy, работают 4 engines; опубликованный отчёт обычных CSV сохранён.

@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "scope": "Comparator regressions, not new TradingView coverage",
+  "python_tests_passed": 173,
+  "parity_tests_passed": 25,
+  "native_csv_comparison_unchanged": true,
+  "compared_closed_bars": 2993,
+  "positive_markers": 124,
+  "full_pine_parity": "UNVERIFIED",
+  "checks": [
+    "Missing Python signals do not become zero",
+    "Missing columns differ from Pine NA",
+    "Malformed numbers and nonbinary signals fail",
+    "All-NA metrics do not prove numerical parity",
+    "Duplicate keys and ambiguous instrument identity rejected",
+    "Exact timestamps reserved before bounded one-to-one realtime matching",
+    "Unmatched Python observations inside the reference window fail",
+    "Timezone and timestamp units validated",
+    "CLI refuses input overwrite and replaces stale PASS on invalid input"
+  ],
+  "docker_parity_tests_passed": 25,
+  "api_health": "HEALTHY",
+  "active_engines": 4
+}

@@ -67,7 +67,7 @@ docker compose logs --tail=100 engine
 
 | Проверка | Результат / evidence |
 |---|---|
-| Python unit/integration/parity regressions | 161 passed; `artifacts/local/python-tests.txt` |
+| Python unit/integration/parity regressions | 173 passed; `artifacts/local/comparator-tests.txt` |
 | Python compileall | PASS для `backend` и `tools` |
 | Frontend lint/typecheck/Vitest/build | PASS, 4 Vitest tests; Docker build выполняет эти команды |
 | PostgreSQL/Redis/API/durable dedupe/Telegram mock | PASS: PostgreSQL/Redis smoke в отдельной временной схеме; `artifacts/local/integration-smoke.json` |
@@ -153,3 +153,5 @@ Alembic 0005 сохраняет SQL-строки, IDs, sequence и FK при п�
 Рабочая БД переведена на **0005** после проверенного backup. Сохранены все строки и контрольные суммы шести таблиц: 3416 snapshots, 611 events, 4 current/checkpoints, 83 signals, Research и archive catalogue. Проверка выполнена при остановленных writers до возобновления мониторинга; evidence: `artifacts/local/live-partition-migration.json`.
 
 Создан `artifacts/local/pre-partition.dump` (65.79 MB). Его реальный restore в отдельную временную PostgreSQL-БД совпал по количествам строк и checksums тех же шести таблиц; временная БД удалена. Evidence: `artifacts/local/backup-restore.json`. Каталог рабочих архивов на момент backup пуст; этот прогон проверяет PostgreSQL backup/restore, а полный disaster-recovery с непустым архивным диском остаётся отдельной проверкой.
+
+Строгая проверка полного reference усилена: missing/invalid values, duplicate keys, identity и bounded realtime matching проверяются с отдельными причинами ошибок. 173 tests PASS; прежние результаты семи CSV не изменены. Подробности: [parity.md](parity.md), [comparator-validation.json](../reports/comparator-validation.json).
