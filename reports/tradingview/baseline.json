@@ -1,0 +1,106 @@
+{
+  "engine_version": "1.15.2-interpreter.1",
+  "observed_status": "FAIL",
+  "reference_records": 3000,
+  "compared_records": 2993,
+  "datasets": [
+    {
+      "symbol": "ARBUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 7,
+      "report": "artifacts/local/tradingview/ARBUSDT/report.json"
+    },
+    {
+      "symbol": "DASHUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 6,
+      "report": "artifacts/local/tradingview/DASHUSDT/report.json"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 1,
+      "report": "artifacts/local/tradingview/DOTUSDT/report.json"
+    },
+    {
+      "symbol": "ETHFIUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "FAIL",
+      "failed_plots": 1,
+      "closed_feed_mismatches": 6,
+      "report": "artifacts/local/tradingview/ETHFIUSDT/report.json"
+    },
+    {
+      "symbol": "OPUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 6,
+      "report": "artifacts/local/tradingview/OPUSDT/report.json"
+    },
+    {
+      "symbol": "PENGUUSDT",
+      "timeframe": "30",
+      "rows": 300,
+      "compared": 299,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 7,
+      "report": "artifacts/local/tradingview/PENGUUSDT/report.json"
+    },
+    {
+      "symbol": "VVVUSDT",
+      "timeframe": "30",
+      "rows": 1200,
+      "compared": 1199,
+      "observed_status": "PASS",
+      "failed_plots": 0,
+      "closed_feed_mismatches": 7,
+      "report": "artifacts/local/tradingview/VVVUSDT/report.json"
+    }
+  ],
+  "failures": [
+    {
+      "symbol": "ETHFIUSDT",
+      "metric": "Forecast T1",
+      "source_line": 4685,
+      "kind": "price",
+      "status": "FAIL",
+      "observations": 299,
+      "numeric_pairs": 227,
+      "both_na": 72,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 1,
+      "match_percent": 99.66555183946488,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.09999999999999998,
+      "pine_events": null,
+      "python_events": null,
+      "first_mismatches": [
+        {
+          "time": 1789054200000,
+          "pine": 0.8,
+          "python": 0.7000000000000001
+        }
+      ]
+    }
+  ]
+}

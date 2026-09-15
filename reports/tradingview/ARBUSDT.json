@@ -1,0 +1,542 @@
+{
+  "status": "UNVERIFIED",
+  "observed_status": "PASS",
+  "reference_records": 299,
+  "python_records": 299,
+  "missing_records": 0,
+  "metrics": [
+    {
+      "metric": "R1 — цена на шкале",
+      "source_line": 4680,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 284,
+      "both_na": 15,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "R2 — цена на шкале",
+      "source_line": 4681,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "S1 — цена на шкале",
+      "source_line": 4682,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 235,
+      "both_na": 64,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "S2 — цена на шкале",
+      "source_line": 4683,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 141,
+      "both_na": 158,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "Forecast T1",
+      "source_line": 4685,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 286,
+      "both_na": 13,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "Estimated Structural SL",
+      "source_line": 4686,
+      "kind": "price",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 286,
+      "both_na": 13,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "EMA Fast",
+      "source_line": 4687,
+      "kind": "indicator",
+      "status": "NOT_OBSERVED",
+      "observations": 299,
+      "numeric_pairs": 0,
+      "both_na": 299,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": null,
+      "error_median": null,
+      "error_p95": null,
+      "error_max": null,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "EMA Slow",
+      "source_line": 4688,
+      "kind": "indicator",
+      "status": "NOT_OBSERVED",
+      "observations": 299,
+      "numeric_pairs": 0,
+      "both_na": 299,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": null,
+      "error_median": null,
+      "error_p95": null,
+      "error_max": null,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "LONG T1 label",
+      "source_line": 4871,
+      "kind": "price",
+      "status": "NOT_OBSERVED",
+      "observations": 299,
+      "numeric_pairs": 0,
+      "both_na": 299,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": null,
+      "error_median": null,
+      "error_p95": null,
+      "error_max": null,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    },
+    {
+      "metric": "SHORT T1 label",
+      "source_line": 4872,
+      "kind": "price",
+      "status": "NOT_OBSERVED",
+      "observations": 299,
+      "numeric_pairs": 0,
+      "both_na": 299,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": null,
+      "error_median": null,
+      "error_p95": null,
+      "error_max": null,
+      "pine_events": null,
+      "python_events": null,
+      "positive_event_coverage": null,
+      "first_mismatches": []
+    }
+  ],
+  "signals": [
+    {
+      "metric": "L WATCH label",
+      "source_line": 4701,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 2,
+      "python_events": 2,
+      "positive_event_coverage": true,
+      "first_mismatches": []
+    },
+    {
+      "metric": "S WATCH label",
+      "source_line": 4702,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 7,
+      "python_events": 7,
+      "positive_event_coverage": true,
+      "first_mismatches": []
+    },
+    {
+      "metric": "LONG ARMED label",
+      "source_line": 4745,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "SHORT ARMED label",
+      "source_line": 4746,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "LONG PINE READY label",
+      "source_line": 4747,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "SHORT PINE READY label",
+      "source_line": 4748,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "LONG BOUNCE WATCH label",
+      "source_line": 4749,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "SHORT BOUNCE WATCH label",
+      "source_line": 4750,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 0,
+      "python_events": 0,
+      "positive_event_coverage": false,
+      "first_mismatches": []
+    },
+    {
+      "metric": "LONG REVERSAL RISK warning",
+      "source_line": 4754,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 1,
+      "python_events": 1,
+      "positive_event_coverage": true,
+      "first_mismatches": []
+    },
+    {
+      "metric": "SHORT REVERSAL RISK warning",
+      "source_line": 4755,
+      "kind": "signal",
+      "status": "PASS",
+      "observations": 299,
+      "numeric_pairs": 299,
+      "both_na": 0,
+      "na_mismatches": 0,
+      "missing_columns": 0,
+      "mismatches": 0,
+      "match_percent": 100.0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "error_max": 0.0,
+      "pine_events": 7,
+      "python_events": 7,
+      "positive_event_coverage": true,
+      "first_mismatches": []
+    }
+  ],
+  "symbol": "ARBUSDT",
+  "timeframe": "30",
+  "tick_size": 1e-05,
+  "provenance": {
+    "kind": "tradingview_chart_with_native_exchange_warmup_and_contexts",
+    "file": "tradingview_data/BYBIT_ARBUSDT.P, 30_0a9f8.csv",
+    "csv_sha256": "53ca41f1a754ba8ee52672a509081feec2faf110ea1e857e1d0840be4defad26",
+    "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+    "engine_version": "1.15.2-interpreter.1",
+    "parameter_set_id": "17c0fda8d444a6963aa334fe41de921d40ff2002ff3bb4cb640021e9b801f149",
+    "parameters_confirmed": false,
+    "captured_at": 1789450653315,
+    "reference_records": 300,
+    "compared_records": 299,
+    "warmup_bars": 780,
+    "history_start": 1787506200000,
+    "excluded_last_time": 1789448400000,
+    "excluded_last_reason": "Potential open candle; export timestamp/confirmed flag absent",
+    "feed_differences": [
+      {
+        "time": 1789113600000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 4835599.4,
+            "bybit": 4835721.4
+          }
+        }
+      },
+      {
+        "time": 1789115400000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 4296289.5,
+            "bybit": 4297535.2
+          }
+        }
+      },
+      {
+        "time": 1789129800000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 24445068.0,
+            "bybit": 24770719.5
+          }
+        }
+      },
+      {
+        "time": 1789192800000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 1060672.8,
+            "bybit": 1072707.7
+          }
+        }
+      },
+      {
+        "time": 1789264800000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 1152696.7,
+            "bybit": 1181259.9
+          }
+        }
+      },
+      {
+        "time": 1789378200000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 4285930.1,
+            "bybit": 4288356.8
+          }
+        }
+      },
+      {
+        "time": 1789380000000,
+        "excluded_last_row": false,
+        "differences": {
+          "volume": {
+            "tradingview": 2332437.1,
+            "bybit": 2364713.2
+          }
+        }
+      },
+      {
+        "time": 1789448400000,
+        "excluded_last_row": true,
+        "differences": {
+          "high": {
+            "tradingview": 0.13291,
+            "bybit": 0.13316
+          },
+          "close": {
+            "tradingview": 0.13224,
+            "bybit": 0.13297
+          },
+          "volume": {
+            "tradingview": 4577919.5,
+            "bybit": 5071619.0
+          }
+        }
+      }
+    ],
+    "unmapped_columns": [
+      "CVD (Close)",
+      "CVD (High",
+      "CVD (Low)",
+      "CVD (Open)",
+      "Open Interest",
+      "Open Interest (Close)",
+      "Open Interest (High",
+      "Open Interest (Low)",
+      "Open Interest (Open)",
+      "Type 1 - OI Delta",
+      "Type 2 - OI Delta (+)",
+      "Type 2 - OI Delta (-)",
+      "direction"
+    ]
+  },
+  "engine_version": "1.15.2-interpreter.2",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "reasons": [
+    "Ordinary chart export does not contain internal scores/FSM or intrabar observations.",
+    "TradingView parameters and loaded history origin are not recorded in CSV.",
+    "Unowned column direction is not the hidden source plot ALERT_DIR."
+  ]
+}

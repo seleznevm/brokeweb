@@ -1,0 +1,2151 @@
+# ЗАДАЧА
+
+Ты работаешь как Lead Quant Developer + Backend Architect + DevOps Engineer + Frontend Engineer.
+
+Не ограничивайся анализом, архитектурным документом или псевдокодом. Твоя задача — **реально реализовать, протестировать и развернуть в Docker production-ready приложение**, являющееся максимально точным standalone-аналогом приложенного TradingView Pine Script индикатора `Scalping_SMA 1.15.2`.
+
+Используй субагентов параллельно, если среда Codex это поддерживает. Раздели работу минимум на направления:
+
+* reverse engineering Pine;
+* market data;
+* Pine-compatible calculation engine;
+* database/research;
+* backend/API;
+* frontend;
+* Telegram alerts;
+* parity/testing;
+* Docker/DevOps.
+
+Главный приоритет проекта:
+
+**точность совпадения с Pine Script > производительность > удобство реализации.**
+
+После достижения parity можно оптимизировать вычисления, но нельзя оптимизировать ценой изменения математической или stateful-логики индикатора.
+
+---
+
+# 1. SOURCE OF TRUTH
+
+В репозитории находится приложенный Pine Script.
+
+Найди файл по содержимому:
+
+`indicator("Scalping_SMA 1.15.2"...`
+
+Полностью прочитай его от первой до последней строки.
+
+Pine Script является **единственным источником истины для baseline engine**.
+
+Запрещено:
+
+* упрощать формулы;
+* менять thresholds;
+* объединять похожие показатели;
+* переосмысливать торговую логику;
+* заменять Pine-логику «более правильной»;
+* менять FSM;
+* менять lifecycle зон;
+* менять смысл `var`, `varip`, confirmed/realtime calculations;
+* менять порядок вычислений там, где порядок может влиять на результат;
+* добавлять в baseline engine рыночные данные, которых Pine не использует;
+* использовать внешние индикаторы вместо точного переноса формул Pine.
+
+Если кажется, что в Pine имеется странное или неоптимальное решение — **сначала воспроизведи его 1:1**, затем можешь реализовать альтернативный `enhanced` режим отдельным feature flag.
+
+Оригинальный Pine-файл не модифицировать.
+
+Создай:
+
+`docs/pine_mapping.md`
+
+где для каждой существенной Pine-переменной будет:
+
+`Pine variable → Python field → formula/function → input data → state type → realtime/confirmed semantics → DB field → API field`.
+
+Особое внимание уделить:
+
+* persistent structural zones;
+* locked setup generation;
+* Setup FSM;
+* zone lifecycle;
+* sweep / failed sweep / broken retest;
+* WATCH;
+* WATCH ENTRY;
+* MATURED;
+* ARMED;
+* TRIGGERED;
+* RETEST;
+* PINE READY;
+* ACTIVE;
+* BRONZE;
+* STRONG;
+* Active Plan Health;
+* ADD-ON;
+* AVG SETUP;
+* CONTINUATION;
+* realtime threshold crossings;
+* Research Mode.
+
+---
+
+# 2. ЦЕЛЬ СИСТЕМЫ
+
+Новая программа должна:
+
+1. автоматически получать рыночные данные;
+2. отслеживать все выбранные криптовалютные инструменты;
+3. вычислять все показатели Pine Script;
+4. поддерживать state каждого setup;
+5. максимально точно воспроизводить Decision Panel TradingView;
+6. выявлять все сигналы Pine;
+7. хранить историю состояния каждого setup;
+8. делать периодические snapshots всех атрибутов;
+9. давать web UI;
+10. давать realtime active-setup screener;
+11. поддерживать гибкие Telegram alerts;
+12. позволять впоследствии статистически исследовать, какие сочетания атрибутов приводят к успешным и неуспешным движениям;
+13. иметь автоматический Pine-vs-Python parity framework.
+
+---
+
+# 3. ОСНОВНОЙ MARKET UNIVERSE
+
+Первая production-версия работает с:
+
+**Bybit USDT Linear Perpetual contracts.**
+
+Universe формировать автоматически через Bybit V5 instruments API.
+
+Включать только:
+
+* `category=linear`;
+* `status=Trading`;
+* USDT perpetual;
+* не PreLaunch;
+* не delisted.
+
+Не хардкодить список монет.
+
+Поддержать автоматическое появление новых инструментов и удаление закрытых.
+
+Архитектура market-data должна сразу иметь интерфейс:
+
+`ExchangeAdapter`
+
+чтобы позже можно было добавить Binance / OKX / Gate / MEXC без переписывания calculation engine.
+
+---
+
+# 4. ИСТОЧНИКИ ДАННЫХ
+
+## 4.1 Bybit — основной источник
+
+Исторические свечи:
+
+Bybit V5 REST:
+
+`/v5/market/kline`
+
+Realtime:
+
+* Bybit public WebSocket;
+* kline streams;
+* public trades.
+
+Instrument metadata:
+
+`/v5/market/instruments-info`
+
+Использовать:
+
+* `tickSize` как эквивалент `syminfo.mintick`;
+* baseCoin;
+* quoteCoin;
+* contract type;
+* launchTime;
+* trading status.
+
+### ВАЖНО: OHLCV
+
+Не использовать CoinGecko, CoinMarketCap, CoinGlass или иной агрегатор вместо exchange-native OHLCV.
+
+Нам нужно минимизировать расхождение с `BYBIT:<symbol>.P` в TradingView.
+
+---
+
+# 5. REALTIME И LOWER-TF
+
+Pine использует:
+
+`request.security_lower_tf()`
+
+и получает все intrabars текущей chart candle.
+
+Следовательно Python engine должен иметь аналогичное представление.
+
+Поддержать Auto TF Profile Pine:
+
+* chart <= 1m → micro TF = 30s;
+* chart <= 5m → micro TF = 1m;
+* chart <= 15m → micro TF = 5m;
+* chart <= 1h → micro TF = 5m;
+* chart <= 4h → micro TF = 30m;
+* выше → micro TF = 1h.
+
+### 30s bars
+
+Bybit не предоставляет стандартные 30-second klines через обычный kline API.
+
+Поэтому 30s bars строить самостоятельно из:
+
+`publicTrade.<symbol>`
+
+Агрегация строго по exchange timestamps.
+
+Для каждой 30s candle вычислять:
+
+* open;
+* high;
+* low;
+* close;
+* base volume;
+* quote/notional при необходимости;
+* start timestamp;
+* end timestamp.
+
+Границы свечей должны быть deterministic и UTC aligned.
+
+Никаких локальных timezone boundaries.
+
+---
+
+# 6. BTC CONTEXT
+
+В Pine используется:
+
+`BINANCE:BTCUSDT.P`
+
+Следовательно для достижения parity **не подменять BTC context на Bybit BTCUSDT**.
+
+Создай отдельный:
+
+`BinanceBtcContextAdapter`
+
+для Binance USD-M Futures BTCUSDT perpetual.
+
+Он должен предоставлять данные, необходимые Pine:
+
+* OHLCV BTC;
+* EMA fast;
+* EMA slow;
+* BTC regime;
+* BTC Shock;
+* необходимые TF из Auto Profile.
+
+Данные BTC должны агрегироваться и синхронизироваться с chart bars анализируемого инструмента.
+
+---
+
+# 7. 24H VOLUME — ВОСПРОИЗВЕСТИ ИМЕННО PINE
+
+Очень важно.
+
+Не заменять формулу Pine готовым Bybit `turnover24h`.
+
+Исходный Pine рассчитывает fixed-time 24h volume через 24 часовых свечи.
+
+Воспроизвести именно эту модель.
+
+Для режима, эквивалентного `syminfo.volumetype == base`:
+
+`quote_notional = volume * HLC3`
+
+где:
+
+`HLC3 = (high + low + close) / 3`
+
+и затем:
+
+`sum(last 24 hourly quote_notional)`.
+
+Для quote-volume feed использовать volume напрямую.
+
+USD-like quotes:
+
+* USD;
+* USDT;
+* USDC;
+* FDUSD;
+* TUSD;
+* BUSD;
+* USDE
+
+могут использовать 1:1 fallback так же, как Pine.
+
+Хранить отдельно:
+
+* native Bybit turnover;
+* Pine-compatible volume24hProxy.
+
+Но baseline calculations должны использовать именно Pine-compatible value.
+
+---
+
+# 8. FIXED-TIME ACTIVITY
+
+Воспроизвести из Pine:
+
+* return 1h;
+* return 6h;
+* return 24h;
+* 1h NATR;
+* activity checks;
+* In-Play;
+* liquidity gate.
+
+Не использовать Bybit `price24hPcnt` вместо Pine-формулы.
+
+Pine использует часовые закрытия — Python должен делать то же самое.
+
+---
+
+# 9. PINE COMPATIBILITY LAYER
+
+Создай отдельный модуль:
+
+`engine/pine_compat/`
+
+Он должен воспроизводить семантику Pine functions.
+
+Минимум:
+
+* `na`;
+* `nz`;
+* historical indexing `[n]`;
+* `ta.sma`;
+* `ta.ema`;
+* `ta.rma`;
+* `ta.atr`;
+* `ta.highest`;
+* `ta.lowest`;
+* `ta.pivothigh`;
+* `ta.pivotlow`;
+* `ta.sum/math.sum`;
+* crossover/crossunder;
+* barssince;
+* change;
+* HLC3;
+* clamp;
+* timeframe conversions;
+* Pine rounding/tick handling, где применимо.
+
+ATR должен соответствовать Pine/TradingView, включая Wilder RMA semantics.
+
+EMA initialization/seed должен быть проверен на TradingView reference data.
+
+Нельзя просто использовать произвольную реализацию `pandas.ewm()` без проверки.
+
+Добавь unit tests для Pine-compatible primitives.
+
+---
+
+# 10. TRADINGVIEW REALTIME EXECUTION MODEL
+
+Это критически важная часть.
+
+Pine indicator на открытой realtime candle выполняется многократно.
+
+Перед новым realtime execution обычные series/`var` значения Pine откатываются к последнему confirmed state.
+
+`varip` значения при этом сохраняются внутри открытого бара.
+
+Python engine должен воспроизвести эту семантику.
+
+Реализуй модель примерно такого уровня:
+
+`ConfirmedState`
++
+`RealtimeWorkingState`
++
+`IntrabarPersistentState`
+
+При каждом новом realtime market update:
+
+1. взять committed state предыдущего закрытого chart bar;
+2. восстановить обычный Pine state;
+3. применить текущее состояние открытой candle;
+4. пересчитать Pine logic;
+5. сохранить только эквиваленты `varip`;
+6. отправить current snapshot/UI update;
+7. не commit обычного state до закрытия candle.
+
+При closing tick:
+
+* выполнить последний calculation;
+* commit state;
+* перевести candle в confirmed;
+* открыть следующий realtime state.
+
+Это необходимо для точного воспроизведения:
+
+* `avgSetupIntrabarSum`;
+* `avgSetupIntrabarSamples`;
+* `AVG SETUP`;
+* `avgSetup70CrossThisBar`;
+* `execution65CrossThisBar`;
+* realtime threshold alerts.
+
+Не реализовывать realtime как простой cumulative mutation одного Python object — это даст отличия от TradingView rollback.
+
+---
+
+# 11. BAR ALIGNMENT И MTF SEMANTICS
+
+Воспроизвести Pine:
+
+`request.security(... gaps_off, lookahead_off)`
+
+и:
+
+`request.security_lower_tf()`.
+
+Для каждого timeframe сделать deterministic bar alignment.
+
+Все timestamp хранить в UTC.
+
+Нужно корректно обработать:
+
+* closed HTF bars;
+* текущий realtime HTF bar;
+* last-known HTF value;
+* LTF arrays внутри chart bar;
+* отсутствующие intrabars;
+* начало истории нового инструмента.
+
+Не допускать look-ahead bias.
+
+---
+
+# 12. ВСЕ INPUTS PINE ДОЛЖНЫ СУЩЕСТВОВАТЬ В НОВОЙ СИСТЕМЕ
+
+Не хардкодить только текущие defaults.
+
+Построй типизированную систему конфигурации.
+
+Все Pine inputs должны быть доступны backend engine.
+
+Основные группы сохранить по смыслу:
+
+1. TF Profile / Setup Lifecycle
+2. Levels / Liquidity
+3. Activity / In-Play / 24h Volume
+4. Structure / Approach
+5. Trigger / Volume / Break-Retest
+6. Context / Whipsaw
+7. Decision Engine / Trade Plan
+8. Reversal / Exhaustion Guard
+9. Milestone Quality Filters
+   9A. WATCH Entry Filters
+   9B. Matured / Pre-Break
+10. Bounce Watch
+    11–14. visualization/UI
+11. diagnostics
+12. alerts
+13. Research Mode
+
+Создай versioned:
+
+`parameter_sets`
+
+Каждый snapshot и signal обязан содержать ссылку на exact parameter-set version.
+
+---
+
+# 13. STRUCTURAL LEVEL ENGINE
+
+Перенеси Pine logic 1:1:
+
+* confirmed pivot highs/lows;
+* clusters;
+* Resistance R1/R2;
+* Support S1/S2;
+* zone padding;
+* zone quality;
+* touch count;
+* cascade;
+* structural breaks;
+* sweep;
+* pending sweep;
+* broken/retest;
+* failed sweep;
+* consumed liquidity;
+* frozen zones;
+* locked zone;
+* generation-local zone state.
+
+Запрещено каждый realtime tick заново выбирать другой уровень, если Pine уже locked текущую generation.
+
+Setup generation identity должна быть persistent.
+
+---
+
+# 14. SETUP FSM
+
+Перенеси Pine state machine без упрощений.
+
+Минимально должны существовать состояния и переходы, соответствующие Pine lifecycle:
+
+FORM
+→ WATCH
+→ APPROACH
+→ ARMED
+→ TRIGGER
+→ RETEST
+→ READY
+→ ACTIVE
+
+а также degradation / invalidation / expiry.
+
+Сохранять:
+
+* `setup_generation_id`;
+* locked direction;
+* locked start bar/time;
+* locked zone;
+* FSM state;
+* FSM path;
+* pre/post-break phase;
+* trigger freshness;
+* active-plan state.
+
+Любой state transition записывать в БД как event.
+
+---
+
+# 15. ВСЕ QUALITY/RISK METRICS
+
+Обязательно воспроизвести минимум:
+
+* Formation Quality
+* Execution Quality
+* Geometry Quality
+* Context Quality
+* Level Quality
+* Approach Quality
+* Exhaustion Risk
+* MAE Risk
+* AVG SETUP
+* CONTINUATION
+* MTF Trend Quality
+* Dynamic Support Quality
+* HTF Base Quality
+* Broad Consolidation Quality
+* BTC Shock
+* Activity/In-Play
+* Hard Gates
+* Fresh Trigger
+* Pre-break Safety
+* Active Plan Health
+* ADD-ON Gate
+* Target Freshness
+
+Но не ограничивайся этим списком.
+
+Найди в Pine **все** промежуточные metrics и сохрани их в engine state.
+
+---
+
+# 16. AVG SETUP
+
+Перенести формулу без изменений.
+
+Следовать Pine source.
+
+AVG SETUP должен учитывать:
+
+* Formation;
+* Execution;
+* Geometry;
+* Context;
+* Exhaustion Safety;
+* MAE Safety;
+* history текущего locked setup;
+* intrabar samples текущей realtime candle.
+
+Обязательно воспроизвести:
+
+`avgSetupBarsHistory`
+
+и intrabar accumulation.
+
+Реализовать live risk override.
+
+Если Pine показывает:
+
+`DEGRADED`
+
+Python должен показывать то же самое.
+
+---
+
+# 17. PATHS
+
+Хранить отдельно:
+
+* Candidate Path;
+* Candidate Path Score;
+* Trigger Path;
+* Trigger Path Score;
+* Risk Path;
+* FSM Path.
+
+Не смешивать Candidate и Trigger Path.
+
+Поддержать все path values, существующие в Pine.
+
+Не хардкодить только известные значения — извлечь полный enum непосредственно из исходника.
+
+---
+
+# 18. TRADE PLAN
+
+Воспроизвести:
+
+* structural SL;
+* SL ATR distance;
+* directional validity;
+* Forecast T1;
+* Next liquidity;
+* Measured move;
+* OPEN SKY target behavior;
+* expected move %;
+* R:R;
+* target freshness.
+
+На PINE READY trade plan должен freeze там же, где он freeze в Pine.
+
+После freeze текущие пересчёты индикатора не должны самопроизвольно перемещать frozen SL/T1, если Pine этого не делает.
+
+---
+
+# 19. ACTIVE PLAN HEALTH
+
+Полностью перенести:
+
+* HEALTHY;
+* DEGRADED;
+* REDUCE;
+* EXIT;
+* NO ADD;
+* ADD-ON CONFIRMED;
+* target consumed logic;
+* MAE degradation;
+* BTC Shock degradation;
+* fresh breakout/retest requirements.
+
+ACTION должен иметь тот же приоритет условий, что и Pine.
+
+---
+
+# 20. ACTION
+
+В UI и API обязательно создать canonical field:
+
+`action`
+
+которое повторяет Pine `actionText`.
+
+Включая, но не ограничиваясь:
+
+* WAIT SETUP
+* WATCH
+* WAIT APPROACH
+* WAIT TRIGGER / MATURATION
+* WAIT TRIGGER
+* ARMED / WAIT RECOVERY
+* TRIGGERED / WAIT ENTRY QUALITY
+* WAIT RETEST
+* WAIT RETEST TRIGGER
+* CHECK DOM/TAPE → ENTRY
+* MATURED PRE-BREAK ENTRY
+* DO NOT CHASE / WAIT RESET
+* SKIP / LIQUIDITY
+* WAIT / BTC SHOCK
+* WAIT / HIGH MAE RISK
+* SKIP / STRUCTURE
+* SKIP / RISK
+* SKIP / GEOMETRY
+* WAIT / CONTEXT
+* ACTIVE HEALTHY / MANAGE PLAN
+* ACTIVE DEGRADED / NO ADD
+* REDUCE / NO ADD
+* EXIT / ABORT ACTIVE PLAN
+* ADD-ON CONFIRMED
+
+Полный список извлечь из Pine.
+
+---
+
+# 21. SIGNALS
+
+Реализовать все signal events Pine.
+
+Минимум:
+
+* L WATCH
+* S WATCH
+* LONG WATCH ENTRY
+* SHORT WATCH ENTRY
+* MATURED PRE-BREAK ENTRY
+* LONG ARMED
+* SHORT ARMED
+* PINE READY LONG
+* PINE READY SHORT
+* BREAKOUT
+* BREAKDOWN
+* BRONZE
+* STRONG
+* REVERSAL RISK
+* ACTIVE PLAN DEGRADED
+* ACTIVE PLAN EXIT
+* ADD-ON
+* TP HIT
+* ARMED LOST
+* BOUNCE WATCH
+* AVG SETUP >= 70
+* EXECUTION QUALITY >= 65
+
+Каждый event должен иметь:
+
+* symbol;
+* exchange;
+* timeframe;
+* event timestamp;
+* candle timestamp;
+* realtime/confirmed;
+* direction;
+* generation id;
+* price;
+* action;
+* all quality metrics;
+* risks;
+* paths;
+* SL;
+* T1;
+* R:R;
+* blockers;
+* parameter_set_version;
+* engine_version.
+
+---
+
+# 22. REALTIME VS CONFIRMED SIGNALS
+
+Не делать все alerts только на candle close.
+
+Воспроизвести Pine semantics.
+
+В частности realtime crossings типа:
+
+`AVG SETUP >= 70`
+
+и:
+
+`EXECUTION QUALITY >= 65`
+
+должны происходить intrabar, сохранять latch до конца текущего бара и re-arm так же, как Pine.
+
+BRONZE / STRONG и прочие confirmed-close события должны оставаться confirmed-close, если именно так реализовано в Pine.
+
+Для каждого signal определить исходную Pine semantics и записать её в:
+
+`docs/signals.md`.
+
+---
+
+# 23. OPTIONAL OI / CVD
+
+В Pine OI/CVD являются optional external sources.
+
+Baseline defaults не должны внезапно начать использовать новые данные.
+
+Реализовать adapters:
+
+### OI
+
+Для Bybit realtime можно получать Open Interest из ticker stream.
+
+Также поддержать исторический OI endpoint.
+
+### CVD
+
+Строить CVD из Bybit `publicTrade`:
+
+* taker Buy;
+* taker Sell;
+* signed volume.
+
+Но CVD formula/version должна быть явно зафиксирована.
+
+Пока `useCvdDivergence=false`, CVD не должен влиять на baseline.
+
+Пока `useOiDivergence=false`, OI не должен влиять на baseline.
+
+---
+
+# 24. DOM/TAPE
+
+Pine сам не видит полноценный DOM/Tape и оставляет его external execution gate.
+
+Поэтому:
+
+**не добавляй DOM/Tape в baseline scores.**
+
+Но подготовь отдельный optional модуль:
+
+`enhanced_market_microstructure`
+
+который сможет позже отображать:
+
+* bid/ask;
+* spread;
+* order book imbalance;
+* recent aggressive Buy/Sell;
+* trade delta;
+* CVD;
+* large trades;
+* liquidity clusters.
+
+В UI показывать его отдельно как:
+
+`Enhanced / not part of Pine parity`.
+
+---
+
+# 25. DATABASE
+
+Использовать:
+
+**PostgreSQL + TimescaleDB**
+
+если TimescaleDB доступен без усложнения deployment.
+
+Иначе использовать PostgreSQL с правильными indexes/partitioning.
+
+ORM:
+
+SQLAlchemy 2.x.
+
+Migrations:
+
+Alembic.
+
+Основные таблицы:
+
+### instruments
+
+metadata всех инструментов.
+
+### market_bars
+
+OHLCV по exchange/symbol/timeframe.
+
+### setup_current
+
+текущее состояние каждого:
+
+`exchange + symbol + timeframe`.
+
+### setup_snapshots
+
+исторические snapshots.
+
+### setup_events
+
+FSM transitions / action changes / zone changes.
+
+### signals
+
+все detector signals.
+
+### parameter_sets
+
+versioned settings.
+
+### alert_rules
+
+правила Telegram.
+
+### alert_rule_versions
+
+история изменения правил.
+
+### alert_deliveries
+
+доставка/ошибки/deduplication.
+
+### research_samples
+
+MFE/MAE/T1/SL outcomes.
+
+### parity_reference
+
+TradingView reference records.
+
+### parity_results
+
+результаты автоматического сравнения.
+
+---
+
+# 26. SNAPSHOT SYSTEM
+
+Это одна из ключевых функций проекта.
+
+Добавь конфигурацию:
+
+`SNAPSHOT_INTERVAL_SEC`
+
+Default:
+
+`15`
+
+Разрешить через UI:
+
+* 5 sec;
+* 10 sec;
+* 15 sec;
+* 30 sec;
+* 60 sec;
+* custom.
+
+Для `ACTION != WAIT SETUP` регулярно сохранять полный snapshot.
+
+Кроме periodic snapshot обязательно сохранять snapshot при:
+
+* новом setup;
+* ACTION change;
+* FSM transition;
+* direction change;
+* generation change;
+* locked zone change;
+* signal;
+* BRONZE;
+* STRONG;
+* PINE READY;
+* ACTIVE health transition;
+* target hit;
+* setup invalidation/expiry;
+* candle close.
+
+Snapshot должен содержать **не только UI metrics, а полный analytic state**.
+
+При этом основные часто анализируемые атрибуты должны быть отдельными typed DB columns.
+
+Остальные можно дополнительно сохранить в `JSONB`.
+
+Каждый snapshot содержит:
+
+* `event_time`;
+* `received_at`;
+* exchange;
+* symbol;
+* timeframe;
+* price;
+* candle start;
+* candle confirmed flag;
+* setup generation;
+* ACTION;
+* FSM;
+* Direction;
+* Candidate Path;
+* Trigger Path;
+* Risk Path;
+* Formation;
+* Execution;
+* Geometry;
+* Context;
+* Level;
+* Approach;
+* Exhaustion;
+* MAE;
+* AVG SETUP;
+* Continuation;
+* BTC Shock;
+* In-Play;
+* SL;
+* T1;
+* RR;
+* blockers;
+* gates;
+* all remaining metrics;
+* engine git SHA;
+* parameter-set version;
+* data-source health.
+
+---
+
+# 27. RESEARCH MODE
+
+Воспроизвести существующий Pine Research Mode.
+
+Не заменять его новой аналитикой.
+
+Research families минимум:
+
+* WATCH ENTRY;
+* MATURED ENTRY;
+* PINE READY;
+* BRONZE;
+* STRONG.
+
+Сохранять frozen signal:
+
+* entry;
+* ATR;
+* SL;
+* T1;
+* path;
+* direction;
+* quality metrics.
+
+Далее измерять:
+
+* MFE;
+* MAE;
+* T1 hit;
+* SL hit;
+* first hit;
+* horizon result;
+* clean outcome.
+
+После переноса Pine Research Mode можно добавить отдельный advanced analytics layer поверх snapshot database.
+
+---
+
+# 28. ACTIVE SETUPS WEB PAGE
+
+Главная страница приложения:
+
+`/setups`
+
+Она показывает **все инструменты, где:**
+
+`ACTION != "WAIT SETUP"`
+
+Одна строка =
+
+`exchange / symbol / timeframe`.
+
+Realtime обновление через WebSocket или SSE без reload страницы.
+
+Таблица должна поддерживать:
+
+* сортировку по любой колонке;
+* multi-column sorting;
+* фильтры;
+* диапазоны;
+* search;
+* direction;
+* timeframe;
+* ACTION;
+* state;
+* path;
+* signal;
+* min/max quality;
+* min/max risk;
+* BTC Shock;
+* blockers;
+* active-plan status.
+
+Минимальные колонки:
+
+* Symbol
+* TF
+* Price
+* ACTION
+* Family / State
+* Direction
+* AVG SETUP
+* CONTINUATION
+* Formation
+* Execution
+* Geometry
+* Exhaustion
+* MAE
+* Level Quality
+* Approach
+* Context
+* BTC regime
+* BTC Shock
+* Candidate Path
+* Trigger Path
+* Hard Gates
+* Fresh Trigger
+* Trigger Zone
+* Distance
+* SL
+* T1
+* R:R
+* Active Plan Health
+* Add-on Gate
+* Target Freshness
+* last signal
+* setup age
+* updated at
+
+Цветовые traffic-light значения сделать по логике Pine Decision Panel.
+
+---
+
+# 29. SYMBOL DETAIL PAGE
+
+Route:
+
+`/setups/{exchange}/{symbol}/{timeframe}`
+
+Показать:
+
+### Chart
+
+Candlestick chart.
+
+На нём:
+
+* R1/R2;
+* S1/S2;
+* locked zone;
+* consumed zone;
+* SL;
+* T1;
+* WATCH markers;
+* WATCH ENTRY;
+* MATURED;
+* ARMED;
+* PINE READY;
+* BRONZE;
+* STRONG;
+* failed sweep;
+* breakout/retest.
+
+### Current Decision Panel
+
+Максимально близко к FULL Decision Panel Pine.
+
+### Attribute history
+
+Time-series графики:
+
+* AVG SETUP;
+* Formation;
+* Execution;
+* Geometry;
+* Context;
+* MAE;
+* Exhaustion;
+* Level;
+* Approach;
+* BTC Shock;
+* price.
+
+Выбор периода:
+
+* 15m;
+* 1h;
+* 6h;
+* 24h;
+* 7d;
+* custom.
+
+### Timeline
+
+Показать события:
+
+* WATCH;
+* state transitions;
+* path change;
+* signal;
+* BRONZE;
+* STRONG;
+* READY;
+* ACTIVE health;
+* target/SL.
+
+---
+
+# 30. FRONTEND
+
+Рекомендуемый stack:
+
+* React;
+* TypeScript;
+* Vite;
+* TanStack Query;
+* TanStack Table;
+* Lightweight Charts или аналогичная performant candlestick library.
+
+Frontend не должен выполнять trading calculations.
+
+Frontend только отображает backend source-of-truth.
+
+Все calculations находятся в engine.
+
+---
+
+# 31. BACKEND/API
+
+Использовать:
+
+* Python 3.12+;
+* FastAPI;
+* Pydantic v2;
+* SQLAlchemy;
+* asyncio;
+* WebSocket/SSE realtime.
+
+API минимум:
+
+`GET /api/setups`
+
+`GET /api/setups/{symbol}/{timeframe}`
+
+`GET /api/setups/{symbol}/{timeframe}/history`
+
+`GET /api/signals`
+
+`GET /api/instruments`
+
+`GET /api/parameters`
+
+`PUT /api/parameters`
+
+`GET/POST/PUT/DELETE /api/alerts/rules`
+
+`GET /api/research`
+
+`GET /api/parity`
+
+`GET /api/health`
+
+Realtime endpoint:
+
+`/ws/setups`
+
+---
+
+# 32. TELEGRAM ALERT ENGINE
+
+Telegram alerts должны быть **не набором жёстко прописанных if**.
+
+Нужен универсальный rule engine.
+
+Пользователь должен создавать условия через UI.
+
+Пример:
+
+AND:
+
+`Direction == LONG`
+
+`AVG SETUP >= 70`
+
+`Execution Quality >= 65`
+
+`MAE Risk <= 45`
+
+`Exhaustion Risk <= 45`
+
+`Level Quality >= 60`
+
+`BTC Shock < 55`
+
+и:
+
+`ACTION IN ["WATCH", "MATURED PRE-BREAK ENTRY", "CHECK DOM/TAPE → ENTRY"]`
+
+Другой пример:
+
+`event == BRONZE`
+AND
+`Geometry >= 65`
+AND
+`Context >= 60`
+
+Поддержать operators:
+
+* `==`
+* `!=`
+* `>`
+* `>=`
+* `<`
+* `<=`
+* `IN`
+* `NOT IN`
+* `BETWEEN`
+* `contains`
+* `changed`
+* `changed_to`
+* `crosses_above`
+* `crosses_below`
+
+Поддержать nested:
+
+* AND;
+* OR;
+* NOT.
+
+Поддержать:
+
+* realtime;
+* confirmed-close only;
+* once per bar;
+* once per setup generation;
+* cooldown;
+* repeat while true;
+* first occurrence only.
+
+---
+
+# 33. ALERT DEDUPLICATION
+
+Нельзя спамить одинаковыми сообщениями.
+
+Использовать deterministic dedupe key примерно:
+
+`rule_id + symbol + timeframe + setup_generation_id + event_type + bar_start`
+
+или другой подходящий ключ.
+
+Deduplication должна учитывать semantics конкретного rule.
+
+---
+
+# 34. TELEGRAM MESSAGE
+
+Default Telegram message должен быть информативным.
+
+Пример структуры:
+
+`🟢 LONG WATCH ENTRY`
+
+`Symbol: XYZUSDT`
+
+`TF: 15m`
+
+`Price: ...`
+
+`ACTION: ...`
+
+`AVG SETUP: 73.4`
+
+`Formation: 78`
+
+`Execution: 71`
+
+`Geometry: 68`
+
+`Context: 74`
+
+`Level: 76`
+
+`Approach: 7/9`
+
+`MAE: 22`
+
+`Exhaustion: 18`
+
+`BTC Shock: 14`
+
+`Candidate: COMPRESSION`
+
+`Trigger: ...`
+
+`SL: ...`
+
+`T1: ...`
+
+`R:R: ...`
+
+`Blockers: NONE`
+
+Добавить ссылку на соответствующую detail page web application.
+
+Message template сделать настраиваемым.
+
+---
+
+# 35. ALERT RULE UI
+
+Страница:
+
+`/alerts`
+
+Нужен визуальный builder.
+
+Пользователь должен иметь возможность:
+
+* добавить condition;
+* выбрать metric;
+* выбрать operator;
+* задать value;
+* создать AND/OR group;
+* включить/выключить rule;
+* протестировать rule на текущих setups;
+* посмотреть, какие symbols прямо сейчас соответствуют rule;
+* отправить test Telegram;
+* посмотреть историю срабатываний.
+
+---
+
+# 36. HISTORICAL ANALYTICS
+
+Так как snapshots будут накоплены, подготовить API/architecture для последующего анализа:
+
+«Какие значения показателей чаще всего предшествуют движению +2%?»
+
+«Что отличает успешный WATCH от неуспешного?»
+
+«При каком MAE/Exhaustion BRONZE становится неэффективным?»
+
+«Какие Candidate Paths дают лучший MFE?»
+
+«Как менялись Execution и Formation за 5/10/15 минут до PINE READY?»
+
+Пока не требуется ML.
+
+Но структура БД должна позволять выполнять такие исследования без изменения схемы.
+
+---
+
+# 37. DATA QUALITY
+
+Каждый market-data stream должен иметь health.
+
+Отслеживать:
+
+* last event timestamp;
+* received timestamp;
+* lag;
+* reconnect count;
+* missing candles;
+* sequence gaps, где возможно;
+* stale feed;
+* last successful REST backfill.
+
+При reconnect:
+
+1. определить gap;
+2. получить пропущенные candles/trades, если возможно;
+3. восстановить state;
+4. только после этого пометить engine как healthy.
+
+Не выдавать realtime alert из заведомо stale market data.
+
+В UI показывать:
+
+* HEALTHY;
+* DEGRADED;
+* STALE;
+* RECOVERING.
+
+---
+
+# 38. DATA RECONCILIATION
+
+Kline WebSocket можно использовать как контрольный источник.
+
+Realtime trades агрегируются engine самостоятельно.
+
+На candle close сравнить агрегированную candle с exchange kline:
+
+* O;
+* H;
+* L;
+* C;
+* Volume.
+
+Если есть отличие — логировать reconciliation error.
+
+При необходимости confirmed bar заменить authoritative exchange-confirmed kline **только если это не ломает Pine parity**, после чего детерминированно replay calculation для этого bar.
+
+---
+
+# 39. PINE PARITY FRAMEWORK
+
+Это обязательная часть проекта.
+
+Система не считается готовой только потому, что «формулы похожи».
+
+Создать:
+
+`tests/parity/`
+
+и:
+
+`tools/pine_reference/`
+
+Нужен способ сравнивать Python engine с TradingView reference.
+
+Сгенерируй отдельную копию/patch Pine для debug export, не изменяя оригинальный source-of-truth.
+
+Reference exporter должен позволять получить как минимум:
+
+* ATR;
+* EMA fast/slow;
+* 1h/6h/24h returns;
+* NATR;
+* volume24h;
+* direction;
+* setup generation;
+* FSM;
+* Level;
+* Approach;
+* Formation;
+* Execution;
+* Geometry;
+* Context;
+* Exhaustion;
+* MAE;
+* AVG SETUP;
+* Continuation;
+* BTC Shock;
+* Candidate Path code;
+* Trigger Path code;
+* SL;
+* T1;
+* R:R;
+* gates;
+* signals.
+
+Для string enums создай стабильные numeric codes/documented mapping.
+
+---
+
+# 40. PARITY ACCEPTANCE CRITERIA
+
+Для CLOSED BARS target:
+
+### Price-based values
+
+* OHLC: exact exchange tick;
+* structural levels: <= 1 tick deviation;
+* SL/T1: <= 1–2 ticks там, где formula deterministic.
+
+### Indicators
+
+ATR/EMA:
+
+* relative error target <= 0.05%.
+
+### Scores
+
+Formation / Execution / Geometry / Context / MAE / Exhaustion / Level / AVG SETUP:
+
+* median absolute error <= 0.5 percentage point;
+* P95 <= 1.5 percentage points.
+
+### Discrete state
+
+* Direction: exact;
+* FSM: exact;
+* Candidate Path: exact;
+* Trigger Path: exact;
+* ACTION: exact;
+* WATCH/ENTRY/BRONZE/STRONG signal candle: exact.
+
+Target state agreement:
+
+`>= 99%` на валидном reference dataset.
+
+Если parity хуже — не маскировать допусками.
+
+Найти корневую причину.
+
+---
+
+# 41. REALTIME PARITY
+
+Отдельно тестировать open realtime candle.
+
+Из-за различия времени доставки feed сравнивать records по ближайшему timestamp.
+
+Target:
+
+* score P95 difference <= 2 percentage points;
+* direction/state должны совпадать;
+* после candle close результаты обязаны сходиться к closed-bar tolerance.
+
+Особенно тестировать:
+
+* AVG SETUP intrabar;
+* AVG >=70 crossing;
+* Execution >=65 crossing;
+* WATCH creation;
+* trigger freshness;
+* BTC Shock;
+* MAE;
+* zone sweep.
+
+---
+
+# 42. GOLDEN TEST DATASETS
+
+Сделать golden fixtures минимум для сценариев:
+
+* no setup;
+* LONG WATCH;
+* SHORT WATCH;
+* approach;
+* protorgovka;
+* compression;
+* direct momentum;
+* breakout;
+* breakdown;
+* breakout + retest;
+* breakdown + retest;
+* failed sweep;
+* BTC Shock;
+* high MAE;
+* exhaustion;
+* OPEN SKY;
+* active healthy;
+* active degraded;
+* active exit;
+* add-on;
+* BRONZE;
+* STRONG.
+
+Каждый bug parity, найденный позже, должен превращаться в regression test.
+
+---
+
+# 43. PERFORMANCE ARCHITECTURE
+
+Нужно сканировать сотни инструментов.
+
+Не пересчитывать тысячи candles через pandas на каждом tick.
+
+Использовать:
+
+* ring buffers/deques;
+* incremental EMA/RMA/SMA;
+* incremental state;
+* cached MTF series;
+* state per `(exchange, symbol, timeframe)`.
+
+Но сначала добиться корректности.
+
+Любая optimization должна проходить тот же parity test suite.
+
+---
+
+# 44. REALTIME SUBSCRIPTION STRATEGY
+
+Из-за большого количества инструментов реализовать sharding WebSocket connections.
+
+Market-data layer должен уметь:
+
+* разделять subscriptions;
+* reconnect independently;
+* resubscribe;
+* detect stalled connection;
+* dynamically subscribe/unsubscribe.
+
+Если full publicTrade feed для всего universe слишком тяжёлый, не ухудшай silently точность.
+
+Реализуй уровни качества:
+
+`FULL_REALTIME`
+
+`KLINE_REALTIME`
+
+`DEGRADED`
+
+Для активных setups, near-setup candidates и user-pinned symbols отдавать приоритет `FULL_REALTIME`.
+
+Если используется chart TF=1m и нужен micro 30s, отсутствие trade feed должно явно отображаться как недостаточная data quality.
+
+---
+
+# 45. MULTI-TIMEFRAME
+
+Приложение не должно быть привязано к одному TF.
+
+Поддержать конфигурацию набора анализируемых chart timeframes.
+
+State key:
+
+`exchange + symbol + timeframe`.
+
+Каждый timeframe имеет независимые:
+
+* setup generation;
+* zones;
+* FSM;
+* scores;
+* signals;
+* snapshots.
+
+---
+
+# 46. DOCKER
+
+Всё приложение должно запускаться:
+
+`docker compose up -d`
+
+Рекомендуемые services:
+
+`marketdata`
+`engine`
+`api`
+`notifier`
+`frontend`
+`postgres`
+`redis`
+`nginx`
+
+Если есть веская причина объединить `engine/api` на первом этапе — допустимо, но calculation engine должен оставаться отдельным Python package/domain layer.
+
+Redis использовать для:
+
+* realtime pub/sub;
+* caching;
+* optional event stream;
+* distributed locks/deduplication.
+
+---
+
+# 47. REPOSITORY STRUCTURE
+
+Организуй monorepo примерно:
+
+`backend/`
+`backend/engine/`
+`backend/engine/pine_compat/`
+`backend/marketdata/`
+`backend/api/`
+`backend/alerts/`
+`backend/research/`
+`backend/models/`
+`frontend/`
+`tests/`
+`tests/unit/`
+`tests/integration/`
+`tests/parity/`
+`tools/`
+`docs/`
+`docker/`
+
+Не воспринимать эту структуру как абсолютную, если найдёшь архитектуру лучше.
+
+---
+
+# 48. CONFIGURATION
+
+Создать `.env.example`.
+
+Секреты не коммитить.
+
+Минимум:
+
+`DATABASE_URL`
+`REDIS_URL`
+`TELEGRAM_BOT_TOKEN`
+`TELEGRAM_CHAT_ID`
+`SNAPSHOT_INTERVAL_SEC`
+`ACTIVE_TIMEFRAMES`
+`BYBIT_ENV`
+`LOG_LEVEL`
+
+Market-data public feeds не должны требовать торговых API keys.
+
+---
+
+# 49. OBSERVABILITY
+
+Добавить structured JSON logs.
+
+В каждом engine log желательно:
+
+* symbol;
+* timeframe;
+* generation;
+* bar timestamp;
+* action;
+* FSM;
+* event type.
+
+Health checks для каждого Docker service.
+
+Добавить `/metrics` Prometheus-compatible, если это не создаёт чрезмерной сложности.
+
+Метрики минимум:
+
+* processed market messages;
+* market-data lag;
+* active setups;
+* calculations/sec;
+* calculation latency;
+* WebSocket reconnects;
+* Telegram failures;
+* DB write latency;
+* stale instruments;
+* parity failures.
+
+---
+
+# 50. FRONTEND DESIGN
+
+UI сделать тёмным, ориентированным на trading dashboard.
+
+Не тратить основное время на декоративный дизайн до достижения parity.
+
+Главные принципы:
+
+* высокая плотность информации;
+* быстрые фильтры;
+* sticky headers;
+* realtime highlight changed values;
+* traffic-light colors;
+* responsive desktop layout;
+* tooltips с объяснением metric;
+* понятная data-health индикация.
+
+Decision Panel должен узнаваемо соответствовать TradingView версии.
+
+---
+
+# 51. VERSIONING
+
+Каждый calculation result должен быть воспроизводим.
+
+Хранить:
+
+* engine version;
+* Git SHA;
+* Pine source version/hash;
+* parameter set ID/hash;
+* data source;
+* calculation timestamp.
+
+При изменении Pine Script должна быть возможность поднять новую calculation-engine version, не уничтожая старую статистику.
+
+---
+
+# 52. MIGRATION PATH ДЛЯ НОВЫХ PINE VERSIONS
+
+Не делай перенос v1.15.2 монолитным файлом на 5000 строк Python.
+
+Разбей calculation engine на logical domains:
+
+* timeframes;
+* market activity;
+* levels;
+* approach;
+* structure;
+* micro;
+* execution;
+* context;
+* BTC;
+* risks;
+* scoring;
+* FSM;
+* trade plan;
+* signals;
+* research.
+
+При этом порядок calculation pipeline должен соответствовать зависимости Pine.
+
+Создай documentation dependency graph.
+
+---
+
+# 53. НЕЛЬЗЯ ДЕЛАТЬ
+
+Нельзя:
+
+* заменить Pine approximate TA-Lib implementation без parity test;
+* использовать Bybit 24h ticker вместо Pine fixed-time 24h calculations;
+* использовать Bybit BTC вместо Binance BTC для baseline BTC Context;
+* подключать OI/CVD к baseline, если Pine options OFF;
+* использовать DOM для изменения baseline scores;
+* пересчитывать locked level каждый tick;
+* игнорировать Pine rollback;
+* считать все alerts candle-close;
+* терять state после restart;
+* создавать alert повторно после process restart;
+* silently пропускать missing data;
+* использовать floats без понимания price tick precision;
+* считать приложение готовым без parity report.
+
+---
+
+# 54. PROCESS RESTART / RECOVERY
+
+После restart приложение не должно начинать все setups с нуля.
+
+Persist или deterministic restore должен восстановить:
+
+* structural zones;
+* setup generation;
+* locked zone;
+* FSM;
+* frozen trade plan;
+* active research samples;
+* relevant alert deduplication state.
+
+Предпочтительно иметь возможность полностью deterministic replay из market bars/events.
+
+После startup:
+
+1. load parameters;
+2. load instruments;
+3. backfill required history;
+4. restore/replay engine;
+5. compare persisted current state;
+6. start realtime;
+7. только после этого выставить service HEALTHY.
+
+---
+
+# 55. HISTORY DEPTH
+
+Не брать фиксированные условные «200 свечей».
+
+Автоматически определить required warmup из максимального lookback текущего parameter set.
+
+Учесть:
+
+* Open Sky;
+* HTF Base;
+* MTF;
+* pivots;
+* reset;
+* divergences;
+* Research;
+* ATR/EMA warmup.
+
+Добавить safety margin.
+
+Для новых coins корректно работать с ограниченной историей без fabrication.
+
+---
+
+# 56. TESTING
+
+Минимум:
+
+### Unit
+
+Все pine_compat primitives и independent formulas.
+
+### Engine tests
+
+FSM, zones, risk, scoring.
+
+### Integration
+
+Bybit adapter, Binance BTC adapter, PostgreSQL, Redis, Telegram mocked.
+
+### Recovery
+
+restart/replay.
+
+### Alert tests
+
+rule matching, crossing, dedupe, cooldown.
+
+### Parity
+
+TradingView vs Python.
+
+Запуск:
+
+`pytest`
+
+должен быть частью CI.
+
+Frontend:
+
+lint + typecheck + build.
+
+---
+
+# 57. DOCUMENTATION
+
+Создать:
+
+`README.md`
+
+с командами:
+
+* installation;
+* `.env`;
+* build;
+* first start;
+* migration;
+* Telegram setup;
+* adding timeframe;
+* troubleshooting.
+
+Также:
+
+`docs/architecture.md`
+
+`docs/pine_mapping.md`
+
+`docs/data_sources.md`
+
+`docs/pine_realtime_semantics.md`
+
+`docs/signals.md`
+
+`docs/database.md`
+
+`docs/alert_rules.md`
+
+`docs/parity.md`
+
+`docs/operations.md`
+
+---
+
+# 58. IMPLEMENTATION ORDER
+
+Работай итеративно, но не останавливайся после отдельных этапов.
+
+Правильный порядок:
+
+### Stage 1
+
+Полный reverse engineering Pine и dependency map.
+
+### Stage 2
+
+Pine compatibility primitives.
+
+### Stage 3
+
+Historical market-data adapters.
+
+### Stage 4
+
+Closed-bar calculation parity.
+
+### Stage 5
+
+Persistent zones + FSM.
+
+### Stage 6
+
+Realtime/rollback/varip semantics.
+
+### Stage 7
+
+WebSocket market data.
+
+### Stage 8
+
+Database snapshots/research.
+
+### Stage 9
+
+Backend API.
+
+### Stage 10
+
+Active setup table/detail UI.
+
+### Stage 11
+
+Telegram rule engine.
+
+### Stage 12
+
+Full Docker deployment.
+
+### Stage 13
+
+Parity verification and optimization.
+
+Если несколько субагентов работают параллельно, следи за единым canonical data model и избегай независимого толкования Pine logic.
+
+---
+
+# 59. DEFINITION OF DONE
+
+Работа НЕ считается законченной, если есть только:
+
+* архитектура;
+* TODO;
+* mock UI;
+* частично перенесённые metrics;
+* hardcoded test symbols;
+* console scanner;
+* Telegram alerts без rule builder.
+
+Готовый MVP должен:
+
+1. запускаться одной Docker Compose командой;
+2. самостоятельно получить universe Bybit;
+3. заполнить историю;
+4. начать realtime monitoring;
+5. вычислять Scalping_SMA state;
+6. сохранять snapshots;
+7. показывать active setups в browser;
+8. фильтровать `ACTION != WAIT SETUP`;
+9. открывать detail page;
+10. показывать history metrics;
+11. создавать Telegram rules через UI;
+12. отправлять alerts;
+13. переживать restart;
+14. иметь tests;
+15. иметь parity report.
+
+---
+
+# 60. ФИНАЛЬНЫЙ ОТЧЁТ CODEX
+
+После реализации не просто напиши «готово».
+
+Предоставь:
+
+* что реализовано;
+* структуру сервисов;
+* команды запуска;
+* какие endpoints работают;
+* какие страницы UI работают;
+* какие Pine metrics перенесены;
+* какие signals перенесены;
+* результаты tests;
+* результаты parity;
+* известные расхождения;
+* причины каждого расхождения;
+* какие данные требуют дополнительной TradingView reference verification;
+* performance при текущем числе symbols;
+* CPU/RAM consumption;
+* database growth estimate;
+* какие задачи остались только как optional enhancements.
+
+Отдельно выдай таблицу:
+
+`Metric | Pine | Python | Error median | Error P95 | Status`
+
+и:
+
+`Signal/State | Pine events | Python events | Match % | Status`.
+
+---
+
+# ГЛАВНЫЙ ПРИНЦИП
+
+Это не «похожий криптоскринер».
+
+Это **реплика execution/state/scoring engine конкретного Pine Script вне TradingView**.
+
+Сначала добейся математического и stateful parity.
+
+Только после этого добавляй улучшения.
+
+Если приходится выбирать между красивой архитектурой и точным совпадением с Pine — выбирай точное совпадение, но изолируй compatibility-код так, чтобы его можно было поддерживать.

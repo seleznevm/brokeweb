@@ -1,0 +1,3328 @@
+[
+  {
+    "name": "tfProfileMode",
+    "type": "string",
+    "default": "Auto",
+    "title": "TF-профиль",
+    "line": 114,
+    "options": [
+      "Auto",
+      "Manual"
+    ],
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Auto = TF Profile v2: подбирает Micro TF, expiry и основные time-sensitive lookback/window параметры под текущий chart TF. Manual использует все заданные ниже bar-based значения без Auto override. Expiry всегда считается по реальному времени."
+  },
+  {
+    "name": "manualSetupExpiryMinutes",
+    "type": "int",
+    "default": 480,
+    "title": "Manual: Setup expiry, минут",
+    "line": 121,
+    "minval": 10,
+    "maxval": 43200,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Используется только при TF-профиль = Manual. В отличие от прежнего bars-based expiry одинаковое число минут имеет одинаковый смысл на разных chart TF."
+  },
+  {
+    "name": "useMicroTf",
+    "type": "bool",
+    "default": true,
+    "title": "Использовать lower-TF micro-проторговку",
+    "line": 128,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Полный intrabar engine через request.security_lower_tf(): анализирует ВСЕ доступные micro-свечи внутри текущей chart-свечи. microLookback по-прежнему считается в контексте Micro TF для каждой intrabar-свечи. Bonus включается только когда Micro TF строго ниже chart TF."
+  },
+  {
+    "name": "manualMicroTf",
+    "type": "timeframe",
+    "default": "5",
+    "title": "Manual: Micro TF",
+    "line": 129,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Используется только при TF-профиль = Manual. Micro TF должен быть строго ниже текущего chart TF."
+  },
+  {
+    "name": "microLookback",
+    "type": "int",
+    "default": 8,
+    "title": "Micro TF lookback",
+    "line": 130,
+    "minval": 4,
+    "maxval": 30,
+    "group": "1. TF Profile / Setup lifecycle"
+  },
+  {
+    "name": "microMaxWidthAtr",
+    "type": "float",
+    "default": 2.2,
+    "title": "Micro TF max width, ATR",
+    "line": 131,
+    "minval": 0.5,
+    "maxval": 6.0,
+    "step": 0.1,
+    "group": "1. TF Profile / Setup lifecycle"
+  },
+  {
+    "name": "microMinIntrabars",
+    "type": "int",
+    "default": 2,
+    "title": "Micro engine: мин. intrabars",
+    "line": 132,
+    "minval": 1,
+    "maxval": 30,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Минимум доступных lower-TF свечей внутри текущей chart-свечи, чтобы micro engine мог подтвердить проторговку. Для Auto 1m→30s обычно доступно 2 intrabars."
+  },
+  {
+    "name": "microMinProtoHitPct",
+    "type": "float",
+    "default": 40.0,
+    "title": "Micro engine: proto occupancy >=, %",
+    "line": 133,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 5.0,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Минимальная доля intrabars текущей chart-свечи, на которых lower-TF proto-state был валиден."
+  },
+  {
+    "name": "microMinQuality",
+    "type": "float",
+    "default": 55.0,
+    "title": "Micro engine: Quality >=, %",
+    "line": 134,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "1. TF Profile / Setup lifecycle",
+    "tooltip": "Итоговая micro quality: 55% proto occupancy + 30% directional pressure + 15% directional volume bias."
+  },
+  {
+    "name": "pivotLen",
+    "type": "int",
+    "default": 3,
+    "title": "Pivot left/right",
+    "line": 142,
+    "minval": 2,
+    "maxval": 20,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Число баров слева/справа для подтверждения swing high/low."
+  },
+  {
+    "name": "levelTolAtr",
+    "type": "float",
+    "default": 0.25,
+    "title": "Допуск кластера, ATR",
+    "line": 149,
+    "minval": 0.05,
+    "maxval": 1.5,
+    "step": 0.05,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Pivot-точки внутри этого расстояния считаются одним кластером ликвидности."
+  },
+  {
+    "name": "cascadeMaxSpacingAtr",
+    "type": "float",
+    "default": 2.5,
+    "title": "Каскад: макс. расстояние R1↔R2 / S1↔S2, ATR",
+    "line": 156,
+    "minval": 0.2,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Бонус, когда несколько очевидных уровней стоят последовательно близко друг к другу."
+  },
+  {
+    "name": "atrLen",
+    "type": "int",
+    "default": 14,
+    "title": "ATR length",
+    "line": 163,
+    "minval": 5,
+    "maxval": 100,
+    "group": "2. Уровни и ликвидность"
+  },
+  {
+    "name": "minLevelQuality",
+    "type": "float",
+    "default": 55.0,
+    "title": "Мин. Level Quality для WATCH",
+    "line": 165,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "2. Уровни и ликвидность"
+  },
+  {
+    "name": "maxWatchDistanceAtr",
+    "type": "float",
+    "default": 6.0,
+    "title": "Макс. дистанция до уровня для WATCH, ATR",
+    "line": 170,
+    "minval": 0.5,
+    "maxval": 30.0,
+    "step": 0.5,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "WATCH может появиться раньше APPROACH. После фиксации уровень не перестраивается до invalidation/expiry."
+  },
+  {
+    "name": "maxStructuralZones",
+    "type": "int",
+    "default": 16,
+    "title": "Макс. структурных зон на сторону",
+    "line": 177,
+    "minval": 4,
+    "maxval": 40,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Сколько persistent resistance/support зон хранить отдельно. Зоны меняются только при подтверждённом новом pivot или structural break."
+  },
+  {
+    "name": "minMapLevelQuality",
+    "type": "float",
+    "default": 30.0,
+    "title": "Мин. Level Quality для карты R/S",
+    "line": 184,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "R1/R2/S1/S2 выбираются только среди структурных зон не ниже этого качества. WATCH по-прежнему использует более строгий min Level Quality."
+  },
+  {
+    "name": "zonePaddingAtr",
+    "type": "float",
+    "default": 0.08,
+    "title": "Толщина зоны: padding, ATR",
+    "line": 191,
+    "minval": 0.01,
+    "maxval": 0.5,
+    "step": 0.01,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Добавочный вертикальный padding вокруг фактического диапазона pivot-кластера. Фиксируется при создании/обновлении зоны и не следует за текущим ATR."
+  },
+  {
+    "name": "zoneBreakBufferAtr",
+    "type": "float",
+    "default": 0.1,
+    "title": "Structural break buffer, ATR",
+    "line": 198,
+    "minval": 0.0,
+    "maxval": 1.0,
+    "step": 0.01,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Close должен выйти за внешнюю границу box-зоны минимум на этот ATR-buffer, прежде чем зона начнёт считаться пробитой."
+  },
+  {
+    "name": "zoneBreakConfirmBars",
+    "type": "int",
+    "default": 1,
+    "title": "Structural break confirmation, баров",
+    "line": 205,
+    "minval": 1,
+    "maxval": 5,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Сколько последовательных подтверждённых закрытий за внешней границей требуется, чтобы исключить зону из активных R/S."
+  },
+  {
+    "name": "zoneSweepResolveBars",
+    "type": "int",
+    "default": 3,
+    "title": "Sweep resolve window, баров",
+    "line": 212,
+    "minval": 1,
+    "maxval": 20,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "После первого снятия внешней границы ликвидность сразу считается consumed и исключается из активных R/S. Если за это число баров нет acceptance/break за зоной, событие классифицируется как FAILED SWEEP."
+  },
+  {
+    "name": "brokenZoneRetestBars",
+    "type": "int",
+    "default": 20,
+    "title": "Показывать consumed/broken zone, баров",
+    "line": 219,
+    "minval": 0,
+    "maxval": 200,
+    "group": "2. Уровни и ликвидность",
+    "tooltip": "Последняя consumed-зона сохраняется как отдельный SWEPT / BROKEN-RETEST / FAILED-SWEEP box. 0 = не сохранять."
+  },
+  {
+    "name": "minMove24",
+    "type": "float",
+    "default": 5.0,
+    "title": "Мин. |24h move|, %",
+    "line": 231,
+    "minval": 0.0,
+    "step": 0.5,
+    "group": "3. Активность / In-Play / 24h Volume"
+  },
+  {
+    "name": "minMove6h",
+    "type": "float",
+    "default": 2.5,
+    "title": "Мин. |6h move|, %",
+    "line": 234,
+    "minval": 0.0,
+    "step": 0.25,
+    "group": "3. Активность / In-Play / 24h Volume"
+  },
+  {
+    "name": "minMove1h",
+    "type": "float",
+    "default": 0.8,
+    "title": "Мин. |1h move|, %",
+    "line": 237,
+    "minval": 0.0,
+    "step": 0.1,
+    "group": "3. Активность / In-Play / 24h Volume"
+  },
+  {
+    "name": "minNatr1h",
+    "type": "float",
+    "default": 1.0,
+    "title": "Мин. 1h NATR, %",
+    "line": 240,
+    "minval": 0.05,
+    "step": 0.05,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "ATR(14) / close в часовом контексте. Не зависит от таймфрейма текущего графика."
+  },
+  {
+    "name": "minActivityChecks",
+    "type": "int",
+    "default": 2,
+    "title": "Сколько In-Play признаков достаточно",
+    "line": 245,
+    "minval": 1,
+    "maxval": 4,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "Признаки: |24h|, |6h|, |1h| и 1h NATR."
+  },
+  {
+    "name": "lazyMode",
+    "type": "string",
+    "default": "Proxy TradingView",
+    "title": "Источник 24h Volume",
+    "line": 254,
+    "options": [
+      "Proxy TradingView",
+      "LazyScalp plot",
+      "Manual"
+    ],
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "Proxy TradingView автоматически учитывает syminfo.volumetype: quote=готовый quote notional, base=volume×price, tick/n/a=dollar-volume недоступен. LazyScalp plot работает только если исходный индикатор экспортирует нужное число отдельным plot."
+  },
+  {
+    "name": "lazyExternalSource",
+    "type": "source",
+    "default": "close",
+    "title": "Источник plot из LazyScalp",
+    "line": 262,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "В режиме 'LazyScalp plot' выберите plot 24h Volume из LazyScalp в выпадающем списке Source."
+  },
+  {
+    "name": "lazyExternalScale",
+    "type": "string",
+    "default": "$M",
+    "title": "Единицы LazyScalp plot",
+    "line": 269,
+    "options": [
+      "$",
+      "$K",
+      "$M",
+      "$B"
+    ],
+    "group": "3. Активность / In-Play / 24h Volume"
+  },
+  {
+    "name": "lazyManualM",
+    "type": "float",
+    "default": 0.0,
+    "title": "Manual 24h Volume, $M",
+    "line": 276,
+    "minval": 0.0,
+    "step": 1.0,
+    "group": "3. Активность / In-Play / 24h Volume"
+  },
+  {
+    "name": "min24hVolumeM",
+    "type": "float",
+    "default": 10.0,
+    "title": "Мин. 24h Volume, $M",
+    "line": 284,
+    "minval": 0.0,
+    "step": 1.0,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "Ликвидностный checkpoint. Не является подтверждённым универсальным правилом автора."
+  },
+  {
+    "name": "enableLiquidityGate",
+    "type": "bool",
+    "default": true,
+    "title": "Liquidity Gate",
+    "line": 295,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "Hard gate для новых continuation setups, BRONZE/STRONG и PINE READY. Проверяет 24h dollar-volume (когда он достоверно известен) и грубость min tick относительно ATR/цены."
+  },
+  {
+    "name": "liquidityRequireKnownDollarVolume",
+    "type": "bool",
+    "default": false,
+    "title": "Liquidity: требовать известный $Volume",
+    "line": 300,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "OFF по умолчанию: tick/n/a volumetype не блокируется только из-за отсутствия надёжного dollar-volume. ON = неизвестный dollar-volume считается blocker."
+  },
+  {
+    "name": "liquidityMaxTickAtrPct",
+    "type": "float",
+    "default": 2.0,
+    "title": "Liquidity: max minTick / ATR, %",
+    "line": 305,
+    "minval": 0.05,
+    "maxval": 25.0,
+    "step": 0.05,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "Слишком крупный минимальный тик относительно ATR = плохая ценовая гранулярность для скальпинга."
+  },
+  {
+    "name": "liquidityMaxTickPriceBps",
+    "type": "float",
+    "default": 10.0,
+    "title": "Liquidity: max minTick / Price, bps",
+    "line": 310,
+    "minval": 0.1,
+    "maxval": 100.0,
+    "step": 0.5,
+    "group": "3. Активность / In-Play / 24h Volume",
+    "tooltip": "1 bp = 0.01%. Защищает от инструментов, где один тик слишком велик относительно цены."
+  },
+  {
+    "name": "emaFastLen",
+    "type": "int",
+    "default": 20,
+    "title": "EMA fast",
+    "line": 320,
+    "minval": 3,
+    "maxval": 200,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "emaSlowLen",
+    "type": "int",
+    "default": 50,
+    "title": "EMA slow",
+    "line": 321,
+    "minval": 5,
+    "maxval": 400,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "trendSlopeBars",
+    "type": "int",
+    "default": 5,
+    "title": "Проверка наклона EMA, баров",
+    "line": 322,
+    "minval": 1,
+    "maxval": 50,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "maxApproachAtr",
+    "type": "float",
+    "default": 3.0,
+    "title": "Макс. дистанция до уровня для APPROACH, ATR",
+    "line": 324,
+    "minval": 0.2,
+    "maxval": 15.0,
+    "step": 0.1,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "approachBars",
+    "type": "int",
+    "default": 5,
+    "title": "Lookback подхода, баров",
+    "line": 329,
+    "minval": 1,
+    "maxval": 50,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "minApproachScore",
+    "type": "int",
+    "default": 6,
+    "title": "Мин. Approach Quality Score",
+    "line": 335,
+    "minval": 1,
+    "maxval": 9,
+    "group": "4. Структура / Approach",
+    "tooltip": "9 компонентов: близость, сокращение дистанции, направление, slope экстремумов, acceptance, rejection decay, повторные атаки, shallow pullback, recovery speed."
+  },
+  {
+    "name": "minApproachRecoveryAtrPerBar",
+    "type": "float",
+    "default": 0.04,
+    "title": "Approach: мин. recovery speed, ATR/bar",
+    "line": 342,
+    "minval": 0.0,
+    "maxval": 1.0,
+    "step": 0.01,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "rejectionLookback",
+    "type": "int",
+    "default": 3,
+    "title": "Rejection decay: окно, баров",
+    "line": 347,
+    "minval": 2,
+    "maxval": 12,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "rejectionDecayTolerance",
+    "type": "float",
+    "default": 1.1,
+    "title": "Rejection decay: допуск recent/prior",
+    "line": 353,
+    "minval": 0.5,
+    "maxval": 2.0,
+    "step": 0.05,
+    "group": "4. Структура / Approach",
+    "tooltip": "<= 1.10 допускает небольшое усиление recent rejection; < 1 означает его ослабление."
+  },
+  {
+    "name": "acceptanceLen",
+    "type": "int",
+    "default": 12,
+    "title": "Price acceptance lookback",
+    "line": 359,
+    "minval": 4,
+    "maxval": 100,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "longAcceptancePos",
+    "type": "float",
+    "default": 0.6,
+    "title": "LONG: позиция в диапазоне >=",
+    "line": 365,
+    "minval": 0.5,
+    "maxval": 0.95,
+    "step": 0.05,
+    "group": "4. Структура / Approach",
+    "tooltip": "0.60 = цена должна находиться минимум в верхних 40% локального диапазона."
+  },
+  {
+    "name": "shortAcceptancePos",
+    "type": "float",
+    "default": 0.4,
+    "title": "SHORT: позиция в диапазоне <=",
+    "line": 372,
+    "minval": 0.05,
+    "maxval": 0.5,
+    "step": 0.05,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "protoLookback",
+    "type": "int",
+    "default": 10,
+    "title": "Проторговка lookback",
+    "line": 378,
+    "minval": 4,
+    "maxval": 100,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "protoDistanceAtr",
+    "type": "float",
+    "default": 1.2,
+    "title": "Проторговка: дистанция до уровня, ATR",
+    "line": 384,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "protoMaxWidthAtr",
+    "type": "float",
+    "default": 2.25,
+    "title": "Проторговка: макс. ширина диапазона, ATR",
+    "line": 389,
+    "minval": 0.5,
+    "maxval": 10.0,
+    "step": 0.25,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "minNearLevelOccupancy",
+    "type": "float",
+    "default": 0.4,
+    "title": "Проторговка: мин. доля времени возле уровня",
+    "line": 394,
+    "minval": 0.1,
+    "maxval": 0.9,
+    "step": 0.05,
+    "group": "4. Структура / Approach",
+    "tooltip": "Acceptance = не просто узкий диапазон, а устойчивое пребывание возле уровня."
+  },
+  {
+    "name": "attackLookback",
+    "type": "int",
+    "default": 16,
+    "title": "Повторные атаки уровня: lookback",
+    "line": 401,
+    "minval": 4,
+    "maxval": 100,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "minAttacks",
+    "type": "int",
+    "default": 2,
+    "title": "Мин. атак уровня",
+    "line": 407,
+    "minval": 1,
+    "maxval": 10,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "maxRetestGapBars",
+    "type": "int",
+    "default": 8,
+    "title": "Проторговка: макс. интервал между последними атаками, баров",
+    "line": 413,
+    "minval": 1,
+    "maxval": 50,
+    "group": "4. Структура / Approach",
+    "tooltip": "Частые повторные атаки повышают acceptance/protorgovka quality, но не являются hard filter."
+  },
+  {
+    "name": "compressionSlopeBars",
+    "type": "int",
+    "default": 5,
+    "title": "Поджатие: slope lookback",
+    "line": 420,
+    "minval": 1,
+    "maxval": 30,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "resetLookback",
+    "type": "int",
+    "default": 30,
+    "title": "Correction/reset lookback",
+    "line": 426,
+    "minval": 10,
+    "maxval": 200,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "minCorrectionPct",
+    "type": "float",
+    "default": 3.0,
+    "title": "Мин. коррекция для reset, %",
+    "line": 432,
+    "minval": 0.5,
+    "maxval": 50.0,
+    "step": 0.5,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "minRecoveryFraction",
+    "type": "float",
+    "default": 0.55,
+    "title": "Мин. восстановление после коррекции",
+    "line": 438,
+    "minval": 0.1,
+    "maxval": 0.95,
+    "step": 0.05,
+    "group": "4. Структура / Approach",
+    "tooltip": "0.55 = цена восстановила не менее 55% диапазона от минимума reset к максимуму."
+  },
+  {
+    "name": "enableMtfTrendQuality",
+    "type": "bool",
+    "default": true,
+    "title": "MTF Trend Quality",
+    "line": 447,
+    "group": "4. Структура / Approach",
+    "tooltip": "15m/1h/4h/1d alignment is a Formation bonus, not a hard gate."
+  },
+  {
+    "name": "mtfTrendTf1",
+    "type": "timeframe",
+    "default": "15",
+    "title": "MTF TF1",
+    "line": 448,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "mtfTrendTf2",
+    "type": "timeframe",
+    "default": "60",
+    "title": "TF2",
+    "line": 449,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "mtfTrendTf3",
+    "type": "timeframe",
+    "default": "240",
+    "title": "TF3",
+    "line": 450,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "mtfTrendTf4",
+    "type": "timeframe",
+    "default": "D",
+    "title": "TF4",
+    "line": 451,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "enableDynamicSupportQuality",
+    "type": "bool",
+    "default": true,
+    "title": "Dynamic Support Quality",
+    "line": 453,
+    "group": "4. Структура / Approach",
+    "tooltip": "Scores a rising support/trendline proxy from confirmed swing lows. Used as LONG structural evidence, not a hard gate."
+  },
+  {
+    "name": "dynamicSupportNearAtr",
+    "type": "float",
+    "default": 2.0,
+    "title": "Dynamic support: max distance, ATR",
+    "line": 454,
+    "minval": 0.25,
+    "maxval": 8.0,
+    "step": 0.25,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "dynamicSupportMinScore",
+    "type": "float",
+    "default": 55.0,
+    "title": "Dynamic support: quality >=",
+    "line": 455,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "enableBroadConsolidation",
+    "type": "bool",
+    "default": true,
+    "title": "Broad HTF consolidation",
+    "line": 457,
+    "group": "4. Структура / Approach",
+    "tooltip": "Separate from narrow protorgovka: allows a wider upper-range consolidation when higher lows / dynamic support remain intact."
+  },
+  {
+    "name": "broadConsolidationMaxWidthAtr",
+    "type": "float",
+    "default": 6.0,
+    "title": "Broad consolidation: max width, ATR",
+    "line": 458,
+    "minval": 2.0,
+    "maxval": 15.0,
+    "step": 0.25,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "broadConsolidationMinRangePos",
+    "type": "float",
+    "default": 0.6,
+    "title": "Broad consolidation: range position >=",
+    "line": 459,
+    "minval": 0.5,
+    "maxval": 0.95,
+    "step": 0.05,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "broadConsolidationMinOccupancy",
+    "type": "float",
+    "default": 0.3,
+    "title": "Broad consolidation: near-level occupancy >=",
+    "line": 460,
+    "minval": 0.1,
+    "maxval": 0.9,
+    "step": 0.05,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "enableHtfBaseQuality",
+    "type": "bool",
+    "default": true,
+    "title": "HTF Base Quality",
+    "line": 462,
+    "group": "4. Структура / Approach",
+    "tooltip": "Daily/HTF long-duration base context. It is a Formation bonus and does not bypass In-Play/Execution gates."
+  },
+  {
+    "name": "htfBaseTf",
+    "type": "timeframe",
+    "default": "D",
+    "title": "HTF Base TF",
+    "line": 463,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "htfBaseLongLookback",
+    "type": "int",
+    "default": 180,
+    "title": "HTF Base long lookback",
+    "line": 464,
+    "minval": 60,
+    "maxval": 1000,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "htfBaseShortLookback",
+    "type": "int",
+    "default": 30,
+    "title": "HTF Base recent lookback",
+    "line": 465,
+    "minval": 10,
+    "maxval": 200,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "enableOpenSkyMode",
+    "type": "bool",
+    "default": true,
+    "title": "ATH / OPEN SKY continuation",
+    "line": 467,
+    "group": "4. Структура / Approach",
+    "tooltip": "Keeps/creates a LONG continuation setup after accepted break of a major historical high when no fresh overhead resistance remains."
+  },
+  {
+    "name": "openSkyLookback",
+    "type": "int",
+    "default": 365,
+    "title": "OPEN SKY: historical high lookback",
+    "line": 468,
+    "minval": 90,
+    "maxval": 2000,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "openSkyReferenceDelayBars",
+    "type": "int",
+    "default": 5,
+    "title": "OPEN SKY: exclude latest HTF bars",
+    "line": 469,
+    "minval": 1,
+    "maxval": 30,
+    "group": "4. Структура / Approach",
+    "tooltip": "Prevents a fresh ATH from immediately becoming its own reference high."
+  },
+  {
+    "name": "openSkyAcceptanceBars",
+    "type": "int",
+    "default": 3,
+    "title": "OPEN SKY: acceptance bars",
+    "line": 470,
+    "minval": 1,
+    "maxval": 20,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "openSkyHoldBars",
+    "type": "int",
+    "default": 40,
+    "title": "OPEN SKY: max post-break hold, chart bars",
+    "line": 471,
+    "minval": 5,
+    "maxval": 300,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "openSkyReclaimToleranceAtr",
+    "type": "float",
+    "default": 0.25,
+    "title": "OPEN SKY: reclaim tolerance, ATR",
+    "line": 472,
+    "minval": 0.0,
+    "maxval": 2.0,
+    "step": 0.05,
+    "group": "4. Структура / Approach"
+  },
+  {
+    "name": "volMaLen",
+    "type": "int",
+    "default": 20,
+    "title": "RVOL MA length",
+    "line": 478,
+    "minval": 5,
+    "maxval": 200,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minRvol",
+    "type": "float",
+    "default": 1.0,
+    "title": "RVOL checkpoint",
+    "line": 480,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "RVOL не является жёстким фильтром стратегии, а повышает качество сетапа."
+  },
+  {
+    "name": "triggerRvol",
+    "type": "float",
+    "default": 1.3,
+    "title": "RVOL для сильного trigger",
+    "line": 487,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minBodyAtr",
+    "type": "float",
+    "default": 0.35,
+    "title": "Мин. тело trigger-свечи, ATR",
+    "line": 493,
+    "minval": 0.05,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "strongBodyAtr",
+    "type": "float",
+    "default": 0.7,
+    "title": "Сильное тело без обязательного RVOL, ATR",
+    "line": 499,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "directMomentumMaxDistAtr",
+    "type": "float",
+    "default": 1.5,
+    "title": "Direct momentum: макс. дистанция до уровня, ATR",
+    "line": 504,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "volumeFormationLen",
+    "type": "int",
+    "default": 8,
+    "title": "Volume formation MA",
+    "line": 509,
+    "minval": 3,
+    "maxval": 50,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "volumeBaselineLen",
+    "type": "int",
+    "default": 30,
+    "title": "Volume baseline MA",
+    "line": 510,
+    "minval": 10,
+    "maxval": 200,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "contractionLookback",
+    "type": "int",
+    "default": 12,
+    "title": "Искать contraction за N баров",
+    "line": 511,
+    "minval": 3,
+    "maxval": 100,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "maxVolumeCompressionRatio",
+    "type": "float",
+    "default": 0.8,
+    "title": "Volume contraction: formation/base <=",
+    "line": 513,
+    "minval": 0.2,
+    "maxval": 1.5,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minVolumeReExpansion",
+    "type": "float",
+    "default": 1.35,
+    "title": "Volume re-expansion: current/formation >=",
+    "line": 519,
+    "minval": 0.5,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "activityVelocityBars",
+    "type": "int",
+    "default": 3,
+    "title": "Activity proxy: velocity bars",
+    "line": 525,
+    "minval": 1,
+    "maxval": 12,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minVelocityAtrPerBar",
+    "type": "float",
+    "default": 0.12,
+    "title": "Activity proxy: velocity ATR/bar",
+    "line": 526,
+    "minval": 0.01,
+    "maxval": 2.0,
+    "step": 0.01,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minRangeAtr",
+    "type": "float",
+    "default": 0.55,
+    "title": "Activity proxy: candle range ATR",
+    "line": 527,
+    "minval": 0.05,
+    "maxval": 4.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minCloseLocation",
+    "type": "float",
+    "default": 0.7,
+    "title": "Activity proxy: close location",
+    "line": 528,
+    "minval": 0.5,
+    "maxval": 0.95,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minVolumeAcceleration",
+    "type": "float",
+    "default": 1.2,
+    "title": "Activity proxy: volume / SMA(3)",
+    "line": 529,
+    "minval": 0.5,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "minActivityProxyScore",
+    "type": "int",
+    "default": 3,
+    "title": "Мин. Tape/Activity proxy score",
+    "line": 530,
+    "minval": 1,
+    "maxval": 5,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "shortAcceptanceBars",
+    "type": "int",
+    "default": 4,
+    "title": "SHORT: acceptance ниже пробитой поддержки, баров",
+    "line": 536,
+    "minval": 1,
+    "maxval": 12,
+    "group": "5. Trigger / Volume / Break-Retest"
+  },
+  {
+    "name": "maxPostBreakEntryAtr",
+    "type": "float",
+    "default": 0.8,
+    "title": "Макс. post-break extension для нового входа, ATR",
+    "line": 538,
+    "minval": 0.05,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "После пробоя locked level новый continuation-entry допускается только пока цена не ушла слишком далеко от уровня."
+  },
+  {
+    "name": "firstBreakEntryBars",
+    "type": "int",
+    "default": 2,
+    "title": "First-break entry window, баров",
+    "line": 544,
+    "minval": 0,
+    "maxval": 10,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "Сколько баров после первого прохода locked level ещё считать первичным breakout-entry."
+  },
+  {
+    "name": "postBreakRetestBars",
+    "type": "int",
+    "default": 8,
+    "title": "Post-break retest window, баров",
+    "line": 551,
+    "minval": 1,
+    "maxval": 30,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "После первичного пробоя разрешает новый вход только при принятом ретесте уровня в этом окне."
+  },
+  {
+    "name": "retestCandidateMaxDistanceAtr",
+    "type": "float",
+    "default": 0.6,
+    "title": "Retest candidate: макс. дистанция, ATR",
+    "line": 558,
+    "minval": 0.05,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "BREAKOUT/BREAKDOWN + RETEST становится Candidate Path только когда цена действительно возвращается к frozen level, а не просто находится внутри post-break окна."
+  },
+  {
+    "name": "maxRetestPenetrationAtr",
+    "type": "float",
+    "default": 0.35,
+    "title": "Retest: макс. penetration за зону, ATR",
+    "line": 565,
+    "minval": 0.0,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "5. Trigger / Volume / Break-Retest",
+    "tooltip": "Ограничивает глубину прокола через противоположную границу frozen box. Глубокий reclaim больше не считается качественным accepted retest."
+  },
+  {
+    "name": "useBtcContext",
+    "type": "bool",
+    "default": true,
+    "title": "Учитывать BTC context",
+    "line": 577,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcSymbol",
+    "type": "symbol",
+    "default": "BINANCE:BTCUSDT.P",
+    "title": "BTC symbol",
+    "line": 578,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcFastLen",
+    "type": "int",
+    "default": 20,
+    "title": "BTC EMA fast",
+    "line": 579,
+    "minval": 3,
+    "maxval": 100,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcSlowLen",
+    "type": "int",
+    "default": 50,
+    "title": "BTC EMA slow",
+    "line": 580,
+    "minval": 5,
+    "maxval": 200,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "enableBtcShock",
+    "type": "bool",
+    "default": true,
+    "title": "BTC Shock: учитывать",
+    "line": 584,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "manualBtcShockTf",
+    "type": "timeframe",
+    "default": "5",
+    "title": "Manual: BTC Shock TF",
+    "line": 585,
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "Используется при TF-профиль = Manual. В Auto TF Profile v2 Shock TF выбирается автоматически."
+  },
+  {
+    "name": "manualBtcShockLookback",
+    "type": "int",
+    "default": 3,
+    "title": "Manual: BTC Shock lookback, баров",
+    "line": 586,
+    "minval": 1,
+    "maxval": 20,
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "Используется при TF-профиль = Manual; считается внутри BTC Shock TF."
+  },
+  {
+    "name": "btcShockExtremeMoveAtr",
+    "type": "float",
+    "default": 1.25,
+    "title": "BTC Shock: extreme move, ATR",
+    "line": 587,
+    "minval": 0.25,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "ATR-normalized BTC move over Shock lookback that maps to ~100 move-score."
+  },
+  {
+    "name": "btcShockRvolConfirm",
+    "type": "float",
+    "default": 1.5,
+    "title": "BTC Shock: RVOL confirm",
+    "line": 588,
+    "minval": 0.5,
+    "maxval": 10.0,
+    "step": 0.05,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcShockWarningScore",
+    "type": "float",
+    "default": 55.0,
+    "title": "BTC Shock: warning score >=",
+    "line": 589,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcShockBlockScore",
+    "type": "float",
+    "default": 70.0,
+    "title": "BTC Shock: block PINE READY >=",
+    "line": 590,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "btcShockBlocksPineReady",
+    "type": "bool",
+    "default": true,
+    "title": "BTC Shock: блокировать PINE READY",
+    "line": 591,
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "Если BTC делает сильный импульс ПРОТИВ направления текущего setup, PINE READY ждёт нормализации. Formation/ARMED при этом не стираются."
+  },
+  {
+    "name": "roundConfluenceAtr",
+    "type": "float",
+    "default": 2.5,
+    "title": "Круглый уровень: макс. дистанция от trigger, ATR",
+    "line": 593,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "Ищется следующий MAJOR round level за R1/S1. Это магнит/bonus, не hard filter."
+  },
+  {
+    "name": "majorRoundMultiplier",
+    "type": "float",
+    "default": 10.0,
+    "title": "Major round multiplier",
+    "line": 600,
+    "options": [
+      1.0,
+      5.0,
+      10.0
+    ],
+    "group": "6. Контекст / Whipsaw",
+    "tooltip": "Базовый decimal step × multiplier. Для 3.78 при 10 следующий major round = 4.0; для 0.432 = 0.5."
+  },
+  {
+    "name": "falseBreakLevelLookback",
+    "type": "int",
+    "default": 12,
+    "title": "Whipsaw: локальный level lookback",
+    "line": 607,
+    "minval": 4,
+    "maxval": 50,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "falseBreakRiskLookback",
+    "type": "int",
+    "default": 60,
+    "title": "Whipsaw: история, баров",
+    "line": 608,
+    "minval": 20,
+    "maxval": 300,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "falseBreakRiskCount",
+    "type": "int",
+    "default": 3,
+    "title": "Whipsaw: риск при false-break count >=",
+    "line": 609,
+    "minval": 1,
+    "maxval": 20,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "longWickRiskAtr",
+    "type": "float",
+    "default": 0.8,
+    "title": "Whipsaw: upper wick ATR",
+    "line": 610,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "shortWickRiskAtr",
+    "type": "float",
+    "default": 0.8,
+    "title": "Whipsaw: lower wick ATR",
+    "line": 611,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "6. Контекст / Whipsaw"
+  },
+  {
+    "name": "minSetupQuality",
+    "type": "float",
+    "default": 65.0,
+    "title": "Мин. Formation Quality для валидного WATCH, %",
+    "line": 616,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "minArmedQuality",
+    "type": "float",
+    "default": 75.0,
+    "title": "Мин. Formation Quality для ARMED, %",
+    "line": 617,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "minEntryReadiness",
+    "type": "float",
+    "default": 70.0,
+    "title": "Мин. Execution Quality для PINE READY, %",
+    "line": 618,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "minTradeQuality",
+    "type": "float",
+    "default": 60.0,
+    "title": "Мин. Geometry Quality для PINE READY, %",
+    "line": 619,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Stage 3: legacy Trade Quality variable is now the independent Geometry Quality score (R:R / SL / target space)."
+  },
+  {
+    "name": "minContextQualityForPineReady",
+    "type": "float",
+    "default": 45.0,
+    "title": "Мин. Context Quality для PINE READY, %",
+    "line": 620,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Independent Context dimension: fixed-time activity/liquidity + BTC regime + whipsaw environment + round-level confluence. Kept moderate by default so Context filters poor regimes without suppressing otherwise valid setups."
+  },
+  {
+    "name": "requireFreshTriggerForPineReady",
+    "type": "bool",
+    "default": true,
+    "title": "PINE READY: требовать fresh/reconfirmed trigger",
+    "line": 623,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Не позволяет медленному In-Play/Context gate открыть READY на старом pre-break trigger. Для повторного pre-break/compression trigger fast-metrics должны подтвердиться заново."
+  },
+  {
+    "name": "preBreakReadyMinLevelQuality",
+    "type": "float",
+    "default": 65.0,
+    "title": "PRE-BREAK READY: Level >=",
+    "line": 624,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinFormation",
+    "type": "float",
+    "default": 75.0,
+    "title": "Formation >=",
+    "line": 625,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinExecution",
+    "type": "float",
+    "default": 75.0,
+    "title": "PRE-BREAK READY: Execution >=",
+    "line": 626,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinApproach",
+    "type": "int",
+    "default": 7,
+    "title": "Approach >=",
+    "line": 627,
+    "minval": 1,
+    "maxval": 9,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinRR",
+    "type": "float",
+    "default": 1.5,
+    "title": "PRE-BREAK READY: R:R >=",
+    "line": 628,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.05,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinInPlay",
+    "type": "int",
+    "default": 3,
+    "title": "In-Play >= /4",
+    "line": 629,
+    "minval": 1,
+    "maxval": 4,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyMinTouches",
+    "type": "int",
+    "default": 2,
+    "title": "PRE-BREAK READY: touches >=",
+    "line": 630,
+    "minval": 1,
+    "maxval": 6,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "preBreakReadyStrongSingleTouchLevel",
+    "type": "float",
+    "default": 70.0,
+    "title": "или Level >=",
+    "line": 631,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Один touch допускается только для действительно сильного уровня."
+  },
+  {
+    "name": "activePlanExitMae",
+    "type": "float",
+    "default": 80.0,
+    "title": "ACTIVE: EXIT при MAE >=",
+    "line": 634,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "activePlanReduceMae",
+    "type": "float",
+    "default": 50.0,
+    "title": "REDUCE от MAE >=",
+    "line": 635,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "addOnMaxMae",
+    "type": "float",
+    "default": 45.0,
+    "title": "ADD-ON: MAE <=",
+    "line": 636,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "addOnMaxExhaustion",
+    "type": "float",
+    "default": 45.0,
+    "title": "Exhaust <=",
+    "line": 637,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "addOnMinFormation",
+    "type": "float",
+    "default": 65.0,
+    "title": "ADD-ON: Formation >=",
+    "line": 638,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "addOnMinExecution",
+    "type": "float",
+    "default": 70.0,
+    "title": "Execution >=",
+    "line": 639,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "addOnMinApproach",
+    "type": "int",
+    "default": 6,
+    "title": "ADD-ON: Approach >=",
+    "line": 640,
+    "minval": 1,
+    "maxval": 9,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "avgSetupBarsHistory",
+    "type": "int",
+    "default": 3,
+    "title": "AVG SETUP bars history",
+    "line": 642,
+    "minval": 1,
+    "maxval": 50,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Число свечей текущего locked setup, участвующих в AVG SETUP. Текущая realtime-свеча дополнительно усредняет все intrabar-пересчёты индикатора. Исторические свечи после перезагрузки TradingView доступны только по их финальному состоянию."
+  },
+  {
+    "name": "minRR",
+    "type": "float",
+    "default": 1.5,
+    "title": "R:R quality reference",
+    "line": 649,
+    "minval": 0.1,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Reference used by Geometry Quality; no longer a universal hard entry gate."
+  },
+  {
+    "name": "minRRSafetyFloor",
+    "type": "float",
+    "default": 0.6,
+    "title": "R:R safety floor",
+    "line": 650,
+    "minval": 0.1,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Only plans below this very low floor are blocked. T1 is often first liquidity, not the final trade objective."
+  },
+  {
+    "name": "stopLookback",
+    "type": "int",
+    "default": 12,
+    "title": "Structural SL lookback, баров",
+    "line": 651,
+    "minval": 3,
+    "maxval": 100,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "stopAtrBuffer",
+    "type": "float",
+    "default": 0.2,
+    "title": "Structural SL ATR buffer",
+    "line": 652,
+    "minval": 0.0,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "maxStopAtr",
+    "type": "float",
+    "default": 3.0,
+    "title": "Макс. дистанция SL, ATR",
+    "line": 653,
+    "minval": 0.25,
+    "maxval": 15.0,
+    "step": 0.25,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "targetMode",
+    "type": "string",
+    "default": "Auto",
+    "title": "Forecast T1 model",
+    "line": 655,
+    "options": [
+      "Auto",
+      "Measured move",
+      "Next liquidity"
+    ],
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "На скринах автора уровень пробоя и цель выше/ниже него — разные сущности. Auto использует R2/S2 только если это отдельная ликвидность, иначе measured move от trigger-level."
+  },
+  {
+    "name": "targetAtrExtension",
+    "type": "float",
+    "default": 1.75,
+    "title": "Target: мин. extension от trigger-level, ATR",
+    "line": 662,
+    "minval": 0.25,
+    "maxval": 10.0,
+    "step": 0.25,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "targetStructureMultiplier",
+    "type": "float",
+    "default": 0.8,
+    "title": "Target: проторговка range ×",
+    "line": 668,
+    "minval": 0.1,
+    "maxval": 3.0,
+    "step": 0.1,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "minTargetLiquidityGapAtr",
+    "type": "float",
+    "default": 1.0,
+    "title": "Target: R2/S2 считается отдельной целью от, ATR",
+    "line": 674,
+    "minval": 0.2,
+    "maxval": 8.0,
+    "step": 0.1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Близкие R1/R2 чаще являются каскадом/зоной пробоя, а не конечной целью."
+  },
+  {
+    "name": "maxTargetExtensionAtr",
+    "type": "float",
+    "default": 8.0,
+    "title": "Target: макс. measured extension, ATR",
+    "line": 681,
+    "minval": 1.0,
+    "maxval": 30.0,
+    "step": 0.5,
+    "group": "7. Decision Engine / Trade Plan"
+  },
+  {
+    "name": "minExpectedMovePct",
+    "type": "float",
+    "default": 0.8,
+    "title": "Мин. прогнозируемое движение до T1, %",
+    "line": 687,
+    "minval": 0.0,
+    "maxval": 30.0,
+    "step": 0.1,
+    "group": "7. Decision Engine / Trade Plan",
+    "tooltip": "Checkpoint, а не подтверждённое правило автора."
+  },
+  {
+    "name": "enableReversalGuard",
+    "type": "bool",
+    "default": true,
+    "title": "Включить Reversal / Exhaustion Guard",
+    "line": 699,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Stage 3 Exhaustion layer: EMA/post-break/reset extension, acceleration, climax and divergence. Counter/pullback/whipsaw/BTC сюда больше не входят. Может блокировать BRONZE/STRONG/PINE READY."
+  },
+  {
+    "name": "maxShortDrop24",
+    "type": "float",
+    "default": 20.0,
+    "title": "SHORT: макс. уже реализованное падение 24h, %",
+    "line": 705,
+    "minval": 1.0,
+    "maxval": 90.0,
+    "step": 1.0,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Защита от позднего шорта после уже очень сильного падения."
+  },
+  {
+    "name": "emaExtensionWarnAtr",
+    "type": "float",
+    "default": 1.5,
+    "title": "EMA extension: начало риска, ATR",
+    "line": 712,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "emaExtensionExtremeAtr",
+    "type": "float",
+    "default": 2.75,
+    "title": "EMA extension: extreme, ATR",
+    "line": 713,
+    "minval": 0.2,
+    "maxval": 15.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "moveSinceResetWarnAtr",
+    "type": "float",
+    "default": 2.5,
+    "title": "Move since reset: начало риска, ATR",
+    "line": 714,
+    "minval": 0.1,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "moveSinceResetExtremeAtr",
+    "type": "float",
+    "default": 4.5,
+    "title": "Move since reset: extreme, ATR",
+    "line": 715,
+    "minval": 0.2,
+    "maxval": 30.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "exhaustionLegLookback",
+    "type": "int",
+    "default": 12,
+    "title": "Fallback leg lookback, баров",
+    "line": 717,
+    "minval": 3,
+    "maxval": 100,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "meaningfulPullbackAtr",
+    "type": "float",
+    "default": 0.55,
+    "title": "Meaningful pullback/reset, ATR",
+    "line": 718,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "riskAtrSmoothingLen",
+    "type": "int",
+    "default": 5,
+    "title": "Risk ATR smoothing",
+    "line": 720,
+    "minval": 1,
+    "maxval": 30,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Reversal/MAE risk uses a smoothed ATR denominator so a volatility spike cannot instantly make the same move look artificially smaller."
+  },
+  {
+    "name": "resetRecoveryAtr",
+    "type": "float",
+    "default": 0.45,
+    "title": "Reset confirmation: recovery, ATR",
+    "line": 725,
+    "minval": 0.1,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "An opposite candle only starts a pending pullback. A new reset anchor is confirmed only after price recovers this distance from the pending extreme and reclaims EMA fast in setup direction."
+  },
+  {
+    "name": "reversalEvidencePersistenceBars",
+    "type": "int",
+    "default": 3,
+    "title": "Climax persistence, bars",
+    "line": 730,
+    "minval": 0,
+    "maxval": 12,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Volume-climax persistence only. Strong rejection uses the separate longer same-zone memory below."
+  },
+  {
+    "name": "rejectionRiskPersistenceBars",
+    "type": "int",
+    "default": 8,
+    "title": "Rejection memory, bars",
+    "line": 735,
+    "minval": 1,
+    "maxval": 24,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Strong rejection against the same locked zone remains adverse-flow evidence for this many bars. Two recent rejections veto pre-break continuation."
+  },
+  {
+    "name": "pullbackRiskLookback",
+    "type": "int",
+    "default": 8,
+    "title": "MAE: recent extreme lookback",
+    "line": 736,
+    "minval": 3,
+    "maxval": 50,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "pullbackRiskStartAtr",
+    "type": "float",
+    "default": 0.25,
+    "title": "MAE: pullback risk starts, ATR",
+    "line": 737,
+    "minval": 0.0,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "pullbackRiskExtremeAtr",
+    "type": "float",
+    "default": 1.2,
+    "title": "MAE: pullback extreme, ATR",
+    "line": 738,
+    "minval": 0.1,
+    "maxval": 6.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "counterPressureExtremeAtr",
+    "type": "float",
+    "default": 0.8,
+    "title": "MAE: counter body extreme, ATR",
+    "line": 739,
+    "minval": 0.1,
+    "maxval": 4.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "decelerationFastBars",
+    "type": "int",
+    "default": 2,
+    "title": "MAE: recent velocity bars",
+    "line": 740,
+    "minval": 1,
+    "maxval": 10,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "decelerationSlowBars",
+    "type": "int",
+    "default": 5,
+    "title": "MAE: prior velocity endpoint",
+    "line": 741,
+    "minval": 2,
+    "maxval": 20,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Should normally be greater than recent velocity bars. The code safely handles equal/reversed values."
+  },
+  {
+    "name": "maxMaeRiskForPineReady",
+    "type": "float",
+    "default": 60.0,
+    "title": "PINE READY: max Pullback / MAE Risk, %",
+    "line": 742,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Separate from Reversal Risk. Blocks entries that are not necessarily exhausted but currently have high probability of an adverse pullback / MAE."
+  },
+  {
+    "name": "accelerationLookback",
+    "type": "int",
+    "default": 5,
+    "title": "Acceleration lookback, баров",
+    "line": 747,
+    "minval": 2,
+    "maxval": 20,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "accelerationStrongBars",
+    "type": "int",
+    "default": 3,
+    "title": "Мин. сильных свечей в acceleration",
+    "line": 748,
+    "minval": 1,
+    "maxval": 10,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "accelerationMinMoveAtr",
+    "type": "float",
+    "default": 2.0,
+    "title": "Acceleration: мин. движение, ATR",
+    "line": 749,
+    "minval": 0.2,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "minNoPullbackBars",
+    "type": "int",
+    "default": 4,
+    "title": "Acceleration: минимум баров без reset",
+    "line": 750,
+    "minval": 1,
+    "maxval": 30,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "volumeClimaxRvol",
+    "type": "float",
+    "default": 2.0,
+    "title": "Volume climax: RVOL >=",
+    "line": 752,
+    "minval": 0.5,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "volumeClimaxRangeAtr",
+    "type": "float",
+    "default": 1.1,
+    "title": "Volume climax: range >= ATR",
+    "line": 753,
+    "minval": 0.2,
+    "maxval": 8.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "reversalWickAtr",
+    "type": "float",
+    "default": 0.7,
+    "title": "Reversal rejection wick, ATR",
+    "line": 754,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "reversalCloseLocation",
+    "type": "float",
+    "default": 0.45,
+    "title": "Reversal: close-location threshold",
+    "line": 755,
+    "minval": 0.1,
+    "maxval": 0.49,
+    "step": 0.01,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "LONG risk: close <= threshold; SHORT risk: close >= 1-threshold."
+  },
+  {
+    "name": "failedBreakRecentBars",
+    "type": "int",
+    "default": 8,
+    "title": "Failed sweep сохранять N баров",
+    "line": 756,
+    "minval": 0,
+    "maxval": 24,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "v1.15.1: longer same-generation memory so a failed attack cannot disappear after only a few candles."
+  },
+  {
+    "name": "minRemainingTargetAtr",
+    "type": "float",
+    "default": 0.5,
+    "title": "Мин. оставшееся пространство до T1, ATR",
+    "line": 757,
+    "minval": 0.0,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "reversalWarningThreshold",
+    "type": "float",
+    "default": 65.0,
+    "title": "Exhaustion Risk: предупреждение от, %",
+    "line": 759,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "maxReversalRiskForPineReady",
+    "type": "float",
+    "default": 75.0,
+    "title": "PINE READY: макс. Exhaustion Risk, %",
+    "line": 760,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "useOiDivergence",
+    "type": "bool",
+    "default": false,
+    "title": "Учитывать внешний OI plot",
+    "line": 761,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Опционально. Выберите OI plot в следующем Source. Сам по себе OI не является hard filter."
+  },
+  {
+    "name": "oiExternalSource",
+    "type": "source",
+    "default": "close",
+    "title": "OI Source",
+    "line": 762,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "useCvdDivergence",
+    "type": "bool",
+    "default": false,
+    "title": "Учитывать внешний CVD plot",
+    "line": 763,
+    "group": "8. Reversal / Exhaustion Guard",
+    "tooltip": "Опционально. Выберите CVD plot в следующем Source."
+  },
+  {
+    "name": "cvdExternalSource",
+    "type": "source",
+    "default": "close",
+    "title": "CVD Source",
+    "line": 764,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "divergenceLookback",
+    "type": "int",
+    "default": 12,
+    "title": "OI/CVD divergence lookback",
+    "line": 765,
+    "minval": 3,
+    "maxval": 100,
+    "group": "8. Reversal / Exhaustion Guard"
+  },
+  {
+    "name": "SETUP_QUALITY_BRONZE",
+    "type": "float",
+    "default": 58.0,
+    "title": "SETUP_QUALITY_BRONZE, %",
+    "line": 772,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Базовый Quality threshold для BRONZE. Финальный marker/alert дополнительно требует все включённые Milestone Quality Filters."
+  },
+  {
+    "name": "SETUP_QUALITY_STRONG",
+    "type": "float",
+    "default": 70.0,
+    "title": "SETUP_QUALITY_STRONG, %",
+    "line": 778,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Базовый Quality threshold для STRONG. Финальный marker/alert дополнительно требует все включённые Milestone Quality Filters."
+  },
+  {
+    "name": "milestoneRequireCoreQuality",
+    "type": "bool",
+    "default": true,
+    "title": "Core Quality Gate",
+    "line": 788,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default ON. Milestone Core is an EARLY-quality veto, not a hidden Execution/Trigger gate: Level Quality stays a hard floor; Counter Pressure and Deceleration use path-aware limits; Activity/Reset only improve Core Score and do not delay a milestone by themselves."
+  },
+  {
+    "name": "milestoneCoreApplyToShort",
+    "type": "bool",
+    "default": true,
+    "title": "Core Gate: применять к SHORT",
+    "line": 793,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default ON с v1.13.4. SHORT остаётся строже LONG: к базовому Core Score автоматически добавляется +5 п.п. к минимальному порогу. Это исправляет ситуацию, когда SHORT milestone проходил почти без quality-veto."
+  },
+  {
+    "name": "milestoneCoreMinLevelQuality",
+    "type": "float",
+    "default": 70.0,
+    "title": "Core: Level Quality >=",
+    "line": 798,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneCoreMaxCounterPressure",
+    "type": "float",
+    "default": 5.0,
+    "title": "Diag Counter <=",
+    "line": 799,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneCoreMaxDeceleration",
+    "type": "float",
+    "default": 10.0,
+    "title": "Diag Decel <=",
+    "line": 800,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneCoreMinActivity",
+    "type": "int",
+    "default": 5,
+    "title": "Diag Activity >=",
+    "line": 801,
+    "minval": 1,
+    "maxval": 5,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneCoreMinMoveSinceResetAtr",
+    "type": "float",
+    "default": 1.5,
+    "title": "Diag Reset >= ATR",
+    "line": 802,
+    "minval": 0.0,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneCoreMinScoreBronze",
+    "type": "float",
+    "default": 65.0,
+    "title": "Core Score B >=",
+    "line": 803,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Early Core Quality Score. Level is a hard floor; Counter/Decel are path-aware safety factors; Activity/Reset is a small bonus rather than a hard wait condition."
+  },
+  {
+    "name": "milestoneCoreMinScoreStrong",
+    "type": "float",
+    "default": 72.0,
+    "title": "STR >=",
+    "line": 804,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneSignalIntegrity",
+    "type": "bool",
+    "default": true,
+    "title": "Signal Integrity Gate",
+    "line": 806,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default ON. Не даёт BRONZE/STRONG противоречить Decision Panel: нужен реальный Candidate/Trigger path, валидный trade plan, отсутствие adverse BTC Shock и не слишком поздняя EMA/reset extension. Для SHORT BRONZE/STRONG дополнительно требуется фактический Trigger; STRONG LONG до Trigger допускается только для очень сильного Candidate path."
+  },
+  {
+    "name": "milestoneQualificationWindowBars",
+    "type": "int",
+    "default": 3,
+    "title": "Milestone qualification window, баров",
+    "line": 811,
+    "minval": 0,
+    "maxval": 10,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "После первого достижения Formation threshold milestone может ждать включённые фильтры только это число закрытых баров. 0 = только бар первого достижения. Ограниченное окно допускает формирование path/trigger без старого эффекта запоздалого сигнала через много свечей."
+  },
+  {
+    "name": "milestoneRequireTrigger",
+    "type": "bool",
+    "default": true,
+    "title": "Require Trigger = YES",
+    "line": 820,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default ON. BRONZE/STRONG отображаются только на закрытом баре с активным OHLCV Trigger. Milestone может ждать Trigger только внутри ограниченного qualification window, поэтому поздний сигнал через много свечей не возникает."
+  },
+  {
+    "name": "milestoneRequireExpectedMove",
+    "type": "bool",
+    "default": false,
+    "title": "Expected Move",
+    "line": 826,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneBronzeMinExpectedMovePct",
+    "type": "float",
+    "default": 1.0,
+    "title": "B ≥ %",
+    "line": 827,
+    "minval": 0.0,
+    "maxval": 30.0,
+    "step": 0.1,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMinExpectedMovePct",
+    "type": "float",
+    "default": 1.5,
+    "title": "STR ≥ %",
+    "line": 828,
+    "minval": 0.0,
+    "maxval": 30.0,
+    "step": 0.1,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneRequireEntryReadiness",
+    "type": "bool",
+    "default": false,
+    "title": "Execution Quality",
+    "line": 830,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneBronzeMinEntryReadiness",
+    "type": "float",
+    "default": 55.0,
+    "title": "B ≥",
+    "line": 831,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMinEntryReadiness",
+    "type": "float",
+    "default": 62.0,
+    "title": "STR ≥",
+    "line": 832,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneRequireTradeQuality",
+    "type": "bool",
+    "default": false,
+    "title": "Geometry Quality",
+    "line": 834,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneBronzeMinTradeQuality",
+    "type": "float",
+    "default": 55.0,
+    "title": "B ≥",
+    "line": 835,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMinTradeQuality",
+    "type": "float",
+    "default": 60.0,
+    "title": "STR ≥",
+    "line": 836,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneRequireRR",
+    "type": "bool",
+    "default": false,
+    "title": "R:R → T1",
+    "line": 838,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default OFF in v1.15: T1 is often first liquidity and may have R:R below 1.5. Enable only if you want milestone-specific R:R filtering."
+  },
+  {
+    "name": "milestoneBronzeMinRR",
+    "type": "float",
+    "default": 1.2,
+    "title": "B ≥",
+    "line": 839,
+    "minval": 0.1,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMinRR",
+    "type": "float",
+    "default": 1.4,
+    "title": "STR ≥",
+    "line": 840,
+    "minval": 0.1,
+    "maxval": 20.0,
+    "step": 0.1,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneRequireContinuation",
+    "type": "bool",
+    "default": false,
+    "title": "Continuation",
+    "line": 842,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneBronzeMinContinuation",
+    "type": "float",
+    "default": 55.0,
+    "title": "B ≥",
+    "line": 843,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMinContinuation",
+    "type": "float",
+    "default": 62.0,
+    "title": "STR ≥",
+    "line": 844,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneRequireMaeRisk",
+    "type": "bool",
+    "default": true,
+    "title": "Pullback / MAE Risk",
+    "line": 846,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Default ON: filters milestones that look structurally good but have elevated near-term adverse excursion risk. This is deliberately separate from Reversal/Exhaustion Risk."
+  },
+  {
+    "name": "milestoneBronzeMaxMaeRisk",
+    "type": "float",
+    "default": 65.0,
+    "title": "B ≤",
+    "line": 851,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "milestoneStrongMaxMaeRisk",
+    "type": "float",
+    "default": 55.0,
+    "title": "STR ≤",
+    "line": 852,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "maxReversalRiskBronze",
+    "type": "float",
+    "default": 70.0,
+    "title": "Max Exhaustion Risk — BRONZE, %",
+    "line": 854,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters",
+    "tooltip": "Используется при включённом Reversal / Exhaustion Guard. Более низкое значение сильнее отсеивает late-entry / overextension."
+  },
+  {
+    "name": "maxReversalRiskStrong",
+    "type": "float",
+    "default": 65.0,
+    "title": "STRONG Exhaustion, %",
+    "line": 859,
+    "minval": 0.0,
+    "maxval": 100.0,
+    "step": 1.0,
+    "group": "9. Milestone Quality Filters"
+  },
+  {
+    "name": "enableWatchEntryMode",
+    "type": "bool",
+    "default": true,
+    "title": "Включить WATCH Entry Mode",
+    "line": 868,
+    "group": "9A. WATCH Entry Filters",
+    "tooltip": "Ранний вход только на свече первого LONG/SHORT WATCH. Не ждёт последующие бары: если фильтры не прошли на первом WATCH, WATCH ENTRY для этой generation не появляется. BRONZE/STRONG остаются confirmation/add-on."
+  },
+  {
+    "name": "watchEntryMinLevelQuality",
+    "type": "float",
+    "default": 60.0,
+    "title": "Level Quality >=",
+    "line": 869,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMinApproachScore",
+    "type": "int",
+    "default": 5,
+    "title": "Approach >=",
+    "line": 870,
+    "minval": 1,
+    "maxval": 9,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMaxDistanceAtr",
+    "type": "float",
+    "default": 2.5,
+    "title": "Distance <= ATR",
+    "line": 871,
+    "minval": 0.1,
+    "maxval": 10,
+    "step": 0.1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMinRR",
+    "type": "float",
+    "default": 0.6,
+    "title": "R:R >=",
+    "line": 872,
+    "minval": 0.1,
+    "maxval": 20,
+    "step": 0.1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMaxMaeRisk",
+    "type": "float",
+    "default": 45.0,
+    "title": "MAE <= %",
+    "line": 873,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMaxExhaustionRisk",
+    "type": "float",
+    "default": 45.0,
+    "title": "Exhaust <= %",
+    "line": 874,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryMinContextQuality",
+    "type": "float",
+    "default": 45.0,
+    "title": "Context >= %",
+    "line": 875,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9A. WATCH Entry Filters"
+  },
+  {
+    "name": "watchEntryRequireCandidatePath",
+    "type": "bool",
+    "default": false,
+    "title": "Требовать Candidate Path != WAIT",
+    "line": 876,
+    "group": "9A. WATCH Entry Filters",
+    "tooltip": "Default OFF, чтобы не превращать WATCH ENTRY в поздний mature-сигнал. Включайте только если хотите более редкий ранний вход с уже сформированным execution path."
+  },
+  {
+    "name": "enableMaturedEntryMode",
+    "type": "bool",
+    "default": true,
+    "title": "Включить MATURED / PRE-BREAK ENTRY",
+    "line": 881,
+    "group": "9B. Matured / Pre-Break Entry",
+    "tooltip": "One-shot LONG signal per setup generation. It never replaces PINE READY and does not require gateTrigger."
+  },
+  {
+    "name": "maturedEntryMinFormation",
+    "type": "float",
+    "default": 75.0,
+    "title": "Formation >=",
+    "line": 882,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinExecution",
+    "type": "float",
+    "default": 75.0,
+    "title": "Execution >=",
+    "line": 883,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinLevelQuality",
+    "type": "float",
+    "default": 65.0,
+    "title": "Level >=",
+    "line": 884,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinApproachScore",
+    "type": "int",
+    "default": 7,
+    "title": "Approach >=",
+    "line": 885,
+    "minval": 1,
+    "maxval": 9,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMaxDistanceAtr",
+    "type": "float",
+    "default": 1.5,
+    "title": "Distance <= ATR",
+    "line": 886,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinRR",
+    "type": "float",
+    "default": 1.5,
+    "title": "R:R >=",
+    "line": 887,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.05,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinGeometry",
+    "type": "float",
+    "default": 60.0,
+    "title": "Geometry >=",
+    "line": 888,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMinContext",
+    "type": "float",
+    "default": 45.0,
+    "title": "Context >=",
+    "line": 889,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMaxMae",
+    "type": "float",
+    "default": 45.0,
+    "title": "MAE <=",
+    "line": 890,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "maturedEntryMaxExhaustion",
+    "type": "float",
+    "default": 45.0,
+    "title": "Exhaust <=",
+    "line": 891,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "9B. Matured / Pre-Break Entry"
+  },
+  {
+    "name": "enableBounceWatch",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать BOUNCE WATCH",
+    "line": 897,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "bounceMinLevelQuality",
+    "type": "float",
+    "default": 65.0,
+    "title": "Bounce: мин. Level Quality",
+    "line": 898,
+    "minval": 0,
+    "maxval": 100,
+    "step": 1,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "bounceMaxDistanceAtr",
+    "type": "float",
+    "default": 0.7,
+    "title": "Bounce: макс. дистанция до уровня, ATR",
+    "line": 899,
+    "minval": 0.1,
+    "maxval": 5.0,
+    "step": 0.1,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "bounceMinWickAtr",
+    "type": "float",
+    "default": 0.45,
+    "title": "Bounce: мин. rejection wick, ATR",
+    "line": 900,
+    "minval": 0.05,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "bounceMinMove6h",
+    "type": "float",
+    "default": 4.0,
+    "title": "Bounce: мин. предшествующее |6h move|, %",
+    "line": 901,
+    "minval": 0.0,
+    "maxval": 50.0,
+    "step": 0.5,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "bounceMinRvol",
+    "type": "float",
+    "default": 1.2,
+    "title": "Bounce: RVOL/absorption proxy",
+    "line": 902,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "10. Bounce Watch"
+  },
+  {
+    "name": "showLevels",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать R1/R2/S1/S2",
+    "line": 907,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "r1ZoneColor",
+    "type": "color",
+    "default": "#f23645@84",
+    "title": "R1 zone: цвет",
+    "line": 908,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "r2ZoneColor",
+    "type": "color",
+    "default": "#f23645@92",
+    "title": "R2 zone: цвет",
+    "line": 909,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "s1ZoneColor",
+    "type": "color",
+    "default": "#089981@84",
+    "title": "S1 zone: цвет",
+    "line": 910,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "s2ZoneColor",
+    "type": "color",
+    "default": "#089981@92",
+    "title": "S2 zone: цвет",
+    "line": 911,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "zoneBorderColorR",
+    "type": "color",
+    "default": "#f23645@20",
+    "title": "Resistance zone: border",
+    "line": 912,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "zoneBorderColorS",
+    "type": "color",
+    "default": "#089981@20",
+    "title": "Support zone: border",
+    "line": 913,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "zoneBorderWidth",
+    "type": "int",
+    "default": 1,
+    "title": "Zone border width",
+    "line": 914,
+    "minval": 1,
+    "maxval": 4,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "lockedZoneBorderWidth",
+    "type": "int",
+    "default": 3,
+    "title": "Locked trigger zone border width",
+    "line": 915,
+    "minval": 1,
+    "maxval": 5,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "showBrokenRetestZone",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать последнюю consumed liquidity zone",
+    "line": 916,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "sweptPendingZoneColor",
+    "type": "color",
+    "default": "#ff9800@88",
+    "title": "SWEPT/PENDING zone: цвет",
+    "line": 917,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "sweptPendingBorderColor",
+    "type": "color",
+    "default": "#ff9800@30",
+    "title": "SWEPT/PENDING zone: border",
+    "line": 918,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "brokenRetestZoneColor",
+    "type": "color",
+    "default": "#787b86@88",
+    "title": "BROKEN/RETEST zone: цвет",
+    "line": 919,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "brokenRetestBorderColor",
+    "type": "color",
+    "default": "#787b86@35",
+    "title": "BROKEN/RETEST zone: border",
+    "line": 920,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "failedSweepZoneColor",
+    "type": "color",
+    "default": "#f23645@90",
+    "title": "FAILED SWEEP zone: цвет",
+    "line": 921,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "failedSweepBorderColor",
+    "type": "color",
+    "default": "#f23645@25",
+    "title": "FAILED SWEEP zone: border",
+    "line": 922,
+    "group": "12. R/S Zones / Style"
+  },
+  {
+    "name": "showEma",
+    "type": "bool",
+    "default": false,
+    "title": "Показывать EMA",
+    "line": 923,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "showBackground",
+    "type": "bool",
+    "default": true,
+    "title": "Подсвечивать состояние сетапа",
+    "line": 924,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "showSignals",
+    "type": "bool",
+    "default": true,
+    "title": "Метки WATCH / ARMED / PINE READY",
+    "line": 925,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "showQualityBronzeMarker",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать SETUP_QUALITY_BRONZE",
+    "line": 928,
+    "group": "13. Signal Markers / Style",
+    "tooltip": "На баре пересечения: шарик на Close + стрелка направления возле свечи."
+  },
+  {
+    "name": "setupQualityBronzeDotColor",
+    "type": "color",
+    "default": "#cd7f32",
+    "title": "BRONZE: цвет шарика",
+    "line": 934,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "setupQualityBronzeArrowColor",
+    "type": "color",
+    "default": "#cd7f32",
+    "title": "BRONZE: цвет треугольника",
+    "line": 939,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "showQualityStrongMarker",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать SETUP_QUALITY_STRONG",
+    "line": 944,
+    "group": "13. Signal Markers / Style",
+    "tooltip": "На баре пересечения: шарик на Close + стрелка направления возле свечи."
+  },
+  {
+    "name": "setupQualityStrongDotColor",
+    "type": "color",
+    "default": "#ffc107",
+    "title": "STRONG: цвет шарика",
+    "line": 950,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "setupQualityStrongArrowColor",
+    "type": "color",
+    "default": "#ffc107",
+    "title": "STRONG: цвет треугольника",
+    "line": 955,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "showReversalWarnings",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать REVERSAL RISK marker",
+    "line": 960,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "reversalWarningColor",
+    "type": "color",
+    "default": "#dc322f",
+    "title": "REVERSAL RISK: цвет marker",
+    "line": 961,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "showWatchEntryMarkers",
+    "type": "bool",
+    "default": true,
+    "title": "WATCH ENTRY: показывать markers",
+    "line": 965,
+    "group": "13. Signal Markers / Style",
+    "tooltip": "Отдельные ранние WATCH ENTRY markers. Не влияет на расчёт сигнала или alerts."
+  },
+  {
+    "name": "watchEntryLongColor",
+    "type": "color",
+    "default": "#00e676",
+    "title": "WATCH ENTRY LONG: цвет",
+    "line": 970,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "watchEntryShortColor",
+    "type": "color",
+    "default": "#f23645",
+    "title": "SHORT: цвет",
+    "line": 973,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "watchEntryMarkerType",
+    "type": "string",
+    "default": "Label",
+    "title": "WATCH ENTRY: тип marker",
+    "line": 976,
+    "options": [
+      "Triangle",
+      "Arrow",
+      "Label",
+      "Circle",
+      "Diamond",
+      "Square"
+    ],
+    "group": "13. Signal Markers / Style",
+    "tooltip": "Triangle/Arrow/Label автоматически разворачиваются по направлению. Circle/Diamond/Square одинаковой формы для LONG/SHORT, направление различается цветом и положением относительно свечи."
+  },
+  {
+    "name": "watchEntryMarkerOffsetAtr",
+    "type": "float",
+    "default": 0.75,
+    "title": "WATCH ENTRY: отступ от свечи, ATR",
+    "line": 982,
+    "minval": 0.1,
+    "maxval": 3.0,
+    "step": 0.05,
+    "group": "13. Signal Markers / Style",
+    "tooltip": "LONG marker ставится ниже Low, SHORT — выше High. Увеличьте значение, если marker перекрывается WATCH/AVG SETUP label. Default 0.75 ATR."
+  },
+  {
+    "name": "showMaturedEntryMarkers",
+    "type": "bool",
+    "default": true,
+    "title": "MATURED ENTRY: показывать marker",
+    "line": 990,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "maturedEntryLongColor",
+    "type": "color",
+    "default": "#00bcd4",
+    "title": "MATURED ENTRY LONG: цвет",
+    "line": 991,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "maturedEntryMarkerOffsetAtr",
+    "type": "float",
+    "default": 1.05,
+    "title": "MATURED ENTRY: отступ, ATR",
+    "line": 992,
+    "minval": 0.1,
+    "maxval": 4.0,
+    "step": 0.05,
+    "group": "13. Signal Markers / Style"
+  },
+  {
+    "name": "showAvgSetupOnChart",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать AVG SETUP на графике",
+    "line": 994,
+    "group": "11. Визуализация / Chart",
+    "tooltip": "Показывает AVG SETUP 0..100 возле каждой свечи активного continuation setup: под LONG-свечой и над SHORT-свечой. Цветовые состояния: 0..54 красный, 55..61 оранжевый, 62..67 жёлтый, 68..74 зелёный, 75..100 ярко-зелёный. Цветовые зоны информационные и не являются hard gate."
+  },
+  {
+    "name": "showExecutionQualityOnChart",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать EXECUTION QUALITY под AVG SETUP",
+    "line": 1000,
+    "group": "11. Визуализация / Chart",
+    "tooltip": "Работает вместе с 'Показывать AVG SETUP на графике'. На каждом активном setup-баре первая строка = AVG SETUP, вторая строка = EXECUTION QUALITY. По умолчанию включено."
+  },
+  {
+    "name": "showRiskLevels",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать Estimated SL",
+    "line": 1006,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "showTargetLabel",
+    "type": "bool",
+    "default": false,
+    "title": "Показывать label T1",
+    "line": 1007,
+    "group": "11. Визуализация / Chart"
+  },
+  {
+    "name": "showDashboard",
+    "type": "bool",
+    "default": true,
+    "title": "Показывать таблицу",
+    "line": 1008,
+    "group": "14. Decision Panel"
+  },
+  {
+    "name": "dashboardModeInput",
+    "type": "string",
+    "default": "FULL",
+    "title": "Режим таблицы",
+    "line": 1010,
+    "options": [
+      "FULL",
+      "COMPACT",
+      "MINIMAL"
+    ],
+    "group": "14. Decision Panel",
+    "tooltip": "FULL = полный Decision Panel. COMPACT = все параметры по две пары Metric/Value в строке; GATE/NOTE доступны по наведению. MINIMAL = только ключевые параметры для принятия торгового решения. По умолчанию FULL."
+  },
+  {
+    "name": "dashboardTextSizeInput",
+    "type": "string",
+    "default": "Normal",
+    "title": "Размер текста таблицы",
+    "line": 1017,
+    "options": [
+      "Normal",
+      "Small",
+      "Tiny"
+    ],
+    "group": "14. Decision Panel",
+    "tooltip": "Размер основного текста Decision Panel. В FULL по умолчанию сохраняется Normal; длинные примечания остаются Tiny."
+  },
+  {
+    "name": "dashboardPositionInput",
+    "type": "string",
+    "default": "Верхний правый",
+    "title": "Расположение таблицы",
+    "line": 1024,
+    "options": [
+      "Верхний правый",
+      "Нижний правый",
+      "Нижний левый"
+    ],
+    "group": "14. Decision Panel"
+  },
+  {
+    "name": "dashboardBackgroundColor",
+    "type": "color",
+    "default": "#338785",
+    "title": "Таблица: цвет фона",
+    "line": 1031,
+    "group": "14. Decision Panel",
+    "tooltip": "Базовый цвет фона Decision Panel. Сигнальные ячейки сохраняют зелёный/оранжевый/красный semantic background."
+  },
+  {
+    "name": "dashboardBackgroundTransparency",
+    "type": "int",
+    "default": 15,
+    "title": "Таблица: прозрачность фона, %",
+    "line": 1037,
+    "minval": 0,
+    "maxval": 100,
+    "group": "14. Decision Panel",
+    "tooltip": "0 = непрозрачный фон, 100 = полностью прозрачный. Заголовок автоматически делается немного плотнее основного фона."
+  },
+  {
+    "name": "dashboardFontColor",
+    "type": "color",
+    "default": "#ffffff",
+    "title": "Таблица: цвет шрифта",
+    "line": 1044,
+    "group": "14. Decision Panel",
+    "tooltip": "Основной цвет текста Decision Panel. Примечания выводятся тем же цветом с небольшой дополнительной прозрачностью."
+  },
+  {
+    "name": "alertsOnConfirmedClose",
+    "type": "bool",
+    "default": true,
+    "title": "Alerts только после закрытия свечи",
+    "line": 1056,
+    "group": "16. Alerts",
+    "tooltip": "WATCH / ARMED / PINE READY и BRONZE/STRONG остаются confirmed-close. Break / T1 / Reversal / Bounce управляются этим флажком. Исключение: AVG SETUP >=70 в v1.14.6 работает realtime intrabar, чтобы не ждать закрытия свечи."
+  },
+  {
+    "name": "alertNewSetup",
+    "type": "bool",
+    "default": true,
+    "title": "1) Новый L / S WATCH",
+    "line": 1063,
+    "group": "16. Alerts",
+    "tooltip": "Раннее уведомление: появился новый L WATCH / S WATCH. Это ещё НЕ вход."
+  },
+  {
+    "name": "alertWatchEntry",
+    "type": "bool",
+    "default": true,
+    "title": "1A) WATCH ENTRY signal",
+    "line": 1070,
+    "group": "16. Alerts",
+    "tooltip": "Dynamic alert() и отдельные alertcondition для раннего LONG/SHORT WATCH ENTRY. Сигнал возникает только на первом confirmed WATCH и только если пройдены фильтры 9A."
+  },
+  {
+    "name": "alertWatchLabelsCombined",
+    "type": "bool",
+    "default": true,
+    "title": "1B) L + S WATCH — один alarm",
+    "line": 1071,
+    "group": "16. Alerts",
+    "tooltip": "Единый alertcondition для появления любого L WATCH или S WATCH label."
+  },
+  {
+    "name": "alertWatchEntryCombined",
+    "type": "bool",
+    "default": true,
+    "title": "1C) LONG + SHORT WATCH ENTRY — один alarm",
+    "line": 1072,
+    "group": "16. Alerts",
+    "tooltip": "Единый alertcondition для любого WATCH ENTRY; отдельные LONG/SHORT WATCH ENTRY alertcondition также доступны."
+  },
+  {
+    "name": "alertMaturedEntry",
+    "type": "bool",
+    "default": true,
+    "title": "1D) LONG MATURED / PRE-BREAK ENTRY",
+    "line": 1073,
+    "group": "16. Alerts",
+    "tooltip": "Confirmed-close one-shot signal after WATCH maturation, before a full breakout trigger."
+  },
+  {
+    "name": "alertArmed",
+    "type": "bool",
+    "default": true,
+    "title": "2) Setup перешёл в ARMED",
+    "line": 1075,
+    "group": "16. Alerts",
+    "tooltip": "Главное подготовительное уведомление: score и подход к уровню уже достаточно сильные."
+  },
+  {
+    "name": "alertEntry",
+    "type": "bool",
+    "default": true,
+    "title": "3) PINE READY → проверить DOM/Tape",
+    "line": 1082,
+    "group": "16. Alerts",
+    "tooltip": "Все hard gates + Formation / Execution / Geometry / Context + Exhaustion / MAE + trigger. Это НЕ автоматический вход: требуется DOM/Tape."
+  },
+  {
+    "name": "alertBreak",
+    "type": "bool",
+    "default": false,
+    "title": "4) Отдельный Breakout / Breakdown",
+    "line": 1089,
+    "group": "16. Alerts",
+    "tooltip": "Дополнительное подтверждение фактического прохода уровня. Может дублировать OHLCV READY."
+  },
+  {
+    "name": "alertTarget",
+    "type": "bool",
+    "default": true,
+    "title": "5) Достижение T1 после OHLCV READY",
+    "line": 1096,
+    "group": "16. Alerts",
+    "tooltip": "После OHLCV READY запоминается актуальная T1; alert приходит при её достижении."
+  },
+  {
+    "name": "alertArmedLost",
+    "type": "bool",
+    "default": true,
+    "title": "6) ARMED потерян до входа",
+    "line": 1103,
+    "group": "16. Alerts",
+    "tooltip": "Полезно для удаления монеты из активного watchlist, если зрелость сетапа ухудшилась."
+  },
+  {
+    "name": "alertBounceWatch",
+    "type": "bool",
+    "default": false,
+    "title": "7) Новый BOUNCE WATCH",
+    "line": 1110,
+    "group": "16. Alerts",
+    "tooltip": "Отдельная экспериментальная семья. Это наблюдение, не сигнал входа."
+  },
+  {
+    "name": "alertSetupQualityBronze",
+    "type": "bool",
+    "default": true,
+    "title": "8) SETUP_QUALITY_BRONZE достигнут",
+    "line": 1117,
+    "group": "16. Alerts",
+    "tooltip": "Всегда только по закрытой свече. Alert использует тот же финальный confirmed-сигнал, что и BRONZE marker. Если в 9. Milestone Quality Filters включён Require Trigger = YES, alert также ждёт HARD GATE Trigger = YES."
+  },
+  {
+    "name": "alertSetupQualityStrong",
+    "type": "bool",
+    "default": true,
+    "title": "9) SETUP_QUALITY_STRONG достигнут",
+    "line": 1124,
+    "group": "16. Alerts",
+    "tooltip": "Всегда только по закрытой свече. Alert использует тот же финальный confirmed-сигнал, что и STRONG marker. Если в 9. Milestone Quality Filters включён Require Trigger = YES, alert также ждёт HARD GATE Trigger = YES."
+  },
+  {
+    "name": "alertSetupQualityCombined",
+    "type": "bool",
+    "default": true,
+    "title": "10) BRONZE + STRONG — один alarm",
+    "line": 1131,
+    "group": "16. Alerts",
+    "tooltip": "Добавляет единое alertcondition 'BRONZE OR STRONG'. Оно срабатывает на закрытии свечи при появлении любого из двух confirmed milestone-сигналов. Удобно, если не хотите создавать два отдельных TradingView alert."
+  },
+  {
+    "name": "alertReversalWarning",
+    "type": "bool",
+    "default": true,
+    "title": "11) EXHAUSTION / REVERSAL signal (R)",
+    "line": 1138,
+    "group": "16. Alerts",
+    "tooltip": "Alarm срабатывает при новом красном R-маркере: Exhaustion Risk впервые переходит выше warning threshold либо текущая locked-zone даёт FAILED SWEEP. LONG и SHORT доступны отдельно."
+  },
+  {
+    "name": "alertAvgSetup70",
+    "type": "bool",
+    "default": true,
+    "title": "12) AVG SETUP >= 70",
+    "line": 1145,
+    "group": "16. Alerts",
+    "tooltip": "Realtime intrabar: срабатывает в момент первого перехода AVG SETUP через 70 снизу вверх, не дожидаясь закрытия свечи. Для мгновенного TradingView alert выберите Frequency = Once Per Bar, НЕ Once Per Bar Close. После падения AVG ниже 70 crossing снова вооружается; новая setup-generation также сбрасывает latch."
+  },
+  {
+    "name": "alertExecutionQuality65",
+    "type": "bool",
+    "default": true,
+    "title": "13) EXECUTION QUALITY >= 65",
+    "line": 1152,
+    "group": "16. Alerts",
+    "tooltip": "Realtime intrabar: срабатывает при первом переходе Execution Quality через 65 снизу вверх. Для мгновенного уведомления используйте Frequency = Once Per Bar. Повторно вооружается после падения Execution Quality ниже 65 или при новой setup-generation."
+  },
+  {
+    "name": "alertActivePlanHealth",
+    "type": "bool",
+    "default": true,
+    "title": "14) ACTIVE PLAN: DEGRADED / EXIT / ADD",
+    "line": 1159,
+    "group": "16. Alerts",
+    "tooltip": "Confirmed management events after PINE READY: EXIT/ABORT, first NO-ADD degradation, or fresh ADD-ON confirmation."
+  },
+  {
+    "name": "enableDynamicAlertMessages",
+    "type": "bool",
+    "default": true,
+    "title": "Dynamic alert() messages",
+    "line": 1161,
+    "group": "16. Alerts",
+    "tooltip": "Создайте TradingView alert с Condition = 'Any alert() function call'. Сообщение содержит Quality, Entry, Trade, R:R, path, T1 и blockers."
+  },
+  {
+    "name": "researchMode",
+    "type": "bool",
+    "default": true,
+    "title": "Research Mode",
+    "line": 1174,
+    "group": "17. Research Mode",
+    "tooltip": "Tracks confirmed WATCH ENTRY, MATURED ENTRY, PINE READY, BRONZE and STRONG independently. Each freezes entry/ATR/T1/SL at the signal close and measures later MFE/MAE plus T1/SL first-hit by execution path. Does not affect signals."
+  },
+  {
+    "name": "researchHorizonBars",
+    "type": "int",
+    "default": 30,
+    "title": "Outcome horizon, bars",
+    "line": 1179,
+    "minval": 5,
+    "maxval": 500,
+    "group": "17. Research Mode",
+    "tooltip": "Сколько ПОЛНЫХ свечей после confirmed BRONZE/STRONG участвуют в MFE/MAE. Сигнальная свеча исключена, т.к. условный вход принимается по её Close."
+  },
+  {
+    "name": "researchMaxActive",
+    "type": "int",
+    "default": 40,
+    "title": "Max simultaneous tracked signals",
+    "line": 1184,
+    "minval": 5,
+    "maxval": 100,
+    "group": "17. Research Mode",
+    "tooltip": "Защита от чрезмерных циклов на очень плотной истории. При переполнении удаляется самый старый незавершённый sample, а счётчик Dropped увеличивается."
+  },
+  {
+    "name": "researchGoodMfeAtr",
+    "type": "float",
+    "default": 1.0,
+    "title": "Clean outcome: MFE >= ATR",
+    "line": 1189,
+    "minval": 0.1,
+    "maxval": 10.0,
+    "step": 0.1,
+    "group": "17. Research Mode"
+  },
+  {
+    "name": "researchMaxMaeAtr",
+    "type": "float",
+    "default": 0.5,
+    "title": "MAE <= ATR",
+    "line": 1192,
+    "minval": 0.05,
+    "maxval": 5.0,
+    "step": 0.05,
+    "group": "17. Research Mode",
+    "tooltip": "Clean outcome = за research horizon сигнал достиг заданного MFE при MAE не выше указанного значения. Метрика не предполагает порядок экстремумов; T1/SL first-hit считается отдельно."
+  }
+]

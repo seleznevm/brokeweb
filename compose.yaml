@@ -1,0 +1,120 @@
+name: brokeweb
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.backend
+  environment: &environment
+    DATABASE_URL: postgresql+psycopg://brokeweb:${POSTGRES_PASSWORD:-brokeweb_local}@postgres:5432/brokeweb
+    REDIS_URL: redis://redis:6379/0
+    SNAPSHOT_INTERVAL_SEC: ${SNAPSHOT_INTERVAL_SEC:-15}
+    ACTIVE_TIMEFRAMES: ${ACTIVE_TIMEFRAMES:-15}
+    BYBIT_ENV: ${BYBIT_ENV:-mainnet}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+  restart: unless-stopped
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: brokeweb
+      POSTGRES_USER: brokeweb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brokeweb_local}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U brokeweb -d brokeweb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  api:
+    <<: *backend
+    volumes: [./reports:/app/reports:ro]
+    command: sh -c 'alembic upgrade head && uvicorn backend.api.main:app --host 0.0.0.0 --port 8000'
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+  engine:
+    <<: *backend
+    command: python -m backend.worker
+    stop_grace_period: 75s
+    environment:
+      <<: *environment
+      MAX_SYMBOLS: ${MAX_SYMBOLS:-0}
+      PINNED_SYMBOLS: ${PINNED_SYMBOLS:-}
+      MAX_FULL_REALTIME_SYMBOLS: ${MAX_FULL_REALTIME_SYMBOLS:-20}
+      UNIVERSE_REFRESH_SEC: ${UNIVERSE_REFRESH_SEC:-3600}
+      CONTEXT_REFRESH_SEC: ${CONTEXT_REFRESH_SEC:-15}
+      MARKET_UPDATE_THROTTLE_MS: ${MARKET_UPDATE_THROTTLE_MS:-1000}
+      ENGINE_SHARD_INDEX: ${ENGINE_SHARD_INDEX:-0}
+      ENGINE_SHARD_COUNT: ${ENGINE_SHARD_COUNT:-1}
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -m, backend.healthcheck, engine]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+  notifier:
+    <<: *backend
+    command: python -m backend.alerts.notifier
+    environment:
+      <<: *environment
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -m, backend.healthcheck, notifier]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+  retention:
+    <<: *backend
+    command: python -m backend.retention serve
+    stop_grace_period: 75s
+    environment:
+      <<: *environment
+      RETENTION_MODE: ${RETENTION_MODE:-preview}
+      SNAPSHOT_RETENTION_DAYS: ${SNAPSHOT_RETENTION_DAYS:-30}
+      EVENT_RETENTION_DAYS: ${EVENT_RETENTION_DAYS:-90}
+      RETENTION_BATCH_ROWS: ${RETENTION_BATCH_ROWS:-250}
+      RETENTION_MAX_BATCHES: ${RETENTION_MAX_BATCHES:-8}
+      RETENTION_INTERVAL_SEC: ${RETENTION_INTERVAL_SEC:-3600}
+      ARCHIVE_DIR: /archives
+      PARTITION_MONTHS_AHEAD: ${PARTITION_MONTHS_AHEAD:-3}
+      PARTITION_MAX_MOVE_ROWS: ${PARTITION_MAX_MOVE_ROWS:-10000}
+    volumes: [./data/archives:/archives]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -m, backend.healthcheck, retention]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports: ["127.0.0.1:${HTTP_PORT:-8080}:80"]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:

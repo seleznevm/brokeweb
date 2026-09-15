@@ -1,0 +1,107 @@
+{
+  "checked_at": "2026-09-15T10:30:27.646797+00:00",
+  "status": "PASS",
+  "engine_version": "1.15.2-interpreter.2",
+  "python_tests_passed": 161,
+  "frontend_tests_passed": 4,
+  "browser_pages": 6,
+  "browser_errors": 0,
+  "services": [
+    {
+      "Service": "api",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "engine",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "frontend",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "notifier",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "postgres",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "redis",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "retention",
+      "State": "running",
+      "Health": "healthy"
+    }
+  ],
+  "engine_upgrade": {
+    "status": "PASS",
+    "checks": [
+      {
+        "symbol": "XTZUSDT",
+        "timeframe": "15",
+        "version": "1.15.2-interpreter.2",
+        "history_start": 1788678900000,
+        "origin_preserved": true
+      },
+      {
+        "symbol": "LTCUSDT",
+        "timeframe": "15",
+        "version": "1.15.2-interpreter.2",
+        "history_start": 1788678900000,
+        "origin_preserved": true
+      },
+      {
+        "symbol": "LINKUSDT",
+        "timeframe": "15",
+        "version": "1.15.2-interpreter.2",
+        "history_start": 1788678900000,
+        "origin_preserved": true
+      },
+      {
+        "symbol": "BCHUSDT",
+        "timeframe": "15",
+        "version": "1.15.2-interpreter.2",
+        "history_start": 1788678900000,
+        "origin_preserved": true
+      }
+    ]
+  },
+  "setups": [
+    {
+      "symbol": "XTZUSDT",
+      "timeframe": "15",
+      "data_health": "HEALTHY",
+      "engine_version": "1.15.2-interpreter.2"
+    },
+    {
+      "symbol": "LTCUSDT",
+      "timeframe": "15",
+      "data_health": "HEALTHY",
+      "engine_version": "1.15.2-interpreter.2"
+    },
+    {
+      "symbol": "BCHUSDT",
+      "timeframe": "15",
+      "data_health": "HEALTHY",
+      "engine_version": "1.15.2-interpreter.2"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "timeframe": "15",
+      "data_health": "HEALTHY",
+      "engine_version": "1.15.2-interpreter.2"
+    }
+  ],
+  "full_pine_parity": "UNVERIFIED",
+  "observed_tradingview_parity": "PASS"
+}

@@ -1,0 +1,7 @@
+* text=auto eol=lf
+# Preserve exact bytes and hashes of supplied source/reference exports.
+reference/*.pine -text -whitespace
+reference/task.ru.txt -text -whitespace
+tradingview_data/*.csv -text
+# Debug copies preserve the original source prefix, including its whitespace.
+tools/pine_reference/generated/*.pine -text -whitespace
