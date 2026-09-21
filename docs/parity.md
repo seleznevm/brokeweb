@@ -153,3 +153,26 @@ python3 -m tools.pine_reference.full \
 ```
 
 `--parameters` задаёт inputs для replay; `--parameters-confirmed` указывается только после независимого подтверждения соответствия настроек TradingView. Сырые fixtures и Python observations хранятся локально в `artifacts/local/full-ethfi`.
+
+## Диагностика HTF и конвертации объёма, 2026-09-21
+
+Добавлен воспроизводимый анализ сохранённых observations без повторного полного replay:
+
+```bash
+python3 -m tools.pine_reference.alignment \
+  --reference 'tradingview_data/full_reference/BYBIT_ETHFIUSDT.P, 30_caaff.csv' \
+  --actual artifacts/local/full-ethfi/python.jsonl \
+  --output reports/htf-alignment-diagnostics.json
+```
+
+[Отчёт диагностики](../reports/htf-alignment-diagnostics.json) содержит hashes обоих входов, сравнение исходных timestamps и отдельную гипотезу проекции результата конца часа на его предыдущие свечи. Он не изменяет observations или полный parity-отчёт. Постоянные ряды отделены от примеров, позволяющих различить варианты привязки; отсутствующий конец часа не заменяется соседней доступной строкой.
+
+На 4378 ранних получасовых свечах return1h/6h/24h и NATR совпадают с Python в конце того же часа; на 4378 закрытиях часа совпадают исходные timestamps. Для return6h один ранний пример совпадает в обеих привязках. Последняя закрытая строка CSV не имеет закрытия своего часа в Python observations, поэтому для гипотезы она отмечена unavailable. Все 8757 строк имеют Python-наблюдение на исходном timestamp.
+
+После такой диагностической проекции отношение TV/Python volume24h постоянно с допуском 1e-9 внутри **175 из 184 UTC-дней**. В первые дни это 0.99986, 0.99973, 0.99990. **12–20 сентября** отношение меняется и внутри дня; единый дневной множитель эти участки полностью не объясняет. Это согласуется с гипотезой конвертации, но не доказывает фактический FX rate: курс в исходном CSV отсутствует. Interpreter пока возвращает NA для `request.currency_rate`, и исходный Pine применяет stablecoin fallback 1:1. TradingView описывает [currency_rate как дневной курс](https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/#requestcurrency_rate).
+
+Исторический `lookahead_off` по [документации TradingView](https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/#lookahead) обновляется в конце HTF-периода. Поэтому наблюдаемый сдвиг недостаточен для изменения production-логики. Подготовлена дополнительная экспортная копия **PARITY contexts** с исходными расчётами, off/on-измерениями и реальным курсом конвертации; [порядок следующей выгрузки](tradingview_capture.md#следующая-выгрузка-время-htf-и-курс-конвертации). Компиляция этой новой копии на TradingView ещё не проверена.
+
+Full parity остаётся **FAIL**, intrabar — **UNVERIFIED**; версия engine и исходный Pine не изменены. Статус нового отчёта `DIAGNOSTIC_ONLY` не является результатом приёмки.
+
+Проверки: **229 Python tests**, **69 parity tests в изолированном Docker-контейнере**; все семь сервисов локального стенда healthy, `/api/parity` возвращает FAIL и engine `1.15.2-interpreter.2`. Здоровье контейнеров не означает завершённую инициализацию всего universe. Изменения относятся к диагностическим инструментам и документации; работающие сервисы не пересоздавались.

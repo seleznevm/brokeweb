@@ -1,0 +1,1790 @@
+{
+  "status": "DIAGNOSTIC_ONLY",
+  "parity_status": "UNVERIFIED",
+  "timeframe": "30",
+  "reference_rows": 8757,
+  "missing_python_rows": 0,
+  "hourly_alignment": {
+    "return_1h": {
+      "before_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 0,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 4378,
+        "hour_final_only_matches": 4378,
+        "unavailable": 1
+      },
+      "at_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 4378,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 0,
+        "hour_final_only_matches": 0,
+        "unavailable": 0
+      }
+    },
+    "return_6h": {
+      "before_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 1,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 4377,
+        "hour_final_only_matches": 4377,
+        "unavailable": 1
+      },
+      "at_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 4378,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 0,
+        "hour_final_only_matches": 0,
+        "unavailable": 0
+      }
+    },
+    "return_24h": {
+      "before_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 0,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 4378,
+        "hour_final_only_matches": 4378,
+        "unavailable": 1
+      },
+      "at_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 4378,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 0,
+        "hour_final_only_matches": 0,
+        "unavailable": 0
+      }
+    },
+    "natr_1h": {
+      "before_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 0,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 4378,
+        "hour_final_only_matches": 4378,
+        "unavailable": 1
+      },
+      "at_hour_close": {
+        "samples": 4378,
+        "same_timestamp_matches": 4378,
+        "hour_final_matches": 4378,
+        "discriminating_samples": 0,
+        "hour_final_only_matches": 0,
+        "unavailable": 0
+      }
+    }
+  },
+  "examples": [
+    {
+      "bar_start": 1774206000000,
+      "hour_final_bar_start": 1774207800000,
+      "reference": -1.0452333753829368,
+      "python_same_timestamp": -0.5198996055934102,
+      "python_hour_final": -1.0452333753829368
+    },
+    {
+      "bar_start": 1774209600000,
+      "hour_final_bar_start": 1774211400000,
+      "reference": -1.019850664724098,
+      "python_same_timestamp": -1.0452333753829368,
+      "python_hour_final": -1.019850664724098
+    },
+    {
+      "bar_start": 1774213200000,
+      "hour_final_bar_start": 1774215000000,
+      "reference": -0.4783808647653931,
+      "python_same_timestamp": -1.019850664724098,
+      "python_hour_final": -0.4783808647653931
+    },
+    {
+      "bar_start": 1774216800000,
+      "hour_final_bar_start": 1774218600000,
+      "reference": 0.9798484008134434,
+      "python_same_timestamp": -0.4783808647653931,
+      "python_hour_final": 0.9798484008134434
+    },
+    {
+      "bar_start": 1774220400000,
+      "hour_final_bar_start": 1774222200000,
+      "reference": -1.5195898938117902,
+      "python_same_timestamp": 0.9798484008134434,
+      "python_hour_final": -1.5195898938117902
+    }
+  ],
+  "volume_ratio": {
+    "hypothesis": "Reference volume divided by Python hour-final volume; not an observed FX rate.",
+    "unavailable": 1,
+    "days": 184,
+    "constant_days": 175,
+    "daily": [
+      {
+        "date": "2026-03-22",
+        "samples": 10,
+        "median_ratio": 0.9998599999999999,
+        "min_ratio": 0.9998599999999997,
+        "max_ratio": 0.99986,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-23",
+        "samples": 48,
+        "median_ratio": 0.9997299999999998,
+        "min_ratio": 0.9997299999999992,
+        "max_ratio": 0.9997299999999999,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-24",
+        "samples": 48,
+        "median_ratio": 0.9999,
+        "min_ratio": 0.9998999999999999,
+        "max_ratio": 0.9999000000000005,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-25",
+        "samples": 48,
+        "median_ratio": 0.9995800000000001,
+        "min_ratio": 0.9995799999999998,
+        "max_ratio": 0.9995800000000005,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-26",
+        "samples": 48,
+        "median_ratio": 0.9997499999999999,
+        "min_ratio": 0.9997499999999996,
+        "max_ratio": 0.9997500000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-27",
+        "samples": 48,
+        "median_ratio": 0.9994599999999999,
+        "min_ratio": 0.9994599999999997,
+        "max_ratio": 0.9994600000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-28",
+        "samples": 48,
+        "median_ratio": 0.9994199999999998,
+        "min_ratio": 0.9994199999999994,
+        "max_ratio": 0.99942,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-29",
+        "samples": 48,
+        "median_ratio": 0.9992000000000001,
+        "min_ratio": 0.9991999999999994,
+        "max_ratio": 0.9992000000000006,
+        "spread": 1.2212453270876722e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-30",
+        "samples": 48,
+        "median_ratio": 0.99932,
+        "min_ratio": 0.9993199999999998,
+        "max_ratio": 0.9993200000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-03-31",
+        "samples": 48,
+        "median_ratio": 0.9992400000000001,
+        "min_ratio": 0.9992399999999999,
+        "max_ratio": 0.9992400000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-01",
+        "samples": 48,
+        "median_ratio": 0.99909,
+        "min_ratio": 0.9990899999999999,
+        "max_ratio": 0.9990900000000003,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-02",
+        "samples": 48,
+        "median_ratio": 0.9999,
+        "min_ratio": 0.9998999999999997,
+        "max_ratio": 0.9999000000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-03",
+        "samples": 48,
+        "median_ratio": 1.00015,
+        "min_ratio": 1.0001499999999992,
+        "max_ratio": 1.0001500000000003,
+        "spread": 1.1102230246251565e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-04",
+        "samples": 48,
+        "median_ratio": 0.9999399999999996,
+        "min_ratio": 0.999939999999999,
+        "max_ratio": 0.9999400000000004,
+        "spread": 1.3322676295501878e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-05",
+        "samples": 48,
+        "median_ratio": 0.99987,
+        "min_ratio": 0.9998699999999997,
+        "max_ratio": 0.9998700000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-06",
+        "samples": 48,
+        "median_ratio": 0.9995900000000001,
+        "min_ratio": 0.9995899999999999,
+        "max_ratio": 0.9995900000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-07",
+        "samples": 48,
+        "median_ratio": 1.0001,
+        "min_ratio": 1.0001,
+        "max_ratio": 1.0001000000000002,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-08",
+        "samples": 48,
+        "median_ratio": 0.9998399999999998,
+        "min_ratio": 0.9998399999999996,
+        "max_ratio": 0.99984,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-09",
+        "samples": 48,
+        "median_ratio": 1.00009,
+        "min_ratio": 1.0000899999999995,
+        "max_ratio": 1.00009,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-10",
+        "samples": 48,
+        "median_ratio": 0.9999800000000001,
+        "min_ratio": 0.99998,
+        "max_ratio": 0.9999800000000002,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-11",
+        "samples": 48,
+        "median_ratio": 1.00032,
+        "min_ratio": 1.0003199999999999,
+        "max_ratio": 1.0003200000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-12",
+        "samples": 48,
+        "median_ratio": 1.0001999999999998,
+        "min_ratio": 1.0001999999999995,
+        "max_ratio": 1.0002000000000002,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-13",
+        "samples": 48,
+        "median_ratio": 0.9999099999999997,
+        "min_ratio": 0.9999099999999995,
+        "max_ratio": 0.9999100000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-14",
+        "samples": 48,
+        "median_ratio": 1.0001899999999997,
+        "min_ratio": 1.0001899999999995,
+        "max_ratio": 1.00019,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-15",
+        "samples": 48,
+        "median_ratio": 1.0004599999999997,
+        "min_ratio": 1.0004599999999992,
+        "max_ratio": 1.0004600000000001,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-16",
+        "samples": 48,
+        "median_ratio": 1.0003299999999997,
+        "min_ratio": 1.0003299999999995,
+        "max_ratio": 1.00033,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-17",
+        "samples": 48,
+        "median_ratio": 1.0003499999999999,
+        "min_ratio": 1.0003499999999996,
+        "max_ratio": 1.00035,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-18",
+        "samples": 48,
+        "median_ratio": 1.0003199999999999,
+        "min_ratio": 1.0003199999999997,
+        "max_ratio": 1.00032,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-19",
+        "samples": 48,
+        "median_ratio": 1.0004600000000003,
+        "min_ratio": 1.00046,
+        "max_ratio": 1.0004600000000008,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-20",
+        "samples": 48,
+        "median_ratio": 1.0004800000000003,
+        "min_ratio": 1.0004799999999998,
+        "max_ratio": 1.0004800000000005,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-21",
+        "samples": 48,
+        "median_ratio": 1.00046,
+        "min_ratio": 1.0004599999999997,
+        "max_ratio": 1.0004600000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-22",
+        "samples": 48,
+        "median_ratio": 1.00032,
+        "min_ratio": 1.0003199999999999,
+        "max_ratio": 1.0003200000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-23",
+        "samples": 48,
+        "median_ratio": 1.00041,
+        "min_ratio": 1.0004099999999998,
+        "max_ratio": 1.0004100000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-24",
+        "samples": 48,
+        "median_ratio": 1.00035,
+        "min_ratio": 1.0003499999999999,
+        "max_ratio": 1.0003500000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-25",
+        "samples": 48,
+        "median_ratio": 1.00035,
+        "min_ratio": 1.0003499999999999,
+        "max_ratio": 1.0003500000000005,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-26",
+        "samples": 48,
+        "median_ratio": 1.00033,
+        "min_ratio": 1.0003299999999997,
+        "max_ratio": 1.0003300000000006,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-27",
+        "samples": 48,
+        "median_ratio": 1.00036,
+        "min_ratio": 1.0003599999999997,
+        "max_ratio": 1.0003600000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-28",
+        "samples": 48,
+        "median_ratio": 0.9998399999999998,
+        "min_ratio": 0.9998399999999996,
+        "max_ratio": 0.9998400000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-29",
+        "samples": 48,
+        "median_ratio": 0.9998299999999999,
+        "min_ratio": 0.9998299999999996,
+        "max_ratio": 0.9998300000000002,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-04-30",
+        "samples": 48,
+        "median_ratio": 0.9995999999999999,
+        "min_ratio": 0.9995999999999997,
+        "max_ratio": 0.9996000000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-01",
+        "samples": 48,
+        "median_ratio": 0.9995299999999999,
+        "min_ratio": 0.9995299999999996,
+        "max_ratio": 0.9995300000000004,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-02",
+        "samples": 48,
+        "median_ratio": 0.99987,
+        "min_ratio": 0.9998699999999996,
+        "max_ratio": 0.9998700000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-03",
+        "samples": 48,
+        "median_ratio": 1.0,
+        "min_ratio": 0.9999999999999999,
+        "max_ratio": 1.0000000000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-04",
+        "samples": 48,
+        "median_ratio": 0.99991,
+        "min_ratio": 0.9999099999999997,
+        "max_ratio": 0.9999100000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-05",
+        "samples": 48,
+        "median_ratio": 0.99978,
+        "min_ratio": 0.9997799999999998,
+        "max_ratio": 0.9997800000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-06",
+        "samples": 48,
+        "median_ratio": 0.9999500000000002,
+        "min_ratio": 0.9999499999999999,
+        "max_ratio": 0.9999500000000004,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-07",
+        "samples": 48,
+        "median_ratio": 0.9998600000000001,
+        "min_ratio": 0.9998599999999999,
+        "max_ratio": 0.9998600000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-08",
+        "samples": 48,
+        "median_ratio": 0.9998699999999999,
+        "min_ratio": 0.9998699999999997,
+        "max_ratio": 0.9998700000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-09",
+        "samples": 48,
+        "median_ratio": 0.9999399999999999,
+        "min_ratio": 0.9999399999999996,
+        "max_ratio": 0.9999400000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-10",
+        "samples": 48,
+        "median_ratio": 0.9997999999999999,
+        "min_ratio": 0.9997999999999997,
+        "max_ratio": 0.9998000000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-11",
+        "samples": 48,
+        "median_ratio": 1.0000799999999999,
+        "min_ratio": 1.0000799999999996,
+        "max_ratio": 1.00008,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-12",
+        "samples": 48,
+        "median_ratio": 0.9996500000000001,
+        "min_ratio": 0.9996499999999998,
+        "max_ratio": 0.9996500000000006,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-13",
+        "samples": 48,
+        "median_ratio": 0.9997599999999999,
+        "min_ratio": 0.9997599999999998,
+        "max_ratio": 0.99976,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-14",
+        "samples": 48,
+        "median_ratio": 0.9995800000000002,
+        "min_ratio": 0.9995799999999997,
+        "max_ratio": 0.9995800000000005,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-15",
+        "samples": 48,
+        "median_ratio": 0.9997800000000003,
+        "min_ratio": 0.9997800000000001,
+        "max_ratio": 0.9997800000000006,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-16",
+        "samples": 48,
+        "median_ratio": 0.9994199999999999,
+        "min_ratio": 0.9994199999999995,
+        "max_ratio": 0.9994200000000005,
+        "spread": 9.992007221626409e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-17",
+        "samples": 48,
+        "median_ratio": 0.9995799999999999,
+        "min_ratio": 0.9995799999999996,
+        "max_ratio": 0.9995800000000004,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-18",
+        "samples": 48,
+        "median_ratio": 0.99952,
+        "min_ratio": 0.9995199999999999,
+        "max_ratio": 0.9995200000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-19",
+        "samples": 48,
+        "median_ratio": 0.9993900000000002,
+        "min_ratio": 0.9993899999999998,
+        "max_ratio": 0.9993900000000008,
+        "spread": 9.992007221626409e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-20",
+        "samples": 48,
+        "median_ratio": 0.99916,
+        "min_ratio": 0.9991599999999997,
+        "max_ratio": 0.9991600000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-21",
+        "samples": 48,
+        "median_ratio": 0.99899,
+        "min_ratio": 0.9989899999999998,
+        "max_ratio": 0.9989900000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-22",
+        "samples": 48,
+        "median_ratio": 0.9990999999999998,
+        "min_ratio": 0.9990999999999993,
+        "max_ratio": 0.9991,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-23",
+        "samples": 48,
+        "median_ratio": 0.9987999999999999,
+        "min_ratio": 0.9987999999999997,
+        "max_ratio": 0.9988000000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-24",
+        "samples": 48,
+        "median_ratio": 0.99872,
+        "min_ratio": 0.9987199999999996,
+        "max_ratio": 0.9987200000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-25",
+        "samples": 48,
+        "median_ratio": 0.9986699999999998,
+        "min_ratio": 0.9986699999999996,
+        "max_ratio": 0.9986700000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-26",
+        "samples": 48,
+        "median_ratio": 0.99895,
+        "min_ratio": 0.9989499999999998,
+        "max_ratio": 0.9989500000000001,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-27",
+        "samples": 48,
+        "median_ratio": 0.99865,
+        "min_ratio": 0.9986499999999999,
+        "max_ratio": 0.9986500000000003,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-28",
+        "samples": 48,
+        "median_ratio": 0.9985400000000001,
+        "min_ratio": 0.9985399999999999,
+        "max_ratio": 0.9985400000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-29",
+        "samples": 48,
+        "median_ratio": 0.99877,
+        "min_ratio": 0.9987699999999998,
+        "max_ratio": 0.9987700000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-30",
+        "samples": 48,
+        "median_ratio": 0.99878,
+        "min_ratio": 0.9987799999999997,
+        "max_ratio": 0.9987800000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-05-31",
+        "samples": 48,
+        "median_ratio": 0.9986599999999999,
+        "min_ratio": 0.9986599999999994,
+        "max_ratio": 0.9986600000000002,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-01",
+        "samples": 48,
+        "median_ratio": 0.9986200000000001,
+        "min_ratio": 0.9986199999999997,
+        "max_ratio": 0.9986200000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-02",
+        "samples": 48,
+        "median_ratio": 0.9986200000000001,
+        "min_ratio": 0.9986199999999997,
+        "max_ratio": 0.9986200000000005,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-03",
+        "samples": 48,
+        "median_ratio": 0.9985799999999997,
+        "min_ratio": 0.9985799999999995,
+        "max_ratio": 0.9985800000000001,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-04",
+        "samples": 48,
+        "median_ratio": 0.9987199999999998,
+        "min_ratio": 0.9987199999999995,
+        "max_ratio": 0.9987200000000003,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-05",
+        "samples": 48,
+        "median_ratio": 0.9988699999999997,
+        "min_ratio": 0.9988699999999997,
+        "max_ratio": 0.9988700000000006,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-06",
+        "samples": 48,
+        "median_ratio": 0.9996800000000002,
+        "min_ratio": 0.9996799999999999,
+        "max_ratio": 0.9996800000000005,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-07",
+        "samples": 48,
+        "median_ratio": 0.9995099999999996,
+        "min_ratio": 0.9995099999999993,
+        "max_ratio": 0.99951,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-08",
+        "samples": 48,
+        "median_ratio": 0.99961,
+        "min_ratio": 0.9996099999999993,
+        "max_ratio": 0.9996100000000002,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-09",
+        "samples": 48,
+        "median_ratio": 0.9996100000000002,
+        "min_ratio": 0.99961,
+        "max_ratio": 0.9996100000000004,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-10",
+        "samples": 48,
+        "median_ratio": 0.9994400000000003,
+        "min_ratio": 0.99944,
+        "max_ratio": 0.9994400000000007,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-11",
+        "samples": 48,
+        "median_ratio": 0.99906,
+        "min_ratio": 0.9990599999999998,
+        "max_ratio": 0.9990600000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-12",
+        "samples": 48,
+        "median_ratio": 0.9989199999999999,
+        "min_ratio": 0.9989199999999997,
+        "max_ratio": 0.99892,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-13",
+        "samples": 48,
+        "median_ratio": 0.9995199999999999,
+        "min_ratio": 0.9995199999999995,
+        "max_ratio": 0.9995200000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-14",
+        "samples": 48,
+        "median_ratio": 0.9996599999999999,
+        "min_ratio": 0.9996599999999995,
+        "max_ratio": 0.9996600000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-15",
+        "samples": 48,
+        "median_ratio": 0.99937,
+        "min_ratio": 0.9993699999999998,
+        "max_ratio": 0.9993700000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-16",
+        "samples": 48,
+        "median_ratio": 0.99945,
+        "min_ratio": 0.9994499999999997,
+        "max_ratio": 0.9994500000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-17",
+        "samples": 48,
+        "median_ratio": 0.9989799999999998,
+        "min_ratio": 0.9989799999999991,
+        "max_ratio": 0.9989800000000003,
+        "spread": 1.2212453270876722e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-18",
+        "samples": 48,
+        "median_ratio": 0.99913,
+        "min_ratio": 0.9991299999999994,
+        "max_ratio": 0.9991300000000002,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-19",
+        "samples": 48,
+        "median_ratio": 0.9990599999999994,
+        "min_ratio": 0.9990599999999982,
+        "max_ratio": 0.99906,
+        "spread": 1.7763568394002505e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-20",
+        "samples": 48,
+        "median_ratio": 0.99909,
+        "min_ratio": 0.9990899999999997,
+        "max_ratio": 0.9990900000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-21",
+        "samples": 48,
+        "median_ratio": 0.99889,
+        "min_ratio": 0.9988899999999996,
+        "max_ratio": 0.9988900000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-22",
+        "samples": 48,
+        "median_ratio": 0.99893,
+        "min_ratio": 0.9989299999999997,
+        "max_ratio": 0.9989300000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-23",
+        "samples": 48,
+        "median_ratio": 0.9988000000000001,
+        "min_ratio": 0.9987999999999999,
+        "max_ratio": 0.9988000000000005,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-24",
+        "samples": 48,
+        "median_ratio": 0.9987700000000002,
+        "min_ratio": 0.9987699999999999,
+        "max_ratio": 0.9987700000000004,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-25",
+        "samples": 48,
+        "median_ratio": 0.99842,
+        "min_ratio": 0.99842,
+        "max_ratio": 0.9984200000000002,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-26",
+        "samples": 48,
+        "median_ratio": 0.9984500000000001,
+        "min_ratio": 0.9984499999999998,
+        "max_ratio": 0.9984500000000004,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-27",
+        "samples": 48,
+        "median_ratio": 0.9986099999999998,
+        "min_ratio": 0.9986099999999997,
+        "max_ratio": 0.9986100000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-28",
+        "samples": 48,
+        "median_ratio": 0.9984999999999999,
+        "min_ratio": 0.9984999999999996,
+        "max_ratio": 0.9985000000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-29",
+        "samples": 48,
+        "median_ratio": 0.9984999999999998,
+        "min_ratio": 0.9984999999999997,
+        "max_ratio": 0.9985,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-06-30",
+        "samples": 48,
+        "median_ratio": 0.9985099999999998,
+        "min_ratio": 0.9985099999999993,
+        "max_ratio": 0.9985099999999999,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-01",
+        "samples": 48,
+        "median_ratio": 0.9985,
+        "min_ratio": 0.9984999999999998,
+        "max_ratio": 0.9985000000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-02",
+        "samples": 48,
+        "median_ratio": 0.99882,
+        "min_ratio": 0.9988199999999999,
+        "max_ratio": 0.9988200000000005,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-03",
+        "samples": 48,
+        "median_ratio": 0.9987600000000001,
+        "min_ratio": 0.9987599999999996,
+        "max_ratio": 0.9987600000000004,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-04",
+        "samples": 48,
+        "median_ratio": 0.99902,
+        "min_ratio": 0.9990199999999997,
+        "max_ratio": 0.9990200000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-05",
+        "samples": 48,
+        "median_ratio": 0.9991000000000002,
+        "min_ratio": 0.9991,
+        "max_ratio": 0.9991000000000007,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-06",
+        "samples": 48,
+        "median_ratio": 0.9990499999999999,
+        "min_ratio": 0.9990499999999995,
+        "max_ratio": 0.9990500000000007,
+        "spread": 1.1102230246251565e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-07",
+        "samples": 48,
+        "median_ratio": 0.9991499999999996,
+        "min_ratio": 0.9991499999999992,
+        "max_ratio": 0.9991500000000001,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-08",
+        "samples": 48,
+        "median_ratio": 0.9993299999999999,
+        "min_ratio": 0.9993299999999997,
+        "max_ratio": 0.9993300000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-09",
+        "samples": 48,
+        "median_ratio": 0.9988999999999999,
+        "min_ratio": 0.9988999999999996,
+        "max_ratio": 0.9989000000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-10",
+        "samples": 48,
+        "median_ratio": 0.99914,
+        "min_ratio": 0.9991399999999998,
+        "max_ratio": 0.9991400000000004,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-11",
+        "samples": 48,
+        "median_ratio": 0.99935,
+        "min_ratio": 0.9993499999999997,
+        "max_ratio": 0.9993500000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-12",
+        "samples": 48,
+        "median_ratio": 0.9994000000000001,
+        "min_ratio": 0.9993999999999996,
+        "max_ratio": 0.9994000000000005,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-13",
+        "samples": 48,
+        "median_ratio": 0.9993699999999999,
+        "min_ratio": 0.9993699999999996,
+        "max_ratio": 0.9993700000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-14",
+        "samples": 48,
+        "median_ratio": 0.9987299999999998,
+        "min_ratio": 0.9987299999999993,
+        "max_ratio": 0.99873,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-15",
+        "samples": 48,
+        "median_ratio": 0.99925,
+        "min_ratio": 0.9992499999999996,
+        "max_ratio": 0.9992500000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-16",
+        "samples": 48,
+        "median_ratio": 0.99936,
+        "min_ratio": 0.9993599999999997,
+        "max_ratio": 0.9993600000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-17",
+        "samples": 48,
+        "median_ratio": 0.99915,
+        "min_ratio": 0.9991499999999993,
+        "max_ratio": 0.9991500000000003,
+        "spread": 9.992007221626409e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-18",
+        "samples": 48,
+        "median_ratio": 0.9992200000000001,
+        "min_ratio": 0.9992199999999998,
+        "max_ratio": 0.9992200000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-19",
+        "samples": 48,
+        "median_ratio": 0.9993000000000001,
+        "min_ratio": 0.9992999999999995,
+        "max_ratio": 0.9993000000000005,
+        "spread": 9.992007221626409e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-20",
+        "samples": 48,
+        "median_ratio": 0.9991900000000002,
+        "min_ratio": 0.99919,
+        "max_ratio": 0.9991900000000005,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-21",
+        "samples": 48,
+        "median_ratio": 0.9990900000000003,
+        "min_ratio": 0.99909,
+        "max_ratio": 0.9990900000000007,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-22",
+        "samples": 48,
+        "median_ratio": 0.9992,
+        "min_ratio": 0.9991999999999998,
+        "max_ratio": 0.9992000000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-23",
+        "samples": 48,
+        "median_ratio": 0.9994799999999999,
+        "min_ratio": 0.9994799999999996,
+        "max_ratio": 0.9994800000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-24",
+        "samples": 48,
+        "median_ratio": 0.99925,
+        "min_ratio": 0.9992499999999996,
+        "max_ratio": 0.9992500000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-25",
+        "samples": 48,
+        "median_ratio": 0.9991299999999999,
+        "min_ratio": 0.9991299999999996,
+        "max_ratio": 0.9991300000000005,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-26",
+        "samples": 48,
+        "median_ratio": 0.9991000000000001,
+        "min_ratio": 0.9990999999999999,
+        "max_ratio": 0.9991000000000004,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-27",
+        "samples": 48,
+        "median_ratio": 0.9989800000000001,
+        "min_ratio": 0.9989799999999996,
+        "max_ratio": 0.9989800000000003,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-28",
+        "samples": 48,
+        "median_ratio": 0.9990300000000001,
+        "min_ratio": 0.99903,
+        "max_ratio": 0.9990300000000003,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-29",
+        "samples": 48,
+        "median_ratio": 0.9987,
+        "min_ratio": 0.9986999999999999,
+        "max_ratio": 0.9987000000000001,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-30",
+        "samples": 48,
+        "median_ratio": 0.9987000000000001,
+        "min_ratio": 0.9986999999999999,
+        "max_ratio": 0.9987000000000005,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-07-31",
+        "samples": 48,
+        "median_ratio": 0.9991499999999998,
+        "min_ratio": 0.9991499999999995,
+        "max_ratio": 0.9991500000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-01",
+        "samples": 48,
+        "median_ratio": 0.9989999999999999,
+        "min_ratio": 0.9989999999999998,
+        "max_ratio": 0.999,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-02",
+        "samples": 48,
+        "median_ratio": 0.9989999999999998,
+        "min_ratio": 0.9989999999999996,
+        "max_ratio": 0.9990000000000001,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-03",
+        "samples": 48,
+        "median_ratio": 0.9989300000000002,
+        "min_ratio": 0.9989299999999997,
+        "max_ratio": 0.9989300000000007,
+        "spread": 9.992007221626409e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-04",
+        "samples": 48,
+        "median_ratio": 0.99904,
+        "min_ratio": 0.9990399999999997,
+        "max_ratio": 0.9990400000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-05",
+        "samples": 48,
+        "median_ratio": 0.9991199999999998,
+        "min_ratio": 0.9991199999999992,
+        "max_ratio": 0.9991200000000001,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-06",
+        "samples": 48,
+        "median_ratio": 0.9989700000000001,
+        "min_ratio": 0.9989699999999998,
+        "max_ratio": 0.9989700000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-07",
+        "samples": 48,
+        "median_ratio": 0.99903,
+        "min_ratio": 0.9990299999999996,
+        "max_ratio": 0.9990300000000002,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-08",
+        "samples": 48,
+        "median_ratio": 0.9993800000000002,
+        "min_ratio": 0.99938,
+        "max_ratio": 0.9993800000000004,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-09",
+        "samples": 48,
+        "median_ratio": 0.9991999999999998,
+        "min_ratio": 0.9991999999999994,
+        "max_ratio": 0.9992000000000003,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-10",
+        "samples": 48,
+        "median_ratio": 0.9992999999999999,
+        "min_ratio": 0.9992999999999995,
+        "max_ratio": 0.9993000000000002,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-11",
+        "samples": 48,
+        "median_ratio": 0.9990000000000002,
+        "min_ratio": 0.9989999999999999,
+        "max_ratio": 0.9990000000000004,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-12",
+        "samples": 48,
+        "median_ratio": 0.9990800000000001,
+        "min_ratio": 0.9990799999999999,
+        "max_ratio": 0.9990800000000002,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-13",
+        "samples": 48,
+        "median_ratio": 0.9990000000000001,
+        "min_ratio": 0.9989999999999996,
+        "max_ratio": 0.9990000000000004,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-14",
+        "samples": 48,
+        "median_ratio": 0.9990200000000004,
+        "min_ratio": 0.9990200000000001,
+        "max_ratio": 0.9990200000000005,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-15",
+        "samples": 48,
+        "median_ratio": 0.9989400000000004,
+        "min_ratio": 0.99894,
+        "max_ratio": 0.9989400000000008,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-16",
+        "samples": 48,
+        "median_ratio": 0.9989100000000001,
+        "min_ratio": 0.99891,
+        "max_ratio": 0.9989100000000003,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-17",
+        "samples": 48,
+        "median_ratio": 0.9989100000000002,
+        "min_ratio": 0.99891,
+        "max_ratio": 0.9989100000000003,
+        "spread": 3.3306690738754696e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-18",
+        "samples": 48,
+        "median_ratio": 0.9990599999999998,
+        "min_ratio": 0.9990599999999997,
+        "max_ratio": 0.9990600000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-19",
+        "samples": 48,
+        "median_ratio": 0.99923,
+        "min_ratio": 0.9992299999999997,
+        "max_ratio": 0.9992300000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-20",
+        "samples": 48,
+        "median_ratio": 0.9993900000000002,
+        "min_ratio": 0.99939,
+        "max_ratio": 0.9993900000000004,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-21",
+        "samples": 48,
+        "median_ratio": 0.9997500000000001,
+        "min_ratio": 0.99975,
+        "max_ratio": 0.9997500000000002,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-22",
+        "samples": 48,
+        "median_ratio": 0.9998600000000001,
+        "min_ratio": 0.9998599999999997,
+        "max_ratio": 0.9998600000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-23",
+        "samples": 48,
+        "median_ratio": 0.9997,
+        "min_ratio": 0.9996999999999998,
+        "max_ratio": 0.9997000000000006,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-24",
+        "samples": 48,
+        "median_ratio": 0.9998700000000004,
+        "min_ratio": 0.9998700000000001,
+        "max_ratio": 0.9998700000000006,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-25",
+        "samples": 48,
+        "median_ratio": 0.9997500000000001,
+        "min_ratio": 0.9997499999999997,
+        "max_ratio": 0.9997500000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-26",
+        "samples": 48,
+        "median_ratio": 0.9999199999999999,
+        "min_ratio": 0.9999199999999995,
+        "max_ratio": 0.9999200000000004,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-27",
+        "samples": 48,
+        "median_ratio": 1.00003,
+        "min_ratio": 1.0000299999999998,
+        "max_ratio": 1.0000300000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-28",
+        "samples": 48,
+        "median_ratio": 1.00014,
+        "min_ratio": 1.0001399999999998,
+        "max_ratio": 1.0001400000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-29",
+        "samples": 48,
+        "median_ratio": 0.9999899999999999,
+        "min_ratio": 0.9999899999999993,
+        "max_ratio": 0.9999900000000002,
+        "spread": 8.881784197001252e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-30",
+        "samples": 48,
+        "median_ratio": 1.00004,
+        "min_ratio": 1.0000399999999992,
+        "max_ratio": 1.0000400000000005,
+        "spread": 1.3322676295501878e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-08-31",
+        "samples": 48,
+        "median_ratio": 0.9999699999999999,
+        "min_ratio": 0.9999699999999996,
+        "max_ratio": 0.9999700000000002,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-01",
+        "samples": 48,
+        "median_ratio": 0.9996299999999999,
+        "min_ratio": 0.9996299999999997,
+        "max_ratio": 0.9996300000000001,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-02",
+        "samples": 48,
+        "median_ratio": 0.9994599999999999,
+        "min_ratio": 0.9994599999999998,
+        "max_ratio": 0.99946,
+        "spread": 2.220446049250313e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-03",
+        "samples": 48,
+        "median_ratio": 0.99959,
+        "min_ratio": 0.9995899999999998,
+        "max_ratio": 0.9995900000000004,
+        "spread": 6.661338147750939e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-04",
+        "samples": 48,
+        "median_ratio": 0.9999700000000002,
+        "min_ratio": 0.9999699999999998,
+        "max_ratio": 0.9999700000000006,
+        "spread": 7.771561172376096e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-05",
+        "samples": 48,
+        "median_ratio": 1.0002000000000006,
+        "min_ratio": 1.0002,
+        "max_ratio": 1.0002000000000013,
+        "spread": 1.3322676295501878e-15,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-06",
+        "samples": 48,
+        "median_ratio": 1.00005,
+        "min_ratio": 1.0000499999999999,
+        "max_ratio": 1.0000500000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-07",
+        "samples": 48,
+        "median_ratio": 0.99994,
+        "min_ratio": 0.9999399999999998,
+        "max_ratio": 0.9999400000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-08",
+        "samples": 48,
+        "median_ratio": 0.99983,
+        "min_ratio": 0.9998299999999998,
+        "max_ratio": 0.9998300000000003,
+        "spread": 5.551115123125783e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-09",
+        "samples": 48,
+        "median_ratio": 0.99992,
+        "min_ratio": 0.9999199999999998,
+        "max_ratio": 0.9999200000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-10",
+        "samples": 48,
+        "median_ratio": 0.99971,
+        "min_ratio": 0.9997099999999998,
+        "max_ratio": 0.9997100000000002,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-11",
+        "samples": 48,
+        "median_ratio": 0.9996,
+        "min_ratio": 0.9995999999999998,
+        "max_ratio": 0.9996000000000003,
+        "spread": 4.440892098500626e-16,
+        "constant_within_tolerance": true
+      },
+      {
+        "date": "2026-09-12",
+        "samples": 48,
+        "median_ratio": 0.9997460844317128,
+        "min_ratio": 0.9997331285188468,
+        "max_ratio": 0.9997700000000002,
+        "spread": 3.6871481153388785e-05,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-13",
+        "samples": 48,
+        "median_ratio": 0.9996799597106389,
+        "min_ratio": 0.9996530079785728,
+        "max_ratio": 0.9997741768843419,
+        "spread": 0.00012116890576907569,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-14",
+        "samples": 48,
+        "median_ratio": 0.9991819883306299,
+        "min_ratio": 0.9991301792560312,
+        "max_ratio": 0.9995700000000006,
+        "spread": 0.0004398207439694213,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-15",
+        "samples": 48,
+        "median_ratio": 0.9998600000000001,
+        "min_ratio": 0.9993055423288257,
+        "max_ratio": 0.9998600000000004,
+        "spread": 0.0005544576711746796,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-16",
+        "samples": 48,
+        "median_ratio": 0.9992522975481883,
+        "min_ratio": 0.999244867278133,
+        "max_ratio": 0.9992800000000004,
+        "spread": 3.513272186739247e-05,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-17",
+        "samples": 48,
+        "median_ratio": 0.9992100000000002,
+        "min_ratio": 0.9991762028949349,
+        "max_ratio": 0.9992100000000004,
+        "spread": 3.379710506545841e-05,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-18",
+        "samples": 48,
+        "median_ratio": 0.9984494347445977,
+        "min_ratio": 0.9981325316618377,
+        "max_ratio": 0.999126999610396,
+        "spread": 0.0009944679485582864,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-19",
+        "samples": 48,
+        "median_ratio": 0.9996907537897154,
+        "min_ratio": 0.9990118179189202,
+        "max_ratio": 0.9997082716803828,
+        "spread": 0.0006964537614625455,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-20",
+        "samples": 48,
+        "median_ratio": 0.9996500000000001,
+        "min_ratio": 0.9996079557099329,
+        "max_ratio": 0.9996500000000004,
+        "spread": 4.204429006748889e-05,
+        "constant_within_tolerance": false
+      },
+      {
+        "date": "2026-09-21",
+        "samples": 10,
+        "median_ratio": 0.9997499999999999,
+        "min_ratio": 0.9997499999999999,
+        "max_ratio": 0.99975,
+        "spread": 1.1102230246251565e-16,
+        "constant_within_tolerance": true
+      }
+    ]
+  },
+  "limitations": [
+    "Hour-final projection uses future data on earlier chart bars and is not a valid acceptance result.",
+    "A daily multiplier is consistent with currency conversion but does not establish its cause.",
+    "TradingView script version, inputs, request timestamps and conversion rate require independent confirmation."
+  ],
+  "symbol": "ETHFIUSDT",
+  "reference_sha256": "128884e3fc98ff3b5471ca2b95b2ec5a7eb641ef05264d11946a1f582c12960c",
+  "actual_sha256": "6043c29c928fdd67ce910d8206b53179760a5c9f4b933b5dee2b2fc98f4e14e8"
+}
