@@ -38,3 +38,18 @@ def test_historical_rest_download_times_do_not_reorder_market_history():
                    received_at=1800000000000-i*1000)
     rows=list(replay_fixture(data))
     assert [r['replay_event_time'] for r in rows]==[b['end'] for b in data['bars']]
+
+
+def test_incremental_contexts_match_full_history_with_future_samples():
+    # Exercise lower-TF arrays, same-TF requests and retained higher-TF values.
+    data=fixture();origin=1699999200000
+    data['bars']=[dict(start=origin+i*900000,end=origin+(i+1)*900000,open=100.,high=102.,low=99.,close=101.,volume=100.) for i in range(12)]
+    for tf in ('5','15','60','240','D'):
+        step=(86400 if tf=='D' else int(tf)*60)*1000
+        start=(origin//step-60)*step
+        rows=[dict(start=start+i*step,end=start+(i+1)*step,open=100.,high=103.,low=98.,close=100.+i%3,volume=100.+i) for i in range(100)]
+        for symbol in ('BYBIT:TESTUSDT.P','BINANCE:BTCUSDT.P'):data['contexts'][symbol+'|'+tf]=rows
+    full=list(replay_fixture(data));incremental=list(replay_fixture(data,incremental_contexts=True))
+    for a,b in zip(full,incremental):
+        keys=[k for k in a if k.startswith('PARITY_')]+['source_plots','missing_contexts','data_health']
+        assert {k:a[k] for k in keys}=={k:b[k] for k in keys}

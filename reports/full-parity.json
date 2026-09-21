@@ -1,0 +1,2707 @@
+{
+  "status": "FAIL",
+  "engine_version": "1.15.2-interpreter.2",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "reference_records": 8758,
+  "python_records": 8757,
+  "metrics": [
+    {
+      "metric": "open",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "high",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "low",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "close",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "atr",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "ema_fast",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 5.551115123125783e-17,
+      "error_p95": 1.6653345369377348e-16,
+      "relative_error_max": 5.959988690301381e-16,
+      "agreement_percent": 32.33984241178486,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 0.5612225459148931,
+          "python": 0.561222545914893,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 0.5600680177325223,
+          "python": 0.5600680177325221,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 0.5589567779484726,
+          "python": 0.5589567779484724,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 0.557484703858142,
+          "python": 0.5574847038581418,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 0.5561813987287951,
+          "python": 0.5561813987287949,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "ema_slow",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 2.7755575615628914e-16,
+      "error_p95": 5.551115123125783e-16,
+      "relative_error_max": 1.845969891820036e-15,
+      "agreement_percent": 1.5416238437821173,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 0.5707745103751937,
+          "python": 0.570774510375194,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 0.5699245295761665,
+          "python": 0.5699245295761668,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 0.5690804303771011,
+          "python": 0.5690804303771014,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 0.5680772762446658,
+          "python": 0.5680772762446661,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 0.5671252261958554,
+          "python": 0.5671252261958557,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "return_1h",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 2.337162854360031e-05,
+      "error_p95": 2.481334945108041,
+      "relative_error_max": 5409106470386.838,
+      "agreement_percent": 49.994290282060064,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": -1.0452333753829368,
+          "python": -0.5198996055934102,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": -1.019850664724098,
+          "python": -1.0452333753829368,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": -0.4783808647653931,
+          "python": -1.019850664724098,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774216800000,
+          "python_time": 1774216800000,
+          "pine": 0.9798484008134434,
+          "python": -0.4783808647653931,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774220400000,
+          "python_time": 1774220400000,
+          "pine": -1.5195898938117902,
+          "python": 0.9798484008134434,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "return_6h",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 2.458956090583424,
+      "relative_error_max": 2110261144816.6719,
+      "agreement_percent": 50.005709717939936,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": -2.5035511363636354,
+          "python": -1.5960276644795157,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": -2.4412134266738605,
+          "python": -2.5035511363636354,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": -3.272532188841204,
+          "python": -2.4412134266738605,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774216800000,
+          "python_time": 1774216800000,
+          "pine": -2.272320629808544,
+          "python": -3.272532188841204,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774220400000,
+          "python_time": 1774220400000,
+          "pine": -3.5675869487271306,
+          "python": -2.272320629808544,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "return_24h",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.00035606151105316286,
+      "error_p95": 2.4720249920916793,
+      "relative_error_max": 2789303826648.2153,
+      "agreement_percent": 49.994290282060064,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": -8.054253181513715,
+          "python": -6.708137188971087,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": -9.461935698817248,
+          "python": -8.054253181513715,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": -10.283629125891514,
+          "python": -9.461935698817248,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774216800000,
+          "python_time": 1774216800000,
+          "pine": -9.012160586373463,
+          "python": -10.283629125891514,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774220400000,
+          "python_time": 1774220400000,
+          "pine": -7.909604519773994,
+          "python": -9.012160586373463,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "natr_1h",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 2.8030619549923586e-06,
+      "error_p95": 0.08741604751114622,
+      "relative_error_max": 0.3253738296911345,
+      "agreement_percent": 49.994290282060064,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 1.4023844518208002,
+          "python": 1.3544630681796055,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 1.4457406929205443,
+          "python": 1.4023844518208002,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 1.424197879965944,
+          "python": 1.4457406929205443,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774216800000,
+          "python_time": 1774216800000,
+          "pine": 1.435179713416924,
+          "python": 1.424197879965944,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774220400000,
+          "python_time": 1774220400000,
+          "pine": 1.5085965358787086,
+          "python": 1.435179713416924,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "volume_24h",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 9214.550950527191,
+      "error_p95": 475341.4241893649,
+      "relative_error_max": 0.7018146316745071,
+      "agreement_percent": 0.1370332305584104,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 10913430.919871353,
+          "python": 10759292.075493334,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 10913430.919871353,
+          "python": 10914959.014133334,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 11089715.39330608,
+          "python": 10914959.014133334,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 11089715.39330608,
+          "python": 11091268.17085,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 11066830.892578114,
+          "python": 11091268.17085,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "direction",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 98.84663697613338,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": -1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783526400000,
+          "python_time": 1783526400000,
+          "pine": -1.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": -1.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783530000000,
+          "python_time": 1783530000000,
+          "pine": -1.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "generation",
+      "pine": 1443,
+      "python": 1371,
+      "both_na": 7312,
+      "error_median": 0.0,
+      "error_p95": 3.0,
+      "relative_error_max": 0.0009398142926957633,
+      "agreement_percent": 96.64268585131894,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 76,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 22666.0,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1776490200000,
+          "python_time": 1776490200000,
+          "pine": 22666.0,
+          "python": 22667.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776492000000,
+          "python_time": 1776492000000,
+          "pine": 22666.0,
+          "python": 22667.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776493800000,
+          "python_time": 1776493800000,
+          "pine": 22666.0,
+          "python": 22667.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776495600000,
+          "python_time": 1776495600000,
+          "pine": 22666.0,
+          "python": 22667.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "fsm",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 3000000000000.0,
+      "agreement_percent": 98.68676487381524,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 3.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 3.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 3.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 3.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "level",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 62413364455816.875,
+      "agreement_percent": 96.64268585131894,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 72.37,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776490200000,
+          "python_time": 1776490200000,
+          "pine": 72.37,
+          "python": 72.31,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776492000000,
+          "python_time": 1776492000000,
+          "pine": 72.37,
+          "python": 72.31,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776493800000,
+          "python_time": 1776493800000,
+          "pine": 72.37,
+          "python": 72.31,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776495600000,
+          "python_time": 1776495600000,
+          "pine": 72.37,
+          "python": 72.31,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "approach",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 7000000000000.0,
+      "agreement_percent": 98.5954093867763,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 6.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 6.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 4.0,
+          "python": 5.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 2.0,
+          "python": 3.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 2.0,
+          "python": 3.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "formation",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.08032646005679567,
+      "relative_error_max": 67465479153018.04,
+      "agreement_percent": 89.58547447756081,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 64.00106377763221,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776490200000,
+          "python_time": 1776490200000,
+          "pine": 69.32050822207665,
+          "python": 69.65870724113364,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776492000000,
+          "python_time": 1776492000000,
+          "pine": 69.32050822207665,
+          "python": 69.65870724113364,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776493800000,
+          "python_time": 1776493800000,
+          "pine": 64.87606377763221,
+          "python": 65.2142627966892,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776495600000,
+          "python_time": 1776495600000,
+          "pine": 66.72328599985443,
+          "python": 67.06148501891143,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "execution",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 83302011503270.31,
+      "agreement_percent": 98.65250656617563,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 42.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 32.73346362605113,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 11.5,
+          "python": 24.056481772492425,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 16.5,
+          "python": 28.830989233574133,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 21.75,
+          "python": 32.69492005427249,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "geometry",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 70595671320491.23,
+      "agreement_percent": 98.61824825853603,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 82.1401795300301,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 77.55373395507884,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 81.11398146508371,
+          "python": 76.9459877374464,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 87.24223046229008,
+          "python": 87.05289711110957,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 90.80793441069999,
+          "python": 92.07366510044429,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "context",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 5.634616830253341,
+      "relative_error_max": 64561975562390.484,
+      "agreement_percent": 84.12698412698413,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774222200000,
+          "python_time": 1774222200000,
+          "pine": 72.96640619473617,
+          "python": 72.96748064105364,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774224000000,
+          "python_time": 1774224000000,
+          "pine": 64.699457074852,
+          "python": 69.63616654864111,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774225800000,
+          "python_time": 1774225800000,
+          "pine": 64.82171803038685,
+          "python": 64.82355981924707,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774227600000,
+          "python_time": 1774227600000,
+          "pine": 51.04568586826073,
+          "python": 58.882648155552005,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774229400000,
+          "python_time": 1774229400000,
+          "pine": 55.099949898715636,
+          "python": 56.97152920519076,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "exhaustion",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 26955331783976.332,
+      "agreement_percent": 96.30010277492292,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774222200000,
+          "python_time": 1774222200000,
+          "pine": 28.98032981200211,
+          "python": 28.980329812001635,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774234800000,
+          "python_time": 1774234800000,
+          "pine": 11.008494642324187,
+          "python": 11.008494642323798,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774236600000,
+          "python_time": 1774236600000,
+          "pine": 60.8765311435273,
+          "python": 60.876531143526904,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776495600000,
+          "python_time": 1776495600000,
+          "pine": 3.5490741351723143,
+          "python": 2.8577018013610234,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776515400000,
+          "python_time": 1776515400000,
+          "pine": 42.44055428728346,
+          "python": 42.44055428728385,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "mae",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 7.105427357601002e-15,
+      "relative_error_max": 48624425716347.43,
+      "agreement_percent": 92.20052529405048,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776493800000,
+          "python_time": 1776493800000,
+          "pine": 30.921115283678482,
+          "python": 15.921115283678484,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776533400000,
+          "python_time": 1776533400000,
+          "pine": 7.526360985190878,
+          "python": 7.52636098519088,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776542400000,
+          "python_time": 1776542400000,
+          "pine": 2.0772900064996347,
+          "python": 2.077290006499636,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776544200000,
+          "python_time": 1776544200000,
+          "pine": 15.580111801548131,
+          "python": 15.580111801548133,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776546000000,
+          "python_time": 1776546000000,
+          "pine": 19.730533811095857,
+          "python": 19.73053381109586,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "avg_setup",
+      "pine": 1443,
+      "python": 1371,
+      "both_na": 7312,
+      "error_median": 0.20673885497696176,
+      "error_p95": 0.8139058598824305,
+      "relative_error_max": 0.33644927065363667,
+      "agreement_percent": 83.51033458947128,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 76,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774222200000,
+          "python_time": 1774222200000,
+          "pine": 74.13372609474833,
+          "python": 74.13383353938012,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774224000000,
+          "python_time": 1774224000000,
+          "pine": 70.3820364311388,
+          "python": 70.62892562714416,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774225800000,
+          "python_time": 1774225800000,
+          "pine": 67.13594509155799,
+          "python": 67.30059928185692,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774227600000,
+          "python_time": 1774227600000,
+          "pine": 60.13828885137814,
+          "python": 60.56413930304283,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774229400000,
+          "python_time": 1774229400000,
+          "pine": 60.175818116949564,
+          "python": 60.499497563037124,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "continuation",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 1.3057420336915821,
+      "relative_error_max": 72953347047020.45,
+      "agreement_percent": 83.59027064063035,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774222200000,
+          "python_time": 1774222200000,
+          "pine": 74.69316073174508,
+          "python": 74.69337562100863,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774224000000,
+          "python_time": 1774224000000,
+          "pine": 65.56894698259175,
+          "python": 66.55628887734957,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774225800000,
+          "python_time": 1774225800000,
+          "pine": 60.94037971461586,
+          "python": 60.9407480723879,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774227600000,
+          "python_time": 1774227600000,
+          "pine": 52.672410496865844,
+          "python": 54.2398029543241,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774229400000,
+          "python_time": 1774229400000,
+          "pine": 64.97471003449597,
+          "python": 65.34902589579099,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "btc_shock",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 12.043263985249476,
+      "error_p95": 43.41396613161836,
+      "relative_error_max": 6.175162762457827,
+      "agreement_percent": 10.151878497202238,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 70.88610714320318,
+          "python": 83.60177771957257,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 67.37429680885145,
+          "python": 53.40620107885674,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 45.34756528731546,
+          "python": 58.867421317801586,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 76.52502053069426,
+          "python": 73.54198435261019,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774215000000,
+          "python_time": 1774215000000,
+          "pine": 37.46609772831286,
+          "python": 35.394227300995986,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "candidate_path",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 7000000000000.0,
+      "agreement_percent": 99.82870846180198,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783512000000,
+          "python_time": 1783512000000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783513800000,
+          "python_time": 1783513800000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": 0.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783530000000,
+          "python_time": 1783530000000,
+          "pine": 0.0,
+          "python": 3.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783567800000,
+          "python_time": 1783567800000,
+          "pine": 0.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "trigger_path",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 7000000000000.0,
+      "agreement_percent": 99.88580564120133,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783515600000,
+          "python_time": 1783515600000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": 0.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783567800000,
+          "python_time": 1783567800000,
+          "pine": 0.0,
+          "python": 2.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783571400000,
+          "python_time": 1783571400000,
+          "pine": 0.0,
+          "python": 5.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783573200000,
+          "python_time": 1783573200000,
+          "pine": 0.0,
+          "python": 3.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "risk_path",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 7000000000000.0,
+      "agreement_percent": 99.40618933424689,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783512000000,
+          "python_time": 1783512000000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783513800000,
+          "python_time": 1783513800000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783515600000,
+          "python_time": 1783515600000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783517400000,
+          "python_time": 1783517400000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783519200000,
+          "python_time": 1783519200000,
+          "pine": 0.0,
+          "python": 7.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "sl",
+      "pine": 1443,
+      "python": 1371,
+      "both_na": 7312,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0644655891491956,
+      "agreement_percent": 98.84663697613338,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 76,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 0.5070359978318837,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 0.40409050440391947,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783526400000,
+          "python_time": 1783526400000,
+          "pine": 0.4036726024376645,
+          "python": 0.3781273975623355,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": 0.4036917022635456,
+          "python": 0.3781082977364544,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783530000000,
+          "python_time": 1783530000000,
+          "pine": 0.4036465806732924,
+          "python": 0.38695341932670757,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "t1",
+      "pine": 1443,
+      "python": 1371,
+      "both_na": 7312,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.19279611475109779,
+      "agreement_percent": 98.61824825853603,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 76,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 0.5468217282632895,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 0.3599626723010958,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 0.36099232401924997,
+          "python": 0.37383161890592176,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 0.3612984203250961,
+          "python": 0.37413771521176786,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 0.3609226723010958,
+          "python": 0.37376196718776755,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "rr",
+      "pine": 1437,
+      "python": 1365,
+      "both_na": 7318,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 22.188900479252293,
+      "agreement_percent": 98.61824825853603,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 76,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 2.9532712500252254,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 2.003833693487768,
+          "python": null,
+          "reason": "NA_MISMATCH"
+        },
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 2.5067772517464526,
+          "python": 1.4620618902084985,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 3.650797524650513,
+          "python": 2.1140356096902213,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 5.482188763280013,
+          "python": 3.2947032512824648,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "r1",
+      "pine": 8420,
+      "python": 8417,
+      "both_na": 337,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0898190045248869,
+      "agreement_percent": 98.92657302729245,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 3,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783533600000,
+          "python_time": 1783533600000,
+          "pine": 0.40215,
+          "python": 0.4023,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783535400000,
+          "python_time": 1783535400000,
+          "pine": 0.40215,
+          "python": 0.4023,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783537200000,
+          "python_time": 1783537200000,
+          "pine": 0.40215,
+          "python": 0.4023,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783539000000,
+          "python_time": 1783539000000,
+          "pine": 0.40215,
+          "python": 0.4023,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783540800000,
+          "python_time": 1783540800000,
+          "pine": 0.40215,
+          "python": 0.4023,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "r2",
+      "pine": 6797,
+      "python": 6797,
+      "both_na": 1960,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.09326772534108704,
+      "agreement_percent": 99.21205892428914,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783567800000,
+          "python_time": 1783567800000,
+          "pine": 0.442,
+          "python": 0.4054,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783569600000,
+          "python_time": 1783569600000,
+          "pine": 0.442,
+          "python": 0.4054,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783571400000,
+          "python_time": 1783571400000,
+          "pine": 0.4471,
+          "python": 0.4054,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783573200000,
+          "python_time": 1783573200000,
+          "pine": 0.4471,
+          "python": 0.4054,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783575000000,
+          "python_time": 1783575000000,
+          "pine": 0.4471,
+          "python": 0.4054,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "s1",
+      "pine": 8388,
+      "python": 8388,
+      "both_na": 369,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.04437869822485196,
+      "agreement_percent": 99.58890030832477,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 0.3718,
+          "python": 0.3847,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 0.3718,
+          "python": 0.3847,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 0.3718,
+          "python": 0.3847,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783512000000,
+          "python_time": 1783512000000,
+          "pine": 0.3718,
+          "python": 0.3847,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783513800000,
+          "python_time": 1783513800000,
+          "pine": 0.3718,
+          "python": 0.3847,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "s2",
+      "pine": 7303,
+      "python": 7293,
+      "both_na": 1454,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.02929210740439375,
+      "agreement_percent": 99.58890030832477,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 10,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783506600000,
+          "python_time": 1783506600000,
+          "pine": 0.3687,
+          "python": 0.3718,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783508400000,
+          "python_time": 1783508400000,
+          "pine": 0.3687,
+          "python": 0.3718,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783510200000,
+          "python_time": 1783510200000,
+          "pine": 0.3687,
+          "python": 0.3718,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783512000000,
+          "python_time": 1783512000000,
+          "pine": 0.3687,
+          "python": 0.3718,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783513800000,
+          "python_time": 1783513800000,
+          "pine": 0.3687,
+          "python": 0.3718,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "mtf_trend",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 16.25,
+      "relative_error_max": 2.8333333333333335,
+      "agreement_percent": 69.52152563663356,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 15.0,
+          "python": 23.75,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 15.0,
+          "python": 23.75,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 15.0,
+          "python": 23.75,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 15.0,
+          "python": 23.75,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 15.0,
+          "python": 23.75,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "dynamic_support",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.2,
+      "agreement_percent": 99.9657416923604,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1786656600000,
+          "python_time": 1786656600000,
+          "pine": 25.0,
+          "python": 20.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1786658400000,
+          "python_time": 1786658400000,
+          "pine": 25.0,
+          "python": 20.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1786660200000,
+          "python_time": 1786660200000,
+          "pine": 25.0,
+          "python": 20.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "htf_base",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 1.112894596040661,
+      "error_p95": 12.940448842551689,
+      "relative_error_max": 1.2108206545248241,
+      "agreement_percent": 2.0897567660157588,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774206000000,
+          "python_time": 1774206000000,
+          "pine": 49.49098141610855,
+          "python": 60.623264977164865,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774207800000,
+          "python_time": 1774207800000,
+          "pine": 49.49098141610855,
+          "python": 60.623264977164865,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774209600000,
+          "python_time": 1774209600000,
+          "pine": 49.49098141610855,
+          "python": 60.623264977164865,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774211400000,
+          "python_time": 1774211400000,
+          "pine": 49.49098141610855,
+          "python": 60.623264977164865,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774213200000,
+          "python_time": 1774213200000,
+          "pine": 49.49098141610855,
+          "python": 60.623264977164865,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "action",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 6.666666666666667,
+      "agreement_percent": 97.41920749114993,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774224000000,
+          "python_time": 1774224000000,
+          "pine": 14.0,
+          "python": 23.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 30.0,
+          "python": 27.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776497400000,
+          "python_time": 1776497400000,
+          "pine": 23.0,
+          "python": 21.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776520800000,
+          "python_time": 1776520800000,
+          "pine": 14.0,
+          "python": 29.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1781753400000,
+          "python_time": 1781753400000,
+          "pine": 21.0,
+          "python": 29.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "gate_liquidity",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 99.49754482128583,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774224000000,
+          "python_time": 1774224000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776520800000,
+          "python_time": 1776520800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1781719200000,
+          "python_time": 1781719200000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1781812800000,
+          "python_time": 1781812800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "gate_structure",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 99.38335046248716,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1776488400000,
+          "python_time": 1776488400000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783504800000,
+          "python_time": 1783504800000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783512000000,
+          "python_time": 1783512000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783513800000,
+          "python_time": 1783513800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783526400000,
+          "python_time": 1783526400000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "gate_trigger",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 99.88580564120133,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783515600000,
+          "python_time": 1783515600000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783567800000,
+          "python_time": 1783567800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783571400000,
+          "python_time": 1783571400000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783573200000,
+          "python_time": 1783573200000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "gate_btc_shock",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 98.32134292565948,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1774231200000,
+          "python_time": 1774231200000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774233000000,
+          "python_time": 1774233000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774242000000,
+          "python_time": 1774242000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1774243800000,
+          "python_time": 1774243800000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1776497400000,
+          "python_time": 1776497400000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "metric": "fresh_trigger",
+      "pine": 8757,
+      "python": 8757,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1000000000000.0,
+      "agreement_percent": 99.89722507708119,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1783515600000,
+          "python_time": 1783515600000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783528200000,
+          "python_time": 1783528200000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783567800000,
+          "python_time": 1783567800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783571400000,
+          "python_time": 1783571400000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1783576800000,
+          "python_time": 1783576800000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "FAIL"
+    }
+  ],
+  "signals": [
+    {
+      "signal": "L WATCH",
+      "pine_events": 25,
+      "python_events": 25,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "S WATCH",
+      "pine_events": 14,
+      "python_events": 14,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG WATCH ENTRY",
+      "pine_events": 13,
+      "python_events": 14,
+      "match_percent": 99.98858056412013,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1789209000000,
+          "python_time": 1789209000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "SIGNAL_MISMATCH"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "signal": "SHORT WATCH ENTRY",
+      "pine_events": 4,
+      "python_events": 4,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "MATURED PRE-BREAK ENTRY",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG ARMED",
+      "pine_events": 9,
+      "python_events": 9,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "SHORT ARMED",
+      "pine_events": 7,
+      "python_events": 7,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "PINE READY LONG",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "PINE READY SHORT",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "BREAKOUT",
+      "pine_events": 20,
+      "python_events": 20,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "BREAKDOWN",
+      "pine_events": 9,
+      "python_events": 9,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "BRONZE",
+      "pine_events": 5,
+      "python_events": 6,
+      "match_percent": 99.98858056412013,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1789209000000,
+          "python_time": 1789209000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "SIGNAL_MISMATCH"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "signal": "STRONG",
+      "pine_events": 5,
+      "python_events": 5,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG REVERSAL RISK",
+      "pine_events": 24,
+      "python_events": 24,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "SHORT REVERSAL RISK",
+      "pine_events": 8,
+      "python_events": 8,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "ACTIVE PLAN DEGRADED",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "ACTIVE PLAN EXIT",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "ADD-ON",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG TP HIT",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "SHORT TP HIT",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG ARMED LOST",
+      "pine_events": 10,
+      "python_events": 10,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "SHORT ARMED LOST",
+      "pine_events": 12,
+      "python_events": 12,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "LONG BOUNCE WATCH",
+      "pine_events": 0,
+      "python_events": 0,
+      "match_percent": 100.0,
+      "positive_event_coverage": false,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "SHORT BOUNCE WATCH",
+      "pine_events": 1,
+      "python_events": 1,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "signal": "AVG SETUP >= 70",
+      "pine_events": 42,
+      "python_events": 41,
+      "match_percent": 99.9657416923604,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1789066800000,
+          "python_time": 1789066800000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "SIGNAL_MISMATCH"
+        },
+        {
+          "time": 1789666200000,
+          "python_time": 1789666200000,
+          "pine": 1.0,
+          "python": 0.0,
+          "reason": "SIGNAL_MISMATCH"
+        },
+        {
+          "time": 1789668000000,
+          "python_time": 1789668000000,
+          "pine": 0.0,
+          "python": 1.0,
+          "reason": "SIGNAL_MISMATCH"
+        }
+      ],
+      "status": "FAIL"
+    },
+    {
+      "signal": "EXECUTION QUALITY >= 65",
+      "pine_events": 89,
+      "python_events": 89,
+      "match_percent": 100.0,
+      "positive_event_coverage": true,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    }
+  ],
+  "realtime": false,
+  "reasons": [],
+  "matched_records": 8757,
+  "missing_records": 0,
+  "unexpected_python_records": 0,
+  "timestamp_error_max_ms": 0,
+  "symbol": "ETHFIUSDT",
+  "timeframe": "30",
+  "csv_sha256": "128884e3fc98ff3b5471ca2b95b2ec5a7eb641ef05264d11946a1f582c12960c",
+  "history_start": 1735689600000,
+  "parameters_confirmed": false,
+  "compared_closed_records": 8757,
+  "excluded_records": 1,
+  "intrabar_status": "UNVERIFIED",
+  "feed_differences": [
+    {
+      "time": 1789192800000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 381194.1,
+          "bybit": 382479.5
+        }
+      }
+    },
+    {
+      "time": 1789264800000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 314161.7,
+          "bybit": 317548.2
+        }
+      }
+    },
+    {
+      "time": 1789380000000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 567903.6,
+          "bybit": 576849.6
+        }
+      }
+    },
+    {
+      "time": 1789542000000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 329225.5,
+          "bybit": 329443.8
+        }
+      }
+    },
+    {
+      "time": 1789551000000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 101642.6,
+          "bybit": 101790.0
+        }
+      }
+    },
+    {
+      "time": 1789686000000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 120421.5,
+          "bybit": 120671.0
+        }
+      }
+    },
+    {
+      "time": 1789718400000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 569926.0,
+          "bybit": 569927.3
+        }
+      }
+    },
+    {
+      "time": 1789723800000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 1274719.4,
+          "bybit": 1293395.9
+        }
+      }
+    },
+    {
+      "time": 1789806600000,
+      "excluded_last_row": false,
+      "differences": {
+        "volume": {
+          "tradingview": 423316.9,
+          "bybit": 423842.4
+        }
+      }
+    },
+    {
+      "time": 1789968600000,
+      "excluded_last_row": true,
+      "differences": {
+        "low": {
+          "tradingview": 0.7324,
+          "bybit": 0.7317
+        },
+        "close": {
+          "tradingview": 0.7325,
+          "bybit": 0.7328
+        },
+        "volume": {
+          "tradingview": 152371.3,
+          "bybit": 219566.4
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Native exchange warmup and request contexts can differ from TradingView feeds.",
+    "Historical CSV does not verify intrabar execution."
+  ],
+  "observed_status": "FAIL"
+}

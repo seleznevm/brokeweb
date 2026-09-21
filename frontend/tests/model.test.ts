@@ -10,3 +10,7 @@ describe('screener source values',()=>{
 describe('alert condition values',()=>{
  it('supports numeric ranges, string membership and booleans',()=>{expect(conditionValue('BETWEEN','60, 80')).toEqual([60,80]);expect(conditionValue('IN','LONG, SHORT')).toEqual(['LONG','SHORT']);expect(conditionValue('IN','["WATCH", "READY"]')).toEqual(['WATCH','READY']);expect(conditionValue('==','false')).toBe(false);expect(conditionValue('crosses_above','70')).toBe(70);});
 });
+
+describe('display precision',()=>{
+ it('rounds scores only at presentation, preserving underlying values',()=>{expect(format(64.12345678)).toBe('64.12');expect(format(0.00012345,8)).toBe('0.00012345');expect(valueOf(row('A',64.12345678,2),'avg_setup')).toBe(64.12345678);expect(format([1.2345,2.3456])).toBe('1.23 · 2.35');});
+});

@@ -1,0 +1,79 @@
+{
+  "status": "DIFFERENCES_FOUND",
+  "source_report": "reports/full-parity.json",
+  "metrics_pass": [
+    "open",
+    "high",
+    "low",
+    "close",
+    "atr",
+    "ema_fast",
+    "ema_slow",
+    "level",
+    "formation",
+    "execution",
+    "geometry",
+    "exhaustion",
+    "mae",
+    "continuation",
+    "dynamic_support"
+  ],
+  "metrics_fail": [
+    "return_1h",
+    "return_6h",
+    "return_24h",
+    "natr_1h",
+    "volume_24h",
+    "direction",
+    "generation",
+    "fsm",
+    "approach",
+    "context",
+    "avg_setup",
+    "btc_shock",
+    "candidate_path",
+    "trigger_path",
+    "risk_path",
+    "sl",
+    "t1",
+    "rr",
+    "r1",
+    "r2",
+    "s1",
+    "s2",
+    "mtf_trend",
+    "htf_base",
+    "action",
+    "gate_liquidity",
+    "gate_structure",
+    "gate_trigger",
+    "gate_btc_shock",
+    "fresh_trigger"
+  ],
+  "signals_fail": [
+    "LONG WATCH ENTRY",
+    "BRONZE",
+    "AVG SETUP >= 70"
+  ],
+  "hourly_alignment": {
+    "return_1h": {
+      "first_half_hour_samples": 4378,
+      "matches_next_python_half_hour": 4378
+    },
+    "return_6h": {
+      "first_half_hour_samples": 4378,
+      "matches_next_python_half_hour": 4378
+    },
+    "return_24h": {
+      "first_half_hour_samples": 4378,
+      "matches_next_python_half_hour": 4378
+    },
+    "natr_1h": {
+      "first_half_hour_samples": 4378,
+      "matches_next_python_half_hour": 4378
+    }
+  },
+  "conclusion": "The CSV publishes the final hourly result in both half-hour rows, while historical replay publishes it after hour close. Cause and exact TradingView script/settings still need confirmation; no engine lookahead change was made.",
+  "parameters_confirmed": false,
+  "intrabar_status": "UNVERIFIED"
+}

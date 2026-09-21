@@ -132,3 +132,24 @@ CLI по умолчанию пишет `reports/full-parity.json`, сохран�
 Прошли **200 Python tests** и **52 parity tests в новом Docker-образе**. API обновлён; `/setups`, `/parity` и `/api/parity` отвечают HTTP 200, семь контейнеров healthy. Текущая локальная конфигурация уже выбирает весь universe (`MAX_SYMBOLS=0`, 771 инструмент), поэтому приложение сообщает **RECOVERING** во время инициализации; прежнее измерение на четырёх инструментах не описывает этот запуск. Конфигурация universe в этой работе не менялась. [Отчёт проверки инструментов capture](../reports/capture-tooling-validation.json).
 
 Исходник 1.15.2 и опубликованный отчёт обычных CSV не изменены. Новых reference из TradingView ещё нет; компиляция диагностических копий на TradingView и full parity остаются UNVERIFIED. Версия 1.16.5 в этот набор проверки не включена.
+
+## Первый полный CSV ETHFI 30m, 2026-09-21
+
+Получен `tradingview_data/full_reference/BYBIT_ETHFIUSDT.P, 30_caaff.csv`: 8758 строк, 45 внутренних метрик, 26 сигналов, metadata обеих копий. Начало расчёта `1735689600000` (2025-01-01 UTC); первый экспортированный bar_index 21398. На всех закрытых свечах metadata metrics/signals согласованы. Последняя свеча имеет confirmed=0, и объём двух одновременно работающих копий уже различается; она исключена.
+
+Python replay выполнен на **30155 свечах от того же origin**, включая 21398 свечей прогрева. OHLCV окна взяты из CSV; более ранняя история и внешние request-контексты — из Bybit/Binance. Inputs пока предполагаются стандартными, подтверждение пользователя не получено. Исторический replay подаёт контекстные свечи по мере их закрытия; эквивалентность с прежним полным потоком проверена отдельно.
+
+Итог **FAIL**: сопоставлены все 8757 закрытых строк, пропущенных или лишних записей нет. По установленным допускам прошли **15/45 метрик** и **23/26 сигналов**. Среди прошедших — OHLC, ATR, EMA, Level, Formation, Execution, Geometry, Exhaustion, MAE, Continuation, Dynamic Support. Это не означает точного совпадения каждой строки для метрик с численным допуском.
+
+Расхождения сигналов: LONG WATCH ENTRY (13 событий TV / 14 Python), BRONZE (5 / 6), AVG SETUP >=70 (42 / 41). Часовые return1h/6h/24h и NATR в CSV повторяют итог текущего часа на обеих его половинах; все 4378 первых получасовых значений точно совпадают со **следующей** Python-строкой. Это установленная закономерность данных, но причина ещё не подтверждена. Кроме неё есть расхождения volume24h, HTF, состояний и других показателей. Логика lookahead engine для подгонки не менялась.
+
+Подробности: [полный отчёт](../reports/full-parity.json), [диагностика](../reports/full-parity-diagnostics.json). `/api/parity` и страница `/parity` предпочитают полный отчёт, когда он существует. Прежний результат ограниченного сравнения семи CSV сохранён в `reports/parity.json`; он не отменяет новые расхождения. Intrabar остаётся UNVERIFIED.
+
+```bash
+python3 -m tools.pine_reference.full \
+  --input 'tradingview_data/full_reference/BYBIT_ETHFIUSDT.P, 30_caaff.csv' \
+  --output-dir artifacts/local/full-ethfi \
+  --report reports/full-parity.json
+```
+
+`--parameters` задаёт inputs для replay; `--parameters-confirmed` указывается только после независимого подтверждения соответствия настроек TradingView. Сырые fixtures и Python observations хранятся локально в `artifacts/local/full-ethfi`.

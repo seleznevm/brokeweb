@@ -32,6 +32,9 @@ def render_message(payload):
     values['blockers']=', '.join(snapshot.get('blockers',[])) or 'NONE'
     base=os.getenv('PUBLIC_BASE_URL','http://localhost:8080').rstrip('/')
     values['detail_url']=base+'/setups/'+'/'.join(quote(str(snapshot.get(k,'')),safe='') for k in ('exchange','symbol','timeframe'))
+    for key in ('avg_setup','formation','execution','geometry','context','level','approach','mae','exhaustion','btc_shock','continuation','rr','distance'):
+        value=values.get(key)
+        if isinstance(value,(int,float)) and not isinstance(value,bool):values[key]=f'{value:.2f}'.rstrip('0').rstrip('.')
     template=payload.get('template') or DEFAULT
     # Only literal field names; no attribute access, expressions, or formatting execution.
     return re.sub(r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}',lambda m:str(values[m[1]]) if values.get(m[1]) is not None else 'n/a',template)[:4096]

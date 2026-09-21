@@ -1,0 +1,44 @@
+{
+  "checked_at": "2026-09-21T10:39:04.106101+00:00",
+  "status": "IMPLEMENTATION_CHECKS_PASS",
+  "python_tests": 218,
+  "docker_parity_and_rule_tests": 84,
+  "frontend_tests": 8,
+  "frontend_checks": [
+    "lint",
+    "typecheck",
+    "production build"
+  ],
+  "browser": {
+    "status": "PASS",
+    "symbol": "LUNA2USDT",
+    "timeframe": "15",
+    "checks": [
+      "attribute selection",
+      "X wheel",
+      "Y wheel",
+      "drag pan",
+      "Shift percentage ruler",
+      "Escape",
+      "double click reset",
+      "metric chart zoom",
+      "unique plot clips",
+      "mobile render"
+    ],
+    "errors": []
+  },
+  "active_signal_timeframes": [
+    "30"
+  ],
+  "engine_status": "RECOVERING",
+  "selected_instruments": 774,
+  "initialized_instruments": 1,
+  "full_historical_parity": "FAIL",
+  "intrabar_parity": "UNVERIFIED",
+  "parity_report": "reports/full-parity.json",
+  "limitations": [
+    "Full-universe warmup and capacity acceptance are not complete.",
+    "TradingView inputs have not yet been independently confirmed.",
+    "Browser interactions used retained real 15m history; active engine is now configured for 30m."
+  ]
+}

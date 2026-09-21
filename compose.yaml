@@ -7,7 +7,7 @@ x-backend: &backend
     DATABASE_URL: postgresql+psycopg://brokeweb:${POSTGRES_PASSWORD:-brokeweb_local}@postgres:5432/brokeweb
     REDIS_URL: redis://redis:6379/0
     SNAPSHOT_INTERVAL_SEC: ${SNAPSHOT_INTERVAL_SEC:-15}
-    ACTIVE_TIMEFRAMES: ${ACTIVE_TIMEFRAMES:-15}
+    ACTIVE_TIMEFRAMES: ${ACTIVE_TIMEFRAMES:-30}
     BYBIT_ENV: ${BYBIT_ENV:-mainnet}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
     PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}

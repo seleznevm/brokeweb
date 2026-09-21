@@ -183,7 +183,7 @@ def create_app(repository:Repository|None=None):
     def parity():
         with repo.session() as s: row=s.scalar(select(ParityResult).order_by(ParityResult.created_at.desc()).limit(1))
         if row: return row.payload
-        path=os.getenv('PARITY_REPORT_PATH','reports/parity.json')
+        path=os.getenv('PARITY_REPORT_PATH','reports/full-parity.json' if os.path.isfile('reports/full-parity.json') else 'reports/parity.json')
         try:
             with open(path) as f: return json.load(f)
         except FileNotFoundError: pass

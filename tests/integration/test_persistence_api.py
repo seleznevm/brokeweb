@@ -56,7 +56,8 @@ def rule(client,**kwargs):
     response=client.post('/api/alerts/rules',json=data); assert response.status_code==201,response.text
     return response.json()
 
-def test_api_persistence_recovery_and_dedupe(repo,client):
+def test_api_persistence_recovery_and_dedupe(repo,client,monkeypatch,tmp_path):
+    monkeypatch.setenv("PARITY_REPORT_PATH",str(tmp_path/"missing-reference.json"))
     row=rule(client)
     repo.save_snapshot(snapshot(repo,signals=['BRONZE']),{'zones':[1],'varip':{'crossed':True}})
     repo.save_snapshot(snapshot(repo,signals=['BRONZE']))
@@ -195,3 +196,14 @@ def test_intrabar_latch_does_not_duplicate_event_snapshots(repo,client):
     with repo.session() as session:
         assert len(session.scalars(select(Snapshot)).all())==1
         assert len(session.scalars(select(Signal)).all())==1
+
+
+def test_parity_prefers_full_reference_when_present(client,monkeypatch,tmp_path):
+    import json
+    monkeypatch.delenv('PARITY_REPORT_PATH',raising=False)
+    monkeypatch.chdir(tmp_path)
+    reports=tmp_path/'reports';reports.mkdir()
+    (reports/'parity.json').write_text(json.dumps({'status':'UNVERIFIED','observed_status':'PASS'}))
+    assert client.get('/api/parity').json()['status']=='UNVERIFIED'
+    (reports/'full-parity.json').write_text(json.dumps({'status':'FAIL','observed_status':'FAIL'}))
+    assert client.get('/api/parity').json()['status']=='FAIL'

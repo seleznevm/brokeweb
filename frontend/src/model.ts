@@ -9,11 +9,11 @@ export function valueOf(item:Snapshot,key:string):unknown {
  if(key==='last_signal')return item.last_signal??item.signals?.at(-1);
  return item[key]??item.metrics?.[aliases[key]??key];
 }
-export function format(value:unknown):string {
+export function format(value:unknown,digits=2):string {
  if(value===null||value===undefined||typeof value==='number'&&!Number.isFinite(value))return 'н/д';
  if(typeof value==='boolean')return value?'Да':'Нет';
- if(typeof value==='number')return new Intl.NumberFormat('en-US',{maximumFractionDigits:8}).format(value);
- if(Array.isArray(value))return value.length?value.map(format).join(' · '):'—';
+ if(typeof value==='number')return new Intl.NumberFormat('en-US',{maximumFractionDigits:digits}).format(value);
+ if(Array.isArray(value))return value.length?value.map(v=>format(v,digits)).join(' · '):'—';
  if(typeof value==='object')return Object.entries(value as Data).map(([key,v])=>`${key}: ${format(v)}`).join(' · ');
  return String(value);
 }
@@ -22,3 +22,5 @@ export type Sort={key:string;direction:'asc'|'desc'};
 export function sortItems(items:Snapshot[],sort:Sort[]):Snapshot[]{return [...items].sort((a,b)=>{for(const s of sort){const x=valueOf(a,s.key),y=valueOf(b,s.key);if(x==null&&y==null)continue;if(x==null)return 1;if(y==null)return -1;const d=typeof x==='number'&&typeof y==='number'?x-y:format(x).localeCompare(format(y),undefined,{numeric:true});if(d)return s.direction==='asc'?d:-d;}return 0;});}
 export function scalar(raw:string):unknown {const trimmed=raw.trim();if(trimmed==='true')return true;if(trimmed==='false')return false;if(trimmed==='null')return null;if(trimmed!==''&&Number.isFinite(Number(trimmed)))return Number(trimmed);return raw;}
 export function conditionValue(op:string,raw:string):unknown {if(['IN','NOT IN','BETWEEN'].includes(op)){try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed;}catch{/* Comma separated input is also supported. */}return raw.split(',').map(x=>scalar(x.trim()));}return scalar(raw);}
+
+export function formatField(key:string,value:unknown):string{return format(value,["price","sl","t1","open","high","low","close","trigger_zone","r1","r2","s1","s2","atr","ema_fast","ema_slow"].includes(key)?8:2);}

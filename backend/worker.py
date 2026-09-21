@@ -51,7 +51,7 @@ class Worker:
         self.bybit=BybitAdapter(base_url='https://api-testnet.bybit.com' if testnet else 'https://api.bybit.com');self.btc=BinanceBtcContextAdapter()
         self.ws=BybitWebSocketManager(self.on_market,url='wss://stream-testnet.bybit.com/v5/public/linear' if testnet else 'wss://stream.bybit.com/v5/public/linear')
         self.btc_ws=BinanceBtcWebSocket(self.on_btc);self.btc_refresh_lock=asyncio.Lock();self.btc_recovering=True;self.btc_last_events={}
-        self.timeframes=[s.strip() for s in os.getenv('ACTIVE_TIMEFRAMES','15').split(',') if s.strip()]
+        self.timeframes=[s.strip() for s in os.getenv('ACTIVE_TIMEFRAMES','30').split(',') if s.strip()]
         for tf in self.timeframes:tf_seconds(tf)
         self.engines={};self.contexts={};self.instruments={};self.native_turnover24h={};self.aggregators={};self.full_charts={};self.full_since={};self.full=set();self.ready=set();self.recovering=set();self.locks=defaultdict(asyncio.Lock)
         self.messages=0;self.calculations=0;self.errors={};self.status='RECOVERING';self.universe_count=0;self.selected_count=0;self.last_events={};self.reconnects=0;self.latencies=[];self.parameter_id=None;self.parameters={};self.pending={};self.replay_skip_until={};self.replay_origins={};self.context_last=0;self.reconciliation_errors=0;self.db_latencies=[];self.backfilled={};self.previous_calculations=0;self.previous_heartbeat=time.monotonic()

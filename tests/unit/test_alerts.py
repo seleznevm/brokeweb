@@ -20,3 +20,18 @@ def test_invalid_groups_and_template():
     with pytest.raises(ValueError): validate_condition({'op':'eval','field':'__import__'})
     message=render_message({'snapshot':{'symbol':'BTCUSDT','timeframe':'15','exchange':'BYBIT','signals':[]},'template':'{symbol} {price} {symbol.__class__}'})
     assert message=='BTCUSDT n/a {symbol.__class__}'
+
+@pytest.mark.parametrize('field',['avg_setup','formation','execution','geometry','context','level','mae','btc_shock','continuation','exhaustion'])
+def test_primary_attributes_and_signal_timeframes(field):
+    node={'op':'AND','conditions':[{'field':'timeframe','op':'IN','value':['30','5']},{'field':field,'op':'>=','value':65}]}
+    assert matches(node,{'timeframe':'30',field:65.001})
+    assert matches(node,{'timeframe':'5',field:65.001})
+    assert not matches(node,{'timeframe':'15',field:65.001})
+    assert not matches(node,{'timeframe':'30',field:64.999})
+
+
+def test_notification_rounds_scores_without_changing_prices_or_inputs():
+    snapshot={'symbol':'ETHFIUSDT','timeframe':'30','exchange':'BYBIT','avg_setup':65.123456,'price':.00012345,'sl':.00011234,'signals':[]}
+    message=render_message({'snapshot':snapshot,'template':'{avg_setup} {price} {sl}'})
+    assert message=='65.12 0.00012345 0.00011234'
+    assert snapshot['avg_setup']==65.123456

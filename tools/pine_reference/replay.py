@@ -93,7 +93,7 @@ def numeric_columns(snapshot: dict) -> dict:
     return output
 
 
-def replay_fixture(fixture: dict) -> Iterator[dict]:
+def replay_fixture(fixture: dict, *, incremental_contexts=False) -> Iterator[dict]:
     """Yield canonical snapshots plus numeric PARITY columns.
 
     Repeated starts model realtime updates; closing updates continue varip state.
@@ -111,7 +111,7 @@ def replay_fixture(fixture: dict) -> Iterator[dict]:
     contexts=normalized_contexts(fixture.get('contexts',{}))
     engine=PineEngine(symbol,timeframe,tick,parameters)
     fingerprint=hashlib.sha256(json.dumps(fixture,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()).hexdigest()
-    previous=None;last_event=None
+    previous=None;last_event=None;context_offsets={}
     for index,row in enumerate(rows):
         raw=row.get('bar',row)
         bar=normalize_bar(raw,symbol,timeframe)
@@ -142,7 +142,21 @@ def replay_fixture(fixture: dict) -> Iterator[dict]:
         if updates is not None:contexts.update(normalized_contexts(updates))
         bar['received_at']=int(event_time)
         for key in ('contexts','realtime','event_time'):bar.pop(key,None)
-        snapshot=engine.update(bar,contexts,realtime)
+        visible=contexts
+        if incremental_contexts:
+            if realtime or updates is not None:
+                raise FixtureError('Incremental contexts require immutable historical streams')
+            # Deliver each confirmed context bar when it first becomes available.
+            # ContextProvider retains its own indicator history and lower-TF results.
+            # Keep the last delivered sample so an empty chunk does not imply a
+            # missing source. Never pass future context candles to the provider.
+            visible={}
+            for key,stream in contexts.items():
+                begin=context_offsets.get(key,0);end=begin
+                while end<len(stream) and stream[end]['confirmed'] and stream[end]['end']<=bar['end']:end+=1
+                visible[key]=stream[max(0,begin-1):end]
+                context_offsets[key]=end
+        snapshot=engine.update(bar,visible,realtime)
         from .native import plot_values
         yield {**snapshot,**numeric_columns(snapshot),'source_plots':plot_values(engine.runtime),'replay_input_sha256':fingerprint,'replay_index':index,'replay_realtime':realtime,'replay_event_time':int(event_time)}
         previous=bar;last_event=event_time
