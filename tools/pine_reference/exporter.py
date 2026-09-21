@@ -8,6 +8,7 @@ from pathlib import Path
 from backend.engine.syntax import SOURCE,load_program
 from backend.engine.runtime import SIGNALS
 from .catalog import METRICS,PATHS
+from .trace import realtime_source,TRACE_COLUMNS,OMITTED_PARAMETERS,INTERVAL_MS,BUFFER_CHARS
 
 def literals(e):
     result=[]
@@ -30,14 +31,23 @@ def generate(directory='tools/pine_reference/generated'):
     action='int parityActionCode = '+' : '.join(f'actionText == {json.dumps(name,ensure_ascii=False)} ? {code}' for name,code in codes.items())+' : -1'
     groups={'metrics':METRICS,'signals':{name:(pine,'bool') for pine,name in SIGNALS.items()}}
     manifest={'pine_source_hash':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'action_codes':codes,'path_codes':PATHS,'groups':{},'status':'EXPORT_SCRIPTS_UNVERIFIED'}
+    base=detector+'\n'+displayed+'\n'+action+'\n'
+    def titled(source,group,short):
+        return source.replace('"Scalping_SMA 1.15.2"',json.dumps('Scalping_SMA 1.15.2 - PARITY '+group),1).replace('shorttitle = "Scalping_SMA 1.15.2"','shorttitle = '+json.dumps(short),1)
     for group,fields in groups.items():
         plots=[]
         for label,(expr,kind) in fields.items():
             if kind=='bool':expr=f'({expr} ? 1 : 0)'
             plots.append(f'plot({expr}, title = {json.dumps("PARITY_"+label)}, display = display.data_window)')
-        script=detector+'\n'+displayed+'\n'+action+'\n'+'\n'.join(plots)+'\n'
+        metadata={'history_start':'parityHistoryStart','bar_index':'bar_index','tick_size':'syminfo.mintick','confirmed':'(barstate.isconfirmed ? 1 : 0)','volume':'volume','timeframe_seconds':'timeframe.in_seconds()'}
+        plots.extend(f'plot({expr}, title = "PARITY_META_{group}_{name}", display = display.data_window)' for name,expr in metadata.items())
+        if len(plots)>64:raise ValueError('Debug group exceeds plot budget')
+        script=titled(base,group,'SMA-P-'+('MET' if group=='metrics' else 'SIG'))+'var int parityHistoryStart = time\n'+'\n'.join(plots)+'\n'
         path=out/f'Scalping_SMA_1.15.2_parity_{group}.pine';path.write_text(script,encoding='utf-8')
-        manifest['groups'][group]={'file':str(path),'plots':{name:expr for name,(expr,_) in fields.items()}}
+        manifest['groups'][group]={'file':str(path),'plots':{name:expr for name,(expr,_) in fields.items()},'metadata':metadata,'plot_count':len(plots)}
+    trace=out/'Scalping_SMA_1.15.2_parity_intrabar.pine'
+    trace.write_text(realtime_source(titled(base,'intrabar','SMA-P-RT')),encoding='utf-8')
+    manifest['intrabar']={'file':str(trace),'columns':TRACE_COLUMNS,'signal_bits':{name:i for i,name in enumerate(SIGNALS.values())},'omitted_parameters':OMITTED_PARAMETERS,'interval_ms':INTERVAL_MS,'buffer_chars':BUFFER_CHARS,'transport':'alert batches -> Alerts Log CSV','status':'NOT_COMPILED_ON_TRADINGVIEW'}
     (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
     return manifest
 if __name__=='__main__':print(json.dumps(generate(),ensure_ascii=False,indent=2))

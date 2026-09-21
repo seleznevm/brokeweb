@@ -85,7 +85,7 @@ Docker-вариант Python tests:
 docker compose run --rm -v "$PWD/tests:/app/tests:ro" api python -m pytest -q -s
 ```
 
-Parity workflow и экспорт: [docs/parity.md](docs/parity.md). Не маркируйте release как готовый до получения полного reference и выполнения требований качества/масштабирования.
+Parity workflow и экспорт: [docs/parity.md](docs/parity.md). Пошаговая инструкция для TradingView: [внутренние оценки через CSV графика и intrabar через Alerts Log](docs/tradingview_capture.md). Не маркируйте release как готовый до получения полного reference и выполнения требований качества/масштабирования.
 
 ## Документация
 

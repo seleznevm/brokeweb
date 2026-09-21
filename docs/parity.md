@@ -90,12 +90,12 @@ python3 -m tools.pine_reference.native \
 python3 -m tools.pine_reference.exporter
 ```
 
-Создаются две отдельные копии в `tools/pine_reference/generated/`: metrics и signals. Original не меняется. Исключена финальная визуализация/dispatch, сохранены detector, Research и frozen plan; группы ограничены plot budget. Компиляция debug-копий на TradingView в этой среде не выполнялась.
+Создаются три отдельные копии в `tools/pine_reference/generated/`: metrics, signals и intrabar. Original не меняется. Исключена финальная визуализация/dispatch, сохранены detector, Research и frozen plan; группы ограничены plot budget. Компиляция debug-копий на TradingView в этой среде не выполнялась. [Пошаговая инструкция по сбору reference](tradingview_capture.md).
 
 1. Открыть `BYBIT:<symbol>.P`, нужный TF и те же 323 inputs; зафиксировать начало истории и параметры.
-2. Добавить каждую debug copy и экспортировать chart data с колонками `PARITY_*`.
-3. Совместить metrics/signals CSV по UTC time, не теряя строки и identity.
-4. Для intrabar нужен отдельный поток наблюдений TradingView по timestamp.
+2. Добавить metrics и signals на один график и экспортировать общий CSV с колонками `PARITY_*`.
+3. Если CSV выгружены отдельно, совместить их по UTC time, не теряя строки и identity.
+4. Для intrabar использовать отдельную копию и CSV журнала Alerts Log; импорт не заменяет синхронизированное сравнение.
 
 ```bash
 python3 -m tools.pine_reference.merge metrics.csv signals.csv --output reference.csv
@@ -124,3 +124,11 @@ CLI по умолчанию пишет `reports/full-parity.json`, сохран�
 Проверены **173 Python tests**, включая **25 parity tests**. Повторное сравнение сохранённых Python observations со всеми семью реальными CSV не изменило результаты: 2993 свечи, 124 положительные метки, observed PASS / full UNVERIFIED. [Проверки comparator](../reports/comparator-validation.json). Новых TradingView reference для внутренних оценок или intrabar этим не создано.
 
 Те же 25 parity tests прошли внутри Docker. API обновлён, все 7 сервисов healthy, работают 4 engines; опубликованный отчёт обычных CSV сохранён.
+
+## Подготовка capture, 2026-09-21
+
+Добавлены intrabar Pine recorder и импорт CSV журнала оповещений, а metrics/signals получили отдельные названия и колонки происхождения данных. Порядковые номера сохраняют обновления с одинаковым timestamp; пропуски, переполнение и неполный диапазон отражаются в отчёте. Импорт не присваивает parity PASS. [Инструкция для TradingView](tradingview_capture.md).
+
+Прошли **200 Python tests** и **52 parity tests в новом Docker-образе**. API обновлён; `/setups`, `/parity` и `/api/parity` отвечают HTTP 200, семь контейнеров healthy. Текущая локальная конфигурация уже выбирает весь universe (`MAX_SYMBOLS=0`, 771 инструмент), поэтому приложение сообщает **RECOVERING** во время инициализации; прежнее измерение на четырёх инструментах не описывает этот запуск. Конфигурация universe в этой работе не менялась. [Отчёт проверки инструментов capture](../reports/capture-tooling-validation.json).
+
+Исходник 1.15.2 и опубликованный отчёт обычных CSV не изменены. Новых reference из TradingView ещё нет; компиляция диагностических копий на TradingView и full parity остаются UNVERIFIED. Версия 1.16.5 в этот набор проверки не включена.

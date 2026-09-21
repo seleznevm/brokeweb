@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-09-21T05:09:58.824569+00:00",
+  "status": "LOCAL_CHECKS_PASS",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "python_tests": 200,
+  "docker_parity_tests": 52,
+  "tradingview_compilation": "UNVERIFIED",
+  "full_parity": "UNVERIFIED",
+  "new_tradingview_observations": 0,
+  "capture_metrics": 45,
+  "capture_signals": 26,
+  "captured_parameters": 298,
+  "alert_interval_ms": 20000,
+  "buffer_chars": 24000,
+  "local_application": {
+    "status": "RECOVERING",
+    "engine_status": "RECOVERING",
+    "selected": 771,
+    "initialized": 21,
+    "max_symbols": 0
+  },
+  "limitations": [
+    "Pine copies parsed locally; TradingView compilation and alert execution require external verification.",
+    "Synthetic protocol tests validate tooling, not indicator parity.",
+    "Intrabar import requires synchronized Python replay and request contexts before comparison.",
+    "Existing full-universe configuration retained; recovery is not a completed load test."
+  ],
+  "instructions": "docs/tradingview_capture.md"
+}

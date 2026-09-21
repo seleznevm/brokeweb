@@ -1,7 +1,7 @@
 //@version=6
 indicator(
-     "Scalping_SMA 1.15.2",
-     shorttitle = "Scalping_SMA 1.15.2",
+     "Scalping_SMA 1.15.2 - PARITY signals",
+     shorttitle = "SMA-P-SIG",
      overlay = true,
      max_labels_count = 500,
      max_boxes_count = 20
@@ -4598,6 +4598,7 @@ float displayedTradePlanT1 = tradePlanActive ? tradePlanT1 : targetT1
 float displayedTradePlanSL = tradePlanActive ? tradePlanSL : estimatedSL
 float displayedTradePlanRR = tradePlanActive ? tradePlanRR : rrToT1
 int parityActionCode = actionText == "ACTIVE DEGRADED / NO ADD" ? 0 : actionText == "ACTIVE HEALTHY / MANAGE PLAN" ? 1 : actionText == "ADD-ON CONFIRMED" ? 2 : actionText == "ARMED / WAIT RECOVERY" ? 3 : actionText == "CHECK DOM/TAPE → ENTRY" ? 4 : actionText == "DO NOT CHASE / WAIT RESET" ? 5 : actionText == "EXIT / ABORT ACTIVE PLAN" ? 6 : actionText == "MATURED PRE-BREAK ENTRY" ? 7 : actionText == "NO ADD / BTC SHOCK" ? 8 : actionText == "NO ADD / TARGET CONSUMED" ? 9 : actionText == "OPEN SKY / HOLD CONTINUATION" ? 10 : actionText == "REDUCE / NO ADD" ? 11 : actionText == "SKIP / GEOMETRY" ? 12 : actionText == "SKIP / INVALID SL" ? 13 : actionText == "SKIP / LIQUIDITY" ? 14 : actionText == "SKIP / R:R" ? 15 : actionText == "SKIP / RISK" ? 16 : actionText == "SKIP / STRUCTURE" ? 17 : actionText == "SKIP / TARGET BEHIND" ? 18 : actionText == "TARGET CONSUMED → NEXT ZONE" ? 19 : actionText == "TRIGGERED / WAIT ENTRY QUALITY" ? 20 : actionText == "WAIT / BTC SHOCK" ? 21 : actionText == "WAIT / CONTEXT" ? 22 : actionText == "WAIT / HIGH MAE RISK" ? 23 : actionText == "WAIT APPROACH" ? 24 : actionText == "WAIT RETEST" ? 25 : actionText == "WAIT RETEST TRIGGER" ? 26 : actionText == "WAIT SETUP" ? 27 : actionText == "WAIT TRIGGER" ? 28 : actionText == "WAIT TRIGGER / MATURATION" ? 29 : actionText == "WATCH" ? 30 : actionText == "WATCH / WAIT RECOVERY" ? 31 : actionText == "WATCH BOUNCE ONLY" ? 32 : -1
+var int parityHistoryStart = time
 plot((newLongWatch ? 1 : 0), title = "PARITY_L WATCH", display = display.data_window)
 plot((newShortWatch ? 1 : 0), title = "PARITY_S WATCH", display = display.data_window)
 plot((watchEntryLongSignal ? 1 : 0), title = "PARITY_LONG WATCH ENTRY", display = display.data_window)
@@ -4624,3 +4625,9 @@ plot((newBounceLong ? 1 : 0), title = "PARITY_LONG BOUNCE WATCH", display = disp
 plot((newBounceShort ? 1 : 0), title = "PARITY_SHORT BOUNCE WATCH", display = display.data_window)
 plot((avgSetup70Signal ? 1 : 0), title = "PARITY_AVG SETUP >= 70", display = display.data_window)
 plot((execution65Signal ? 1 : 0), title = "PARITY_EXECUTION QUALITY >= 65", display = display.data_window)
+plot(parityHistoryStart, title = "PARITY_META_signals_history_start", display = display.data_window)
+plot(bar_index, title = "PARITY_META_signals_bar_index", display = display.data_window)
+plot(syminfo.mintick, title = "PARITY_META_signals_tick_size", display = display.data_window)
+plot((barstate.isconfirmed ? 1 : 0), title = "PARITY_META_signals_confirmed", display = display.data_window)
+plot(volume, title = "PARITY_META_signals_volume", display = display.data_window)
+plot(timeframe.in_seconds(), title = "PARITY_META_signals_timeframe_seconds", display = display.data_window)
