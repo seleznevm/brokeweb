@@ -206,7 +206,7 @@
   },
   "intrabar": {
     "file": "tools/pine_reference/generated/Scalping_SMA_1.15.2_parity_intrabar.pine",
-    "recorder_revision": 2,
+    "recorder_revision": 3,
     "columns": [
       "seq",
       "event_time",
@@ -262,8 +262,112 @@
       "PARITY_gate_trigger",
       "PARITY_gate_btc_shock",
       "PARITY_fresh_trigger",
-      "signal_mask"
+      "signal_mask",
+      "request_observations"
     ],
+    "request_fields": {
+      "activity": [
+        "return1h",
+        "return6h",
+        "return24h",
+        "natr1h",
+        "volume24hQuoteNotional"
+      ],
+      "currency": [
+        "quoteToUsdRequested"
+      ],
+      "mtf1": [
+        "mtfC1",
+        "mtfF1",
+        "mtfS1"
+      ],
+      "mtf2": [
+        "mtfC2",
+        "mtfF2",
+        "mtfS2"
+      ],
+      "mtf3": [
+        "mtfC3",
+        "mtfF3",
+        "mtfS3"
+      ],
+      "mtf4": [
+        "mtfC4",
+        "mtfF4",
+        "mtfS4"
+      ],
+      "base": [
+        "openSkyPriorHigh",
+        "htfBasePosition",
+        "htfBaseCompressionRatio",
+        "htfBaseHigherLowFlag",
+        "htfBaseClose",
+        "htfBaseEma20",
+        "htfBaseAgeProxy"
+      ],
+      "micro": [
+        "microLongStateArr",
+        "microShortStateArr",
+        "microOpenArr",
+        "microHighArr",
+        "microLowArr",
+        "microCloseArr",
+        "microVolumeArr"
+      ],
+      "btc": [
+        "btcClose",
+        "btcEmaFast",
+        "btcEmaSlow"
+      ],
+      "shock": [
+        "btcShockMoveAtr",
+        "btcShockRangeAtr",
+        "btcShockRvol"
+      ]
+    },
+    "request_routes": {
+      "activity": [
+        "syminfo.tickerid",
+        "\"60\""
+      ],
+      "currency": [
+        "syminfo.currency",
+        "\"USD\""
+      ],
+      "mtf1": [
+        "syminfo.tickerid",
+        "mtfTrendTf1"
+      ],
+      "mtf2": [
+        "syminfo.tickerid",
+        "mtfTrendTf2"
+      ],
+      "mtf3": [
+        "syminfo.tickerid",
+        "mtfTrendTf3"
+      ],
+      "mtf4": [
+        "syminfo.tickerid",
+        "mtfTrendTf4"
+      ],
+      "base": [
+        "syminfo.tickerid",
+        "htfBaseTf"
+      ],
+      "micro": [
+        "syminfo.tickerid",
+        "effectiveMicroTf"
+      ],
+      "btc": [
+        "btcSymbol",
+        "timeframe.period"
+      ],
+      "shock": [
+        "btcSymbol",
+        "effectiveBtcShockTf"
+      ]
+    },
+    "request_scope": "Observed request results; not native request calculation parity.",
     "signal_bits": {
       "L WATCH": 0,
       "S WATCH": 1,
@@ -322,6 +426,7 @@
     "interval_ms": 20000,
     "buffer_chars": 24000,
     "transport": "alert batches -> Alerts Log CSV",
-    "status": "NOT_COMPILED_ON_TRADINGVIEW"
+    "status": "NOT_COMPILED_ON_TRADINGVIEW",
+    "max_micro_intrabars": 128
   }
 }

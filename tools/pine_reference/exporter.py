@@ -8,7 +8,8 @@ from pathlib import Path
 from backend.engine.syntax import SOURCE,load_program
 from backend.engine.runtime import SIGNALS
 from .catalog import METRICS,PATHS
-from .trace import realtime_source,TRACE_COLUMNS,OMITTED_PARAMETERS,INTERVAL_MS,BUFFER_CHARS,RECORDER_REVISION
+from .trace import realtime_source,CONTEXT_TRACE_COLUMNS,OMITTED_PARAMETERS,INTERVAL_MS,BUFFER_CHARS,RECORDER_REVISION
+from .trace_contexts import MAX_MICRO_INTRABARS,REQUEST_FIELDS,REQUEST_ROUTES
 from .context_probe import context_source,FIELDS as CONTEXT_FIELDS
 
 def literals(e):
@@ -51,7 +52,8 @@ def generate(directory='tools/pine_reference/generated'):
     manifest['contexts']={'file':str(context),'plots':CONTEXT_FIELDS,'plot_count':len(CONTEXT_FIELDS)+6,'status':'NOT_COMPILED_ON_TRADINGVIEW','purpose':'Diagnose HTF mapping and currency conversion; lookahead_on measurements are diagnostic only.'}
     trace=out/'Scalping_SMA_1.15.2_parity_intrabar.pine'
     trace.write_text(realtime_source(titled(base,'intrabar','SMA-P-RT')),encoding='utf-8')
-    manifest['intrabar']={'file':str(trace),'recorder_revision':RECORDER_REVISION,'columns':TRACE_COLUMNS,'signal_bits':{name:i for i,name in enumerate(SIGNALS.values())},'omitted_parameters':OMITTED_PARAMETERS,'interval_ms':INTERVAL_MS,'buffer_chars':BUFFER_CHARS,'transport':'alert batches -> Alerts Log CSV','status':'NOT_COMPILED_ON_TRADINGVIEW'}
+    manifest['intrabar']={'file':str(trace),'recorder_revision':RECORDER_REVISION,'columns':CONTEXT_TRACE_COLUMNS,'request_fields':REQUEST_FIELDS,'request_routes':REQUEST_ROUTES,'request_scope':'Observed request results; not native request calculation parity.','signal_bits':{name:i for i,name in enumerate(SIGNALS.values())},'omitted_parameters':OMITTED_PARAMETERS,'interval_ms':INTERVAL_MS,'buffer_chars':BUFFER_CHARS,'transport':'alert batches -> Alerts Log CSV','status':'NOT_COMPILED_ON_TRADINGVIEW'}
+    manifest['intrabar']['max_micro_intrabars']=MAX_MICRO_INTRABARS
     (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
     return manifest
 if __name__=='__main__':print(json.dumps(generate(),ensure_ascii=False,indent=2))

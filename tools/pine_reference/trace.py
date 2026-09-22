@@ -15,11 +15,14 @@ from pathlib import Path
 from backend.engine.parameters import input_schema, validate_parameters
 from backend.engine.runtime import PINE_HASH, SIGNALS
 from .catalog import METRICS
+from .trace_contexts import (ARRAY_HELPERS, MAX_MICRO_INTRABARS, REQUEST_ROUTES, decode_observation,
+                             pine_array, pine_observation, validate_routes)
 
 INTERVAL_MS=20000
 BUFFER_CHARS=24000
-RECORDER_REVISION=2
+RECORDER_REVISION=3
 TRACE_COLUMNS=['seq','event_time','bar_start','bar_end','bar_index','confirmed','is_new','bar_update','volume',*('PARITY_'+name for name in METRICS),'signal_mask']
+CONTEXT_TRACE_COLUMNS=[*TRACE_COLUMNS, 'request_observations']
 PARAMETERS=[s for s in input_schema() if s['type'] not in ('source','color')]
 OMITTED_PARAMETERS=[s['name'] for s in input_schema() if s['type'] in ('source','color')]
 
@@ -55,6 +58,7 @@ varip int bwrLastSentSeq = 0
 varip int bwrDropped = 0
 varip string bwrBuffer = ""
 '''
+    helpers += ARRAY_HELPERS
     parameters=[]
     for s in PARAMETERS:
         fn='f_bwrBool' if s['type']=='bool' else 'f_bwrInt' if s['type']=='int' else 'f_bwrNumber' if s['type']=='float' else 'f_bwrString'
@@ -65,8 +69,11 @@ varip string bwrBuffer = ""
         values.append(f'({expr} ? "1" : "0")' if kind=='bool' else f'f_bwrNumber({expr})')
     mask=' + '.join(f'({pine} ? {1<<i} : 0)' for i,pine in enumerate(SIGNALS))
     values.append('f_bwrInt(bwrMask)')
+    values.append(pine_observation())
     fields=[('brokeweb_trace','"1"'),('pine_source_hash',quoted(quoted(PINE_HASH))),('label','f_bwrString(bwrLabel)'),('run_start','f_bwrInt(bwrRunStart)'),('exchange','f_bwrString(syminfo.prefix)'),('symbol','f_bwrString(syminfo.ticker)'),('timeframe','f_bwrString(timeframe.period)'),('tick_size','f_bwrNumber(syminfo.mintick)'),('history_start','f_bwrInt(bwrOrigin)'),('batch_id','f_bwrInt(bwrBatch)'),('first_seq','f_bwrInt(bwrLastSentSeq + 1)'),('last_seq','f_bwrInt(bwrSeq)'),('dropped','f_bwrInt(bwrDropped)'),('interval_ms',quoted(str(INTERVAL_MS))),('parameters','bwrParameters'),('rows','"[" + bwrBuffer + "]"')]
     fields.insert(1,('recorder_revision',quoted(str(RECORDER_REVISION))))
+    routes='"{" + '+' + "," + '.join(quoted(quoted(k)+':')+' + '+pine_array([f'f_bwrString({v})' for v in route]) for k,route in REQUEST_ROUTES.items())+' + "}"'
+    fields.extend([('request_routes',routes),('quote_currency','f_bwrString(syminfo.currency)'),('volume_type','f_bwrString(syminfo.volumetype)')])
     envelope='"{" + '+' + "," + '.join(quoted(quoted(k)+':')+' + '+v for k,v in fields)+' + "}"'
     recording='''if barstate.isrealtime
     if na(bwrRunStart)
@@ -75,8 +82,9 @@ varip string bwrBuffer = ""
     bwrBarUpdate := barstate.isnew ? 1 : bwrBarUpdate + 1
 '''
     recording+='    int bwrMask = '+mask+'\n'
-    recording+='    string bwrRow = "[" + '+' + "," + '.join(values)+' + "]"\n'
-    recording+=f'''    if str.length(bwrBuffer) + str.length(bwrRow) + 1 <= {BUFFER_CHARS}
+    recording+=f'    string bwrRow = ""\n    if microIntrabarCount <= {MAX_MICRO_INTRABARS}\n'
+    recording+='        bwrRow := "[" + '+' + "," + '.join(values)+' + "]"\n'
+    recording+=f'''    if str.length(bwrRow) > 0 and str.length(bwrBuffer) + str.length(bwrRow) + 1 <= {BUFFER_CHARS}
         bwrBuffer += (str.length(bwrBuffer) > 0 ? "," : "") + bwrRow
     else
         bwrDropped += 1
@@ -128,7 +136,7 @@ def captured_parameters(envelope):
     and numeric observations are never inferred or rewritten.
     """
     revision=envelope.get('recorder_revision',1)
-    if not integer(revision,1) or revision not in (1,RECORDER_REVISION):
+    if not integer(revision,1) or revision not in (1,2,RECORDER_REVISION):
         raise ValueError('Unsupported recorder revision')
     raw=envelope.get('parameters')
     if not isinstance(raw,dict) or set(raw)!={s['name'] for s in PARAMETERS}:
@@ -168,7 +176,11 @@ def coverage(rows, metadata, contiguous):
         nondefault_parameters={s['name']:metadata['parameters'][s['name']] for s in PARAMETERS
                                if metadata['parameters'][s['name']]!=s['default']},
         parameter_repairs=metadata.get('parameter_repairs',[]),
-        replay_blockers=['No synchronized request-context updates or currency observations in trace protocol 1.',
+        request_boundary_updates=sum('request_observations' in row for row in rows),
+        request_boundary_scope='Captured request results only; native request calculations remain unverified.' if metadata['recorder_revision']>=3 else 'Not captured.',
+        replay_blockers=([ 'Request-boundary replay still needs matching historical warmup and initial persistent/varip state.',
+                          'Captured request results do not independently validate native request calculations; source input bindings are omitted.']
+                         if metadata['recorder_revision']>=3 else ['No synchronized request-context updates or currency observations in recorder revisions 1/2.']) + [
                          'Chart warmup must be reconstructed from the recorded history_start.',
                          'Repeated confirmed executions and equal timestamps must retain their sequence identity; the generic bar replay/comparator cannot consume this trace directly.'])
 
@@ -186,9 +198,14 @@ def unpack(envelopes):
         if not finite(e.get('tick_size')) or e['tick_size']<=0:raise ValueError('Invalid tick_size')
         if e.get('interval_ms')!=INTERVAL_MS:raise ValueError('Unexpected batch interval')
         parameters,repairs,revision=captured_parameters(e)
-        if not isinstance(e.get('rows'),list) or not e['rows']:raise ValueError('Empty trace batch')
+        if not isinstance(e.get('rows'),list) or (not e['rows'] and not e['dropped']):raise ValueError('Empty trace batch')
         identity={k:e[k] for k in ('run_start','history_start','label','exchange','symbol','timeframe','tick_size','parameters','pine_source_hash')}
         identity.update(parameters=parameters,recorder_revision=revision)
+        if revision>=3:
+            validate_routes(e.get('request_routes'))
+            if not isinstance(e.get('quote_currency'),str) or not e['quote_currency'] or e.get('volume_type') not in ('base','quote','tick','n/a'):
+                raise ValueError('Invalid request symbol metadata')
+            identity.update({k:e[k] for k in ('request_routes','quote_currency','volume_type')})
         if repairs:identity.update(recorded_parameters=e['parameters'],parameter_repairs=repairs)
         key=(e['run_start'],e['label'],e['exchange'],e['symbol'],e['timeframe'])
         session=sessions.setdefault(key,{'identity':identity,'batches':{}})
@@ -207,8 +224,11 @@ def unpack(envelopes):
             if e['last_seq']-e['first_seq']+1!=len(e['rows'])+e['dropped']:raise ValueError('Batch row/drop accounting mismatch')
             last=e['first_seq']-1
             for array in e['rows']:
-                if not isinstance(array,list) or len(array)!=len(TRACE_COLUMNS):raise ValueError('Trace row has wrong column count')
-                r=dict(zip(TRACE_COLUMNS,array))
+                columns=CONTEXT_TRACE_COLUMNS if ident['recorder_revision']>=3 else TRACE_COLUMNS
+                if not isinstance(array,list) or len(array)!=len(columns):raise ValueError('Trace row has wrong column count')
+                r=dict(zip(columns,array))
+                if ident['recorder_revision']>=3:
+                    r['request_observations']=decode_observation(r['request_observations'])
                 for field in ('seq','event_time','bar_start','bar_end','bar_index','bar_update','signal_mask'):
                     if not integer(r[field],1 if field in ('seq','bar_update') else 0):raise ValueError(f'Invalid row {field}')
                 if not last<r['seq']<=e['last_seq'] or r['seq']<e['first_seq']:raise ValueError('Duplicate/unordered sequence')
@@ -227,7 +247,8 @@ def unpack(envelopes):
                 for i,name in enumerate(SIGNALS.values()):r['PARITY_'+name]=(r['signal_mask']>>i)&1
                 rows.append(r);last=r['seq']
             dropped+=e['dropped'];previous_batch=batch;previous_seq=e['last_seq']
-        if dropped:issues.append(f'{dropped} updates dropped by bounded Pine buffer')
+        if dropped:issues.append(f'{dropped} updates dropped by bounded Pine recorder')
+        if not rows:raise ValueError('No observations received; all recorded updates were dropped')
         # No synthetic closing row is invented for the unflushed tail.
         incomplete_start=not rows[0]['is_new'];closed_bars=len({r['bar_start'] for r in rows if r['confirmed']})
         if incomplete_start:issues.append('Capture begins inside an already open candle')

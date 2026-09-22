@@ -162,7 +162,7 @@ def test_enum_repair_rejects_unknown_or_partially_corrupted_values(revision,valu
 
 
 def test_recorder_revision_and_unrestricted_strings_are_not_guessed():
-    e=batch();e['recorder_revision']=3
+    e=batch();e['recorder_revision']=4
     with pytest.raises(ValueError,match='revision'):unpack([e])
     e=batch();e['parameters']['btcSymbol']='BINANCE:BT\rC.P'
     with pytest.raises(ValueError,match='unambiguously'):unpack([e])
@@ -172,7 +172,7 @@ def test_generator_does_not_treat_unsupported_pine_escape_as_carriage_return():
     source=realtime_source('')
     assert r'"\r"' not in source
     assert r'str.match(value, "\\x{000D}")' in source
-    assert r'"\"recorder_revision\":" + "2"' in source
+    assert r'"\"recorder_revision\":" + "3"' in source
 
 
 def test_bar_coverage_keeps_repeated_closes_and_excludes_partial_bars():
