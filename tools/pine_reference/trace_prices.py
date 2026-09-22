@@ -27,7 +27,11 @@ def check(session, warmup):
         raise ValueError('Warmup must cover exactly the recorded origin through the first open candle')
     if any(not b['confirmed'] for b in bars) or any(a['end']!=b['start'] for a,b in zip(bars,bars[1:])):
         raise ValueError('Warmup has unconfirmed bars or gaps')
-    if not session['report']['sequence_contiguous']:raise ValueError('Cannot check a discontinuous trace')
+    capture=session['report']
+    if (not capture.get('received_sequence_contiguous',capture['sequence_contiguous'])
+            or capture.get('reported_dropped_updates',0)
+            or any(b['seq']!=a['seq']+1 for a,b in zip(rows,rows[1:]))):
+        raise ValueError('Cannot check a discontinuous trace')
     program=load_program()
     statements=[s for s in program.statements if s.kind=='assign' and s.meta['name'] in FIELDS.values()]
     ex=Execution(program,metadata['parameters'],f'BYBIT:{metadata["symbol"]}',tf,metadata['tick_size'])
@@ -65,8 +69,10 @@ def check(session, warmup):
                        scope='Only chart ATR and EMA calculations on supplied realtime OHLCV',
                        full_intrabar_status='UNVERIFIED',engine_version=ENGINE_VERSION,pine_source_hash=PINE_HASH,
                        session_id=session['session_id'],matched_updates=len(actual),warmup_bars=len(bars),
+                       missing_prefix_updates=rows[0]['seq']-1,
                        history_start=origin,metrics=metrics,
                        limitations=['Native exchange warmup; captured chart OHLCV is supplied input.',
+                                    'Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.',
                                     'No setup state, scores, request contexts or signal parity is established.'])
 
 

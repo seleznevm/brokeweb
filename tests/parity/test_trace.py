@@ -68,6 +68,23 @@ def test_same_millisecond_updates_are_retained():
     assert len(s['rows'])==2 and s['report']['same_timestamp_updates']==1
 
 
+def test_missing_prefix_does_not_mark_later_complete_bars_as_missing():
+    a,b=batch(2,2),batch(3,3)
+    set_row(a,'is_new',1);set_row(b,'confirmed',1)
+    report=unpack([a,b])[0][0]['report']
+    assert not report['sequence_contiguous']
+    assert report['received_sequence_contiguous']
+    assert report['missing_prefix_updates']==1
+    assert report['complete_bars']==1
+    assert report['parity_status']=='UNVERIFIED'
+
+
+def test_internal_gap_still_blocks_received_sequence():
+    report=unpack([batch(),batch(3,3)])[0][0]['report']
+    assert not report['received_sequence_contiguous']
+    assert report['complete_bars']==0
+
+
 def test_sessions_separate_and_metadata_cannot_change():
     a,b=batch(),batch(2,2);b['label']='other capture'
     assert len(unpack([a,b])[0])==2

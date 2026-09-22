@@ -237,7 +237,10 @@ def unpack(envelopes):
         issues.append('Unsent tail after the last received batch is unknown')
         stamp=hashlib.sha256(json.dumps(ident,sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
         results.append({'session_id':stamp,'metadata':ident,'rows':rows,'report':{'status':'CAPTURE_IMPORTED','parity_status':'UNVERIFIED','rows':len(rows),'closed_bars':closed_bars,'reported_dropped_updates':dropped,'sequence_contiguous':contiguous and not dropped,'issues':issues,'omitted_parameters':OMITTED_PARAMETERS,'same_timestamp_updates':sum(a['event_time']==b['event_time'] for a,b in zip(rows,rows[1:])),'comparison_ready':False,'reason':'Recorded outputs need synchronized Python replay and request contexts; import alone does not prove parity.'}})
-        results[-1]['report'].update(coverage(rows,ident,contiguous and not dropped),batches=len(session['batches']),
+        received_contiguous=not dropped and all(b['seq']==a['seq']+1 for a,b in zip(rows,rows[1:]))
+        results[-1]['report'].update(coverage(rows,ident,received_contiguous),batches=len(session['batches']),
+                                     received_sequence_contiguous=received_contiguous,
+                                     missing_prefix_updates=rows[0]['seq']-1,
                                      session_id=stamp,symbol=ident['symbol'],timeframe=ident['timeframe'],
                                      history_start=ident['history_start'],recorder_revision=ident['recorder_revision'])
     return results,duplicates

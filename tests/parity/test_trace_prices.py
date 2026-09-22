@@ -54,6 +54,17 @@ def test_bad_reference_fails_without_changing_inputs():
     assert {m['metric'] for m in report['metrics'] if m['status']=='FAIL'} == {'ema_fast'}
 
 
+def test_missing_prefix_allows_only_received_price_check():
+    session, warmup = fixture()
+    for row in session['rows']: row['seq'] += 1
+    session['report'].update(sequence_contiguous=False,received_sequence_contiguous=True)
+    _, report = check(session, warmup)
+    assert report['status']=='PASS' and report['missing_prefix_updates']==1
+    assert report['full_intrabar_status']=='UNVERIFIED'
+    session['rows'][-1]['seq']+=1
+    with pytest.raises(ValueError,match='discontinuous'): check(session,warmup)
+
+
 @pytest.mark.parametrize('damage', ['warmup_gap', 'trace_gap', 'unclosed', 'index'])
 def test_incomplete_or_misaligned_history_rejected(damage):
     session, warmup = fixture()
