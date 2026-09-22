@@ -3,5 +3,6 @@
 reference/*.pine -text -whitespace
 reference/task.ru.txt -text -whitespace
 tradingview_data/*.csv -text
+tradingview_data/intrabar/*.csv -text
 # Debug copies preserve the original source prefix, including its whitespace.
 tools/pine_reference/generated/*.pine -text -whitespace
