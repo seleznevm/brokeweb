@@ -1,0 +1,197 @@
+{
+  "status": "CAPTURE_IMPORTED",
+  "parity_status": "UNVERIFIED",
+  "rows": 253,
+  "closed_bars": 3,
+  "reported_dropped_updates": 0,
+  "sequence_contiguous": true,
+  "issues": [
+    "Capture begins inside an already open candle",
+    "Last received candle is open",
+    "Legacy string escaping repaired for explicit enum settings; raw values retained in metadata",
+    "Unsent tail after the last received batch is unknown"
+  ],
+  "omitted_parameters": [
+    "lazyExternalSource",
+    "oiExternalSource",
+    "cvdExternalSource",
+    "r1ZoneColor",
+    "r2ZoneColor",
+    "s1ZoneColor",
+    "s2ZoneColor",
+    "zoneBorderColorR",
+    "zoneBorderColorS",
+    "sweptPendingZoneColor",
+    "sweptPendingBorderColor",
+    "brokenRetestZoneColor",
+    "brokenRetestBorderColor",
+    "failedSweepZoneColor",
+    "failedSweepBorderColor",
+    "setupQualityBronzeDotColor",
+    "setupQualityBronzeArrowColor",
+    "setupQualityStrongDotColor",
+    "setupQualityStrongArrowColor",
+    "reversalWarningColor",
+    "watchEntryLongColor",
+    "watchEntryShortColor",
+    "maturedEntryLongColor",
+    "dashboardBackgroundColor",
+    "dashboardFontColor"
+  ],
+  "same_timestamp_updates": 16,
+  "comparison_ready": false,
+  "reason": "Recorded outputs need synchronized Python replay and request contexts; import alone does not prove parity.",
+  "event_start_utc": "2026-09-22T04:20:39.471000+00:00",
+  "event_end_utc": "2026-09-22T04:39:21.185000+00:00",
+  "duration_seconds": 1121.714,
+  "complete_bars": 2,
+  "bar_coverage": [
+    {
+      "bar_start": 1790050800000,
+      "bar_end": 1790051100000,
+      "updates": 94,
+      "first_seq": 1,
+      "last_seq": 94,
+      "starts_with_new_bar": false,
+      "confirmed_updates": 2,
+      "complete": false
+    },
+    {
+      "bar_start": 1790051100000,
+      "bar_end": 1790051400000,
+      "updates": 59,
+      "first_seq": 95,
+      "last_seq": 153,
+      "starts_with_new_bar": true,
+      "confirmed_updates": 2,
+      "complete": true
+    },
+    {
+      "bar_start": 1790051400000,
+      "bar_end": 1790051700000,
+      "updates": 55,
+      "first_seq": 154,
+      "last_seq": 208,
+      "starts_with_new_bar": true,
+      "confirmed_updates": 2,
+      "complete": true
+    },
+    {
+      "bar_start": 1790051700000,
+      "bar_end": 1790052000000,
+      "updates": 45,
+      "first_seq": 209,
+      "last_seq": 253,
+      "starts_with_new_bar": true,
+      "confirmed_updates": 0,
+      "complete": false
+    }
+  ],
+  "repeated_confirmed_updates": 3,
+  "active_setup_updates": 0,
+  "signal_positive_updates": {
+    "L WATCH": 0,
+    "S WATCH": 0,
+    "LONG WATCH ENTRY": 0,
+    "SHORT WATCH ENTRY": 0,
+    "MATURED PRE-BREAK ENTRY": 0,
+    "LONG ARMED": 0,
+    "SHORT ARMED": 0,
+    "PINE READY LONG": 0,
+    "PINE READY SHORT": 0,
+    "BREAKOUT": 0,
+    "BREAKDOWN": 0,
+    "BRONZE": 0,
+    "STRONG": 0,
+    "LONG REVERSAL RISK": 0,
+    "SHORT REVERSAL RISK": 0,
+    "ACTIVE PLAN DEGRADED": 0,
+    "ACTIVE PLAN EXIT": 0,
+    "ADD-ON": 0,
+    "LONG TP HIT": 0,
+    "SHORT TP HIT": 0,
+    "LONG ARMED LOST": 0,
+    "SHORT ARMED LOST": 0,
+    "LONG BOUNCE WATCH": 0,
+    "SHORT BOUNCE WATCH": 0,
+    "AVG SETUP >= 70": 0,
+    "EXECUTION QUALITY >= 65": 0
+  },
+  "captured_parameter_count": 298,
+  "nondefault_parameters": {},
+  "parameter_repairs": [
+    {
+      "parameter": "lazyMode",
+      "recorded": "P\roxy T\radingView",
+      "restored": "Proxy TradingView",
+      "reason": "revision_1_string_escape"
+    },
+    {
+      "parameter": "dashboardTextSizeInput",
+      "recorded": "No\rmal",
+      "restored": "Normal",
+      "reason": "revision_1_string_escape"
+    }
+  ],
+  "replay_blockers": [
+    "No synchronized request-context updates or currency observations in trace protocol 1.",
+    "Chart warmup must be reconstructed from the recorded history_start.",
+    "Repeated confirmed executions and equal timestamps must retain their sequence identity; the generic bar replay/comparator cannot consume this trace directly."
+  ],
+  "batches": 48,
+  "session_id": "eb43a1a6bdead660",
+  "symbol": "ETHFIUSDT.P",
+  "timeframe": "5",
+  "history_start": 1783900800000,
+  "recorder_revision": 1,
+  "input_file": "tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-22_0c635.csv",
+  "input_sha256": "63926d14ea180c0d43bb456287388be3aeb6992799f954c0d477b13bf4304476",
+  "duplicate_batches": 0,
+  "price_check": {
+    "status": "PASS",
+    "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+    "full_intrabar_status": "UNVERIFIED",
+    "engine_version": "1.15.2-interpreter.3",
+    "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+    "session_id": "eb43a1a6bdead660",
+    "matched_updates": 253,
+    "warmup_bars": 20500,
+    "history_start": 1783900800000,
+    "metrics": [
+      {
+        "metric": "atr",
+        "status": "PASS",
+        "pairs": 253,
+        "invalid_pairs": 0,
+        "error_median": 2.3852447794681098e-17,
+        "error_p95": 4.2500725161431774e-17,
+        "relative_error_max": 1.3936451168379625e-14
+      },
+      {
+        "metric": "ema_fast",
+        "status": "PASS",
+        "pairs": 253,
+        "invalid_pairs": 0,
+        "error_median": 1.1102230246251565e-16,
+        "error_p95": 1.1102230246251565e-16,
+        "relative_error_max": 3.1493834419643433e-16
+      },
+      {
+        "metric": "ema_slow",
+        "status": "PASS",
+        "pairs": 253,
+        "invalid_pairs": 0,
+        "error_median": 4.440892098500626e-16,
+        "error_p95": 5.551115123125783e-16,
+        "relative_error_max": 7.827201926541788e-16
+      }
+    ],
+    "limitations": [
+      "Native exchange warmup; captured chart OHLCV is supplied input.",
+      "No setup state, scores, request contexts or signal parity is established."
+    ],
+    "input_file": "tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-22_0c635.csv",
+    "input_sha256": "63926d14ea180c0d43bb456287388be3aeb6992799f954c0d477b13bf4304476",
+    "warmup_sha256": "0410cee043ac11c5471fab5877d1ae9adbea73f0fe4a22f4347041ce5788d44e"
+  }
+}

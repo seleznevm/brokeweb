@@ -10,6 +10,7 @@ import csv
 import hashlib
 import json
 import math
+from datetime import datetime, timezone
 from pathlib import Path
 from backend.engine.parameters import input_schema, validate_parameters
 from backend.engine.runtime import PINE_HASH, SIGNALS
@@ -17,6 +18,7 @@ from .catalog import METRICS
 
 INTERVAL_MS=20000
 BUFFER_CHARS=24000
+RECORDER_REVISION=2
 TRACE_COLUMNS=['seq','event_time','bar_start','bar_end','bar_index','confirmed','is_new','bar_update','volume',*('PARITY_'+name for name in METRICS),'signal_mask']
 PARAMETERS=[s for s in input_schema() if s['type'] not in ('source','color')]
 OMITTED_PARAMETERS=[s['name'] for s in input_schema() if s['type'] in ('source','color')]
@@ -36,7 +38,11 @@ f_bwrBool(bool value) =>
     value ? "true" : "false"
 f_bwrString(string value) =>
     string escaped = str.replace_all(str.replace_all(value, "\\", "\\\\"), "\"", "\\\"")
-    escaped := str.replace_all(str.replace_all(str.replace_all(escaped, "\n", "\\n"), "\r", "\\r"), "\t", "\\t")
+    escaped := str.replace_all(str.replace_all(escaped, "\n", "\\n"), "\t", "\\t")
+    // Pine has no carriage-return literal escape. Match U+000D explicitly.
+    string carriageReturn = str.match(value, "\\x{000D}")
+    if not na(carriageReturn) and str.length(carriageReturn) > 0
+        escaped := str.replace_all(escaped, carriageReturn, "\\r")
     "\"" + escaped + "\""
 string bwrLabel = input.string("capture-001", "Capture label", group = "PARITY capture")
 var int bwrOrigin = time
@@ -60,6 +66,7 @@ varip string bwrBuffer = ""
     mask=' + '.join(f'({pine} ? {1<<i} : 0)' for i,pine in enumerate(SIGNALS))
     values.append('f_bwrInt(bwrMask)')
     fields=[('brokeweb_trace','"1"'),('pine_source_hash',quoted(quoted(PINE_HASH))),('label','f_bwrString(bwrLabel)'),('run_start','f_bwrInt(bwrRunStart)'),('exchange','f_bwrString(syminfo.prefix)'),('symbol','f_bwrString(syminfo.ticker)'),('timeframe','f_bwrString(timeframe.period)'),('tick_size','f_bwrNumber(syminfo.mintick)'),('history_start','f_bwrInt(bwrOrigin)'),('batch_id','f_bwrInt(bwrBatch)'),('first_seq','f_bwrInt(bwrLastSentSeq + 1)'),('last_seq','f_bwrInt(bwrSeq)'),('dropped','f_bwrInt(bwrDropped)'),('interval_ms',quoted(str(INTERVAL_MS))),('parameters','bwrParameters'),('rows','"[" + bwrBuffer + "]"')]
+    fields.insert(1,('recorder_revision',quoted(str(RECORDER_REVISION))))
     envelope='"{" + '+' + "," + '.join(quoted(quoted(k)+':')+' + '+v for k,v in fields)+' + "}"'
     recording='''if barstate.isrealtime
     if na(bwrRunStart)
@@ -113,6 +120,59 @@ def integer(value,minimum=0):return isinstance(value,int) and not isinstance(val
 def finite(value):return isinstance(value,(int,float)) and not isinstance(value,bool) and math.isfinite(value)
 
 
+def captured_parameters(envelope):
+    """Repair only uniquely identifiable enum values from the revision-1 bug.
+
+    The old Pine encoder replaced literal r with a JSON carriage-return escape.
+    Keep the raw envelope untouched and record each repair; arbitrary strings
+    and numeric observations are never inferred or rewritten.
+    """
+    revision=envelope.get('recorder_revision',1)
+    if not integer(revision,1) or revision not in (1,RECORDER_REVISION):
+        raise ValueError('Unsupported recorder revision')
+    raw=envelope.get('parameters')
+    if not isinstance(raw,dict) or set(raw)!={s['name'] for s in PARAMETERS}:
+        raise ValueError('Incomplete captured parameters')
+    values=dict(raw);repairs=[]
+    if revision==1:
+        for spec in PARAMETERS:
+            value=values[spec['name']]
+            if not isinstance(value,str) or '\r' not in value:continue
+            candidates=[v for v in spec.get('options',[]) if isinstance(v,str) and v.replace('r','\r')==value]
+            if len(candidates)!=1:raise ValueError('Cannot unambiguously repair legacy parameter: '+spec['name'])
+            values[spec['name']]=candidates[0]
+            repairs.append(dict(parameter=spec['name'],recorded=value,restored=candidates[0],reason='revision_1_string_escape'))
+    validate_parameters(values)
+    return values,repairs,revision
+
+
+def coverage(rows, metadata, contiguous):
+    bars={}
+    for row in rows:bars.setdefault(row['bar_start'],[]).append(row)
+    bar_coverage=[]
+    for start,updates in bars.items():
+        confirmed=sum(r['confirmed'] for r in updates)
+        bar_coverage.append(dict(bar_start=start,bar_end=updates[0]['bar_end'],updates=len(updates),
+                                 first_seq=updates[0]['seq'],last_seq=updates[-1]['seq'],
+                                 starts_with_new_bar=updates[0]['is_new'],confirmed_updates=confirmed,
+                                 complete=bool(contiguous and updates[0]['is_new'] and confirmed)))
+    return dict(
+        event_start_utc=datetime.fromtimestamp(rows[0]['event_time']/1000,timezone.utc).isoformat(),
+        event_end_utc=datetime.fromtimestamp(rows[-1]['event_time']/1000,timezone.utc).isoformat(),
+        duration_seconds=(rows[-1]['event_time']-rows[0]['event_time'])/1000,
+        complete_bars=sum(b['complete'] for b in bar_coverage),bar_coverage=bar_coverage,
+        repeated_confirmed_updates=sum(max(b['confirmed_updates']-1,0) for b in bar_coverage),
+        active_setup_updates=sum(r['PARITY_direction'] in (-1,1) for r in rows),
+        signal_positive_updates={name:sum(r['PARITY_'+name] for r in rows) for name in SIGNALS.values()},
+        captured_parameter_count=len(metadata['parameters']),
+        nondefault_parameters={s['name']:metadata['parameters'][s['name']] for s in PARAMETERS
+                               if metadata['parameters'][s['name']]!=s['default']},
+        parameter_repairs=metadata.get('parameter_repairs',[]),
+        replay_blockers=['No synchronized request-context updates or currency observations in trace protocol 1.',
+                         'Chart warmup must be reconstructed from the recorded history_start.',
+                         'Repeated confirmed executions and equal timestamps must retain their sequence identity; the generic bar replay/comparator cannot consume this trace directly.'])
+
+
 def unpack(envelopes):
     sessions={};duplicates=0
     for e in envelopes:
@@ -125,10 +185,11 @@ def unpack(envelopes):
         if e['exchange']!='BYBIT' or not e['symbol'].endswith('.P'):raise ValueError('Expected a native Bybit perpetual chart')
         if not finite(e.get('tick_size')) or e['tick_size']<=0:raise ValueError('Invalid tick_size')
         if e.get('interval_ms')!=INTERVAL_MS:raise ValueError('Unexpected batch interval')
-        if not isinstance(e.get('parameters'),dict) or set(e['parameters'])!={s['name'] for s in PARAMETERS}:raise ValueError('Incomplete captured parameters')
-        validate_parameters(e['parameters'])
+        parameters,repairs,revision=captured_parameters(e)
         if not isinstance(e.get('rows'),list) or not e['rows']:raise ValueError('Empty trace batch')
         identity={k:e[k] for k in ('run_start','history_start','label','exchange','symbol','timeframe','tick_size','parameters','pine_source_hash')}
+        identity.update(parameters=parameters,recorder_revision=revision)
+        if repairs:identity.update(recorded_parameters=e['parameters'],parameter_repairs=repairs)
         key=(e['run_start'],e['label'],e['exchange'],e['symbol'],e['timeframe'])
         session=sessions.setdefault(key,{'identity':identity,'batches':{}})
         if session['identity']!=identity:raise ValueError('Session metadata changed; use separate captures')
@@ -171,9 +232,14 @@ def unpack(envelopes):
         incomplete_start=not rows[0]['is_new'];closed_bars=len({r['bar_start'] for r in rows if r['confirmed']})
         if incomplete_start:issues.append('Capture begins inside an already open candle')
         if not rows[-1]['confirmed']:issues.append('Last received candle is open')
+        if ident.get('parameter_repairs'):issues.append('Legacy string escaping repaired for explicit enum settings; raw values retained in metadata')
+        if '\r' in ident['label']:issues.append('Legacy capture label contains a carriage return; free-form text was not repaired')
         issues.append('Unsent tail after the last received batch is unknown')
         stamp=hashlib.sha256(json.dumps(ident,sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
         results.append({'session_id':stamp,'metadata':ident,'rows':rows,'report':{'status':'CAPTURE_IMPORTED','parity_status':'UNVERIFIED','rows':len(rows),'closed_bars':closed_bars,'reported_dropped_updates':dropped,'sequence_contiguous':contiguous and not dropped,'issues':issues,'omitted_parameters':OMITTED_PARAMETERS,'same_timestamp_updates':sum(a['event_time']==b['event_time'] for a,b in zip(rows,rows[1:])),'comparison_ready':False,'reason':'Recorded outputs need synchronized Python replay and request contexts; import alone does not prove parity.'}})
+        results[-1]['report'].update(coverage(rows,ident,contiguous and not dropped),batches=len(session['batches']),
+                                     session_id=stamp,symbol=ident['symbol'],timeframe=ident['timeframe'],
+                                     history_start=ident['history_start'],recorder_revision=ident['recorder_revision'])
     return results,duplicates
 
 
@@ -189,6 +255,7 @@ def main(argv=None):
         a.output_dir.mkdir(parents=True,exist_ok=True)
         for s in sessions:
             target=a.output_dir/s['session_id'];target.mkdir(exist_ok=True)
+            s['report'].update(input_file=str(a.input),input_sha256=hashlib.sha256(a.input.read_bytes()).hexdigest(),duplicate_batches=duplicates)
             # Refuse accidental overwrite; an export remains independently reviewable.
             paths=[target/n for n in ('reference.jsonl','metadata.json','report.json')]
             if any(path.exists() for path in paths):raise ValueError('Output session exists; choose a new output directory')

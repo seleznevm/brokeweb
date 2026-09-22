@@ -206,6 +206,7 @@
   },
   "intrabar": {
     "file": "tools/pine_reference/generated/Scalping_SMA_1.15.2_parity_intrabar.pine",
+    "recorder_revision": 2,
     "columns": [
       "seq",
       "event_time",

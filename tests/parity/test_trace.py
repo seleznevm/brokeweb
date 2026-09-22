@@ -8,7 +8,7 @@ import pytest
 from backend.engine.runtime import PINE_HASH, SIGNALS
 from tools.pine_reference.catalog import METRICS
 from tools.pine_reference.trace import (
-    INTERVAL_MS, PARAMETERS, TRACE_COLUMNS, main, messages, unpack,
+    INTERVAL_MS, PARAMETERS, TRACE_COLUMNS, main, messages, unpack, realtime_source,
 )
 
 
@@ -122,3 +122,53 @@ def test_cli_import_and_overwrite_preflight(tmp_path):
     source.write_text(json.dumps(b)+'\n'+json.dumps(a))
     assert main(['--input',str(source),'--output-dir',str(out)])==2
     assert {p:p.read_bytes() for p in out.rglob('*.json*')}==before
+
+
+def test_legacy_enum_repair_preserves_raw_input_and_numeric_rows():
+    e=batch();e['parameters']['lazyMode']='P\roxy T\radingView'
+    e['parameters']['dashboardTextSizeInput']='No\rmal'
+    original=deepcopy(e)
+    s=unpack([e])[0][0]
+    assert e==original
+    assert s['metadata']['recorded_parameters']==original['parameters']
+    assert s['metadata']['parameters']['lazyMode']=='Proxy TradingView'
+    assert s['metadata']['parameters']['dashboardTextSizeInput']=='Normal'
+    assert {r['parameter'] for r in s['report']['parameter_repairs']}=={'lazyMode','dashboardTextSizeInput'}
+    assert s['report']['nondefault_parameters']=={}
+    assert s['rows'][0]['PARITY_close']==original['rows'][0][TRACE_COLUMNS.index('PARITY_close')]
+
+
+@pytest.mark.parametrize('revision,value',[(2,'P\roxy T\radingView'),(1,'Proxy T\radingView'),(1,'Not a valid\r option')])
+def test_enum_repair_rejects_unknown_or_partially_corrupted_values(revision,value):
+    e=batch();e['recorder_revision']=revision;e['parameters']['lazyMode']=value
+    with pytest.raises(ValueError):unpack([e])
+
+
+def test_recorder_revision_and_unrestricted_strings_are_not_guessed():
+    e=batch();e['recorder_revision']=3
+    with pytest.raises(ValueError,match='revision'):unpack([e])
+    e=batch();e['parameters']['btcSymbol']='BINANCE:BT\rC.P'
+    with pytest.raises(ValueError,match='unambiguously'):unpack([e])
+
+
+def test_generator_does_not_treat_unsupported_pine_escape_as_carriage_return():
+    source=realtime_source('')
+    assert r'"\r"' not in source
+    assert r'str.match(value, "\\x{000D}")' in source
+    assert r'"\"recorder_revision\":" + "2"' in source
+
+
+def test_bar_coverage_keeps_repeated_closes_and_excludes_partial_bars():
+    e=batch();rows=[]
+    for seq,(start,new,confirmed) in enumerate([(0,0,0),(0,0,1),(0,0,1),(300000,1,0),(300000,0,1),(600000,1,0)],1):
+        r=dict(zip(TRACE_COLUMNS,e['rows'][0]));r.update(seq=seq,event_time=1700000000000+seq*200000,
+            bar_start=1700000000000+start,bar_end=1700000300000+start,is_new=new,confirmed=confirmed)
+        rows.append([r[k] for k in TRACE_COLUMNS])
+    e.update(rows=rows,last_seq=len(rows))
+    s=unpack([e])[0][0];r=s['report']
+    assert len(s['rows'])==6 and r['closed_bars']==2 and r['complete_bars']==1
+    assert r['repeated_confirmed_updates']==1
+    assert r['bar_coverage'][0]['confirmed_updates']==2
+    assert r['active_setup_updates']==0
+    assert r['signal_positive_updates']['L WATCH']==6
+    assert r['parity_status']=='UNVERIFIED'
