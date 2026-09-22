@@ -109,7 +109,7 @@ def replay_fixture(fixture: dict, *, incremental_contexts=False) -> Iterator[dic
     rows=fixture.get('bars')
     if not isinstance(rows,list) or not rows:raise FixtureError('bars must be a nonempty list')
     contexts=normalized_contexts(fixture.get('contexts',{}))
-    engine=PineEngine(symbol,timeframe,tick,parameters)
+    engine=PineEngine(symbol,timeframe,tick,parameters,currency_rates=fixture.get('currency_rates'))
     fingerprint=hashlib.sha256(json.dumps(fixture,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()).hexdigest()
     previous=None;last_event=None;context_offsets={}
     for index,row in enumerate(rows):

@@ -1,0 +1,23 @@
+{
+  "status": "OBSERVED_CONTEXT_EVIDENCE",
+  "rows": 10117,
+  "original_matches_off": 10117,
+  "metrics_matches_off": 10117,
+  "future_off_timestamps": 0,
+  "old_capture_overlap": 8757,
+  "old_capture_discriminating_rows": 4379,
+  "old_matches_on_only": 4378,
+  "old_matches_off_only": 0,
+  "currency_known_rows": 10117,
+  "currency_rate_min": 0.99842,
+  "currency_rate_max": 1.00048,
+  "currency_product_pairs": 10117,
+  "currency_product_max_error": 0.0,
+  "limitations": [
+    "The former CSV behaves like lookahead_on on the measured hourly series; its source/settings are not authenticated by this comparison."
+  ],
+  "reference_file": "tradingview_data/full_reference/BYBIT_ETHFIUSDT.P, 30_22f96.csv",
+  "reference_sha256": "35fdf5b66bc7bd63cede1d6ddc8cf898c3e5fe2f5370d9386d531ff8aecdeb41",
+  "old_reference_sha256": "128884e3fc98ff3b5471ca2b95b2ec5a7eb641ef05264d11946a1f582c12960c",
+  "parameters_confirmed": true
+}

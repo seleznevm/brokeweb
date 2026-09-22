@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import math
 from collections import deque
+from itertools import islice
 from .syntax import Expr, Statement, load_program
 from .values import NA, Namespace, Record, binary, encode, decode, is_na, truth
 
@@ -213,7 +214,9 @@ class Execution:
         if name.startswith('input.'):
             return a[0] if a else kw['defval']
         if name=='timeframe.in_seconds':return tf_seconds(a[0] if a else self.timeframe)
-        if name=='request.currency_rate':return NA # Explicit stablecoin fallback is in the original source.
+        if name=='request.currency_rate':
+            provider=getattr(self.request_provider,'currency_rate',None)
+            return provider(self,a[0],a[1]) if provider else NA
         if name=='str.tostring':
             x=a[0]
             if is_na(x):return 'NaN'
@@ -263,6 +266,16 @@ class Execution:
         def series(index,length):
             old=self.histories.get(f'{key}/a{index}',())
             return list(old)[-max(0,length-1):]+[a[index]] if length>1 else [a[index]]
+        def recent_valid(index,length):
+            # Match the old history_limit window and chronological summation,
+            # but stop once enough non-NA samples have been found.
+            values=[] if is_na(a[index]) else [a[index]]
+            if len(values)<length:
+                for value in islice(reversed(self.histories.get(f'{key}/a{index}',())),self.history_limit-1):
+                    if not is_na(value): values.append(value)
+                    if len(values)>=length: break
+            values.reverse()
+            return values
         op=name.split('.')[-1]; previous=self.previous(f'{key}/out')
         if op in ('ema','rma','sma','sum','highest','lowest','highestbars','lowestbars'):
             if len(a)==1: # implicit high/low overload
@@ -271,12 +284,11 @@ class Execution:
             length=int(a[1]); x=a[0]
             if op=='ema':out=previous if is_na(x) else x if is_na(previous) else 2/(length+1)*x+(1-2/(length+1))*previous
             elif op=='rma':
-                valid=[v for v in series(0,self.history_limit) if not is_na(v)]
-                out=previous if is_na(x) else ((sum(valid[-length:])/length if len(valid)>=length else NA) if is_na(previous) else x/length+(1-1/length)*previous)
+                valid=recent_valid(0,length) if is_na(previous) else ()
+                out=previous if is_na(x) else ((sum(valid)/length if len(valid)>=length else NA) if is_na(previous) else x/length+(1-1/length)*previous)
             elif op in ('sma','sum'):
-                values=series(0,self.history_limit)
-                values=[v for v in values if not is_na(v)][-length:]
-                out=(sum(values)/length if op=='sma' else sum(values)) if len(values)>=length and not any(is_na(v) for v in values) else NA
+                values=recent_valid(0,length)
+                out=(sum(values)/length if op=='sma' else sum(values)) if len(values)>=length else NA
             else:
                 vals=series(0,length); valid=[(i,v) for i,v in enumerate(reversed(vals)) if not is_na(v)]
                 if not valid:out=NA
@@ -286,7 +298,7 @@ class Execution:
         elif op=='atr':
             length=int(a[0]); h,l=self.lookup('high'),self.lookup('low'); pc=self.previous('/g/close')
             tr=h-l if is_na(pc) else max(h-l,abs(h-pc),abs(l-pc));self.remember(f'{key}/tr',tr)
-            old=list(self.histories.get(f'{key}/tr',())); valid=[v for v in old+[tr] if not is_na(v)]
+            valid=[v for v in list(self.histories.get(f'{key}/tr',()))+[tr] if not is_na(v)] if is_na(previous) else ()
             out=(sum(valid[-length:])/length if len(valid)>=length else NA) if is_na(previous) else (previous*(length-1)+tr)/length
         elif op in ('pivothigh','pivotlow'):
             if len(a)==2:a=[self.lookup('high' if op=='pivothigh' else 'low')]+a;self.remember(f'{key}/a0',a[0])

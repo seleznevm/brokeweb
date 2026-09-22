@@ -176,3 +176,31 @@ python3 -m tools.pine_reference.alignment \
 Full parity остаётся **FAIL**, intrabar — **UNVERIFIED**; версия engine и исходный Pine не изменены. Статус нового отчёта `DIAGNOSTIC_ONLY` не является результатом приёмки.
 
 Проверки: **229 Python tests**, **69 parity tests в изолированном Docker-контейнере**; все семь сервисов локального стенда healthy, `/api/parity` возвращает FAIL и engine `1.15.2-interpreter.2`. Здоровье контейнеров не означает завершённую инициализацию всего universe. Изменения относятся к диагностическим инструментам и документации; работающие сервисы не пересоздавались.
+
+## Новый contexts + metrics CSV, 2026-09-22
+
+Пользователь подтвердил **настройки по умолчанию** для `BYBIT_ETHFIUSDT.P, 30_22f96.csv`. SHA-256: `35fdf5b66bc7bd63cede1d6ddc8cf898c3e5fe2f5370d9386d531ff8aecdeb41`. Файл содержит 10 118 строк; последняя открытая свеча исключена. Origin остаётся 2025-01-01 UTC; первый bar_index 20072. Replay выполнил 30 189 свечей, включая 20 072 свечи прогрева, и сопоставил **все 10 117 закрытых строк** без пропусков или лишних наблюдений.
+
+Результат: **45/45 метрик PASS** по прежним допускам. FSM/ACTION, direction/generation, execution paths, gates, уровни, SL/T1 и R:R совпали точно, включая NA. BTC Shock P95 ошибки ≈7.1e-15; AVG SETUP ≈2.84e-14. На части строк сохраняются небольшие различия float/биржевого объёма: PASS не означает побитовое равенство всех чисел. [Машинный отчёт](../reports/context-parity.json), [контекстные доказательства](../reports/context-capture-evidence.json).
+
+Новая выгрузка на всех закрытых строках соответствует `lookahead_off`; timestamps requested-часа не выходят за конец chart-свечи. На общем участке предыдущая выгрузка совпадает с новым диагностическим `lookahead_on` в 4378 из 4379 различимых случаев. Причина отличия исходного старого capture не установлена; история не сдвигалась для получения PASS, старый FAIL сохранён в `full-parity.json`.
+
+Обнаружена ошибка интерпретатора: он заимствовал вычисленный на 30m графике `effectiveBtcShockLookback=2`. Pine пересчитывает зависимости внутри requested context 15m, где Auto-профиль выбирает 3. Это соответствует [семантике declared variables в request.security](https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/#declared-variables). Версия `.3` исполняет необходимые неизменяемые объявления в собственном контексте запроса; неподдержанные mutable-зависимости явно отклоняет. Исходник Pine и thresholds не менялись.
+
+Курс USDT→USD доступен во всех 10 117 строках, диапазон 0.99842–1.00048; quote-volume × rate точно объясняет экспортированный USD volume. Replay использует **отдельно экспортированный `PARITY_CTX_quote_usd_requested`** как внешний вход, с ограниченными интервалами доступности. Курс не выводится из сравниваемых метрик и не распространяется за пределы выгрузки. До её начала и в live worker действует исходный fallback; live FX feed этим не реализован. Native exchange warmup/request data также остаются отдельным источником.
+
+В CSV нет signal columns. Их статус — MISSING_REFERENCE, intrabar — UNVERIFIED, общий статус — **UNVERIFIED** при `metrics_status=PASS`. Старые сигналы не объединяются с несовместимым HTF capture. `/api/parity` предпочитает новый отчёт; явный `PARITY_REPORT_PATH` и сохранённый database result сохраняют приоритет.
+
+Воспроизведение (нужен локальный cache предыдущего native replay):
+
+```bash
+python3 -m tools.pine_reference.context_capture \
+  --input 'tradingview_data/full_reference/BYBIT_ETHFIUSDT.P, 30_22f96.csv' \
+  --cached-fixture artifacts/local/full-ethfi/fixture.json \
+  --output-dir artifacts/local/contexts-ethfi \
+  --report reports/context-parity.json --parameters-confirmed
+```
+
+Fixture сохраняет OHLCV, native contexts и bounded FX inputs. Контекстные хвосты догружаются с публичных Bybit/Binance API. Оптимизированы rolling SMA/sum и уже прогретые RMA/ATR; порядок сложения, NA и границы истории проверены differential-тестами. Полный suite: **256 passed**.
+
+API и engine `.3` развёрнуты локально; 71 профильный тест прошёл внутри нового Docker-образа. `/setups`, `/parity`, `/api/parity`, `/api/health` отвечают HTTP 200, семь контейнеров healthy. Весь universe (774 инструмента, TF30) ещё прогревается: приложение RECOVERING, нагрузочная приёмка не заявляется. [Проверка развёртывания](../reports/context-deployment.json).

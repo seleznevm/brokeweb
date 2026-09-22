@@ -3,9 +3,14 @@ from __future__ import annotations
 from collections import deque
 from .interpreter import Execution, tf_seconds, qualified
 from .values import NA, is_na, encode, decode
+from .request_dependencies import declarations_for
 
 class ContextProvider:
-    def __init__(self,engine):self.engine=engine;self.streams={}
+    def __init__(self,engine):self.engine=engine;self.streams={};self.dependencies={}
+    def currency_rate(self,parent,source,target):
+        # Historical rows use only the rate already known at their opening.
+        at=parent.bar['start'] if not parent.realtime else min(parent.bar.get('received_at',parent.bar['end']),parent.bar['end']-1)
+        return self.engine.currency_rates.at(source,target,at)
     def __call__(self,parent,call,name,nodes):
         symbol=parent.eval(nodes[0]);tf=str(parent.eval(nodes[1]));expr=nodes[2]
         lower=name.endswith('lower_tf')
@@ -13,6 +18,8 @@ class ContextProvider:
         n=len(returned.args) if returned.kind=='list' else 1
         if lower and tf_seconds(tf)>=tf_seconds(parent.timeframe):return [[] for _ in range(n)]
         context_key=f'{symbol}|{tf}';key=f'{call.uid}|{context_key}'
+        if call.uid not in self.dependencies:
+            self.dependencies[call.uid]=declarations_for(parent.program,expr)
         if key not in self.streams:
             ex=Execution(parent.program,parent.parameters,symbol,tf,parent.tick_size,parent.history_limit);ex.request_provider=self
             self.streams[key]=(ex,deque(maxlen=parent.history_limit))
@@ -29,7 +36,8 @@ class ContextProvider:
             closed=bar.get('confirmed',True) and bar['end']<=asof
             open_available=parent.realtime and not lower and not bar.get('confirmed',True) and bar['start']<=asof and bar.get('received_at',asof)<=asof
             if not closed and not open_available:continue
-            ex.begin(bar,realtime=parent.realtime and not closed,outer=parent.scopes[0]);ex.special['barstate.isconfirmed']=closed
+            ex.begin(bar,realtime=parent.realtime and not closed);ex.special['barstate.isconfirmed']=closed
+            ex.execute(self.dependencies[call.uid])
             last=ex.eval(expr)
             if closed:
                 ex.last_value=last;ex.commit();results.append((bar['start'],bar['end'],last))

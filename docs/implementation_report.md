@@ -1,8 +1,10 @@
-# Отчёт реализации Brokeweb — 2026-09-15
+# Отчёт реализации Brokeweb — обновлено 2026-09-22
 
-В `C:\dev\brokeweb` работает локальный стенд с реальными публичными данными Bybit и Binance. **Полный Definition of Done исходного ТЗ ещё не принят:** числовое/stateful совпадение с TradingView не измерено, испытание всего universe и эксплуатационная приёмка объёма/WAL/архивного backup ещё не завершены. Тесты приложения не заменяют эти проверки.
+В `C:\dev\brokeweb` работает локальный стенд с реальными публичными данными Bybit и Binance. **Полный Definition of Done ещё не принят:** исторические метрики нового reference прошли проверку, но сигналы этой сессии, intrabar, нагрузка всего universe и эксплуатационная приёмка хранения ещё требуют подтверждения.
 
-Исходный Pine сохранён без изменений. SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.2`. Получены 7 TradingView CSV: 2993 закрытые свечи, доступные уровни/SL/T1 и 124 положительные метки совпали после исправления float comparisons. Полный reference внутренних оценок и тиков пока отсутствует. Формулы исполняются из AST исходника, а не из независимо подобранного похожего индикатора; это всё ещё требует проверки совместимости интерпретатора с Pine.
+Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
+
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний Python suite: **256 passed**. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
 
 ## Что реализовано
 
@@ -29,7 +31,7 @@
 
 ```powershell
 cd C:\dev\brokeweb
-# .env уже создан для локального стенда: MAX_SYMBOLS=4, ACTIVE_TIMEFRAMES=15
+# Текущее окружение: MAX_SYMBOLS=0, ACTIVE_TIMEFRAMES=30
 docker compose up -d --build
 docker compose ps
 docker compose logs --tail=100 engine
@@ -37,7 +39,7 @@ docker compose logs --tail=100 engine
 
 Открыть [локальный стенд](http://localhost:8080/setups). Первичная установка, workaround WSL credential helper, настройки Telegram и TF: [README](../README.md). Docker volumes сохраняются при обычном restart/down.
 
-Тестовый лимит четырёх контрактов задан явно. Список выбирается автоматически по времени листинга; текущие BCHUSDT, LINKUSDT, LTCUSDT, XTZUSDT не зашиты в engine. `MAX_SYMBOLS=0` включает весь обнаруженный universe, но его capacity acceptance не выполнен.
+Ранние проверки выполнялись на четырёх контрактах. Текущее окружение использует `MAX_SYMBOLS=0`, `ACTIVE_TIMEFRAMES=30`: весь обнаруженный universe и независимые сигналы 30m. Capacity acceptance всего universe не выполнен.
 
 ## HTTP/API и UI
 
@@ -90,7 +92,7 @@ docker compose logs --tail=100 engine
 
 | Ограничение | Причина / последствие |
 |---|---|
-| Числовые расхождения пока не измерены | Нет независимого TradingView oracle; нельзя назвать median/P95 или agreement |
+| Полная parity ещё не принята | 45/45 исторических метрик прошли; новый CSV не содержит сигналов. Intrabar reference отсутствует. Live FX использует исходный fallback |
 | Pine compatibility subset | Парсер/интерпретатор собственного изготовления; tie cases, barmerge и рекурсивные seeds требуют внешней проверки |
 | Историческое начало влияет на зоны/EMA | Persistent состояние может зависеть от данных за пределами конечного warmup; origin сохраняется, reference должен его учитывать |
 | Intrabar sampling отличается от возможного TradingView feed | Native exchange WS не доказывает тот же порядок/частоту executions у TradingView; источник BTC теперь streaming, но tick parity остаётся gate |

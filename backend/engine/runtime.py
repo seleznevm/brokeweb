@@ -13,8 +13,9 @@ from .interpreter import Execution,tf_seconds
 from .contexts import ContextProvider
 from .parameters import validate_parameters,parameter_hash,required_history
 from .values import encode,truth,is_na
+from .currency import CurrencyRates
 
-ENGINE_VERSION='1.15.2-interpreter.2'
+ENGINE_VERSION='1.15.2-interpreter.3'
 PINE_HASH=hashlib.sha256(SOURCE.read_bytes()).hexdigest()
 FIELDS={
  'action':'actionText','fsm':'setupFsmState','setup_state':'setupState','candidate_path':'candidateEntryPath','trigger_path':'entryPath','risk_path':'riskPath','fsm_path':'setupFsmPath',
@@ -25,10 +26,11 @@ SIGNALS={
  'newLongWatch':'L WATCH','newShortWatch':'S WATCH','watchEntryLongSignal':'LONG WATCH ENTRY','watchEntryShortSignal':'SHORT WATCH ENTRY','maturedEntryLongSignal':'MATURED PRE-BREAK ENTRY','newLongArmed':'LONG ARMED','newShortArmed':'SHORT ARMED','newLongEntry':'PINE READY LONG','newShortEntry':'PINE READY SHORT','newLongBreakout':'BREAKOUT','newShortBreakdown':'BREAKDOWN','setupQualityBronzeSignal':'BRONZE','setupQualityStrongSignal':'STRONG','newLongReversalRisk':'LONG REVERSAL RISK','newShortReversalRisk':'SHORT REVERSAL RISK','activePlanDegradedSignal':'ACTIVE PLAN DEGRADED','activePlanExitSignal':'ACTIVE PLAN EXIT','addOnAllowedSignal':'ADD-ON','longT1Hit':'LONG TP HIT','shortT1Hit':'SHORT TP HIT','longArmedLost':'LONG ARMED LOST','shortArmedLost':'SHORT ARMED LOST','newBounceLong':'LONG BOUNCE WATCH','newBounceShort':'SHORT BOUNCE WATCH','avgSetup70Signal':'AVG SETUP >= 70','execution65Signal':'EXECUTION QUALITY >= 65',
 }
 class PineEngine:
-    def __init__(self,symbol,timeframe,tick_size=0.01,parameters=None):
+    def __init__(self,symbol,timeframe,tick_size=0.01,parameters=None,currency_rates=None):
         self.symbol=symbol;self.timeframe=str(timeframe);self.tick_size=float(tick_size);self.parameters=validate_parameters(parameters or {});self.parameter_set_id=parameter_hash(self.parameters)
         self.runtime=Execution(load_program(),self.parameters,f'BYBIT:{symbol}.P',self.timeframe,self.tick_size,max(2600,required_history(self.parameters,self.timeframe)))
         self.contexts={};self.chart_bars=[];self.provider=ContextProvider(self);self.runtime.request_provider=self.provider;self.snapshot=None;self.first_bar_start=None
+        self.currency_rates=CurrencyRates(currency_rates)
     def update(self,bar,contexts=None,realtime=False):
         bar=bar.to_dict() if hasattr(bar,'to_dict') else dict(bar)
         bar['received_at'] = bar.get('received_at') or bar['end']
@@ -67,7 +69,8 @@ class PineEngine:
             self.chart_bars=self.chart_bars[-self.runtime.history_limit:]
         self.snapshot=snapshot
         return snapshot
-    def export_state(self):return {'version':ENGINE_VERSION,'pine_source_hash':PINE_HASH,'parameter_hash':parameter_hash(self.parameters),'first_bar_start':self.first_bar_start,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'chart_bars':self.chart_bars,'snapshot':self.snapshot}
+    def export_state(self):return {'version':ENGINE_VERSION,'pine_source_hash':PINE_HASH,'parameter_hash':parameter_hash(self.parameters),'currency_rates':self.currency_rates.records,'first_bar_start':self.first_bar_start,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'chart_bars':self.chart_bars,'snapshot':self.snapshot}
     def restore_state(self,payload):
         if payload['pine_source_hash']!=PINE_HASH or payload['version']!=ENGINE_VERSION or payload['parameter_hash']!=parameter_hash(self.parameters):raise ValueError('Checkpoint source/engine/parameter version mismatch; explicit replay required')
+        if payload.get('currency_rates',{})!=self.currency_rates.records:raise ValueError('Checkpoint currency inputs mismatch; explicit replay required')
         self.runtime.restore_state(payload['runtime']);self.provider.restore_state(payload['contexts']);self.chart_bars=payload['chart_bars'];self.first_bar_start=payload['first_bar_start'];self.snapshot=payload['snapshot']

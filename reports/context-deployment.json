@@ -1,0 +1,75 @@
+{
+  "checked_at": "2026-09-22T03:56:03.403032+00:00",
+  "status": "DEPLOYED",
+  "engine_version": "1.15.2-interpreter.3",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "python_tests_passed": 256,
+  "container_focused_tests_passed": 71,
+  "http": {
+    "/setups": 200,
+    "/parity": 200,
+    "/api/parity": 200,
+    "/api/health": 200
+  },
+  "services": [
+    {
+      "Service": "api",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "engine",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "frontend",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "notifier",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "postgres",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "redis",
+      "State": "running",
+      "Health": "healthy"
+    },
+    {
+      "Service": "retention",
+      "State": "running",
+      "Health": "healthy"
+    }
+  ],
+  "parity": {
+    "status": "UNVERIFIED",
+    "metrics_status": "PASS",
+    "matched_records": 10117,
+    "csv_sha256": "35fdf5b66bc7bd63cede1d6ddc8cf898c3e5fe2f5370d9386d531ff8aecdeb41"
+  },
+  "application_status": "RECOVERING",
+  "engine": {
+    "status": "RECOVERING",
+    "selected": 774,
+    "universe": 774,
+    "initialized": 1,
+    "engines": 2,
+    "timeframes": [
+      "30"
+    ],
+    "max_symbols": 0,
+    "errors": {}
+  },
+  "limitations": [
+    "Full-universe initialization is still in progress; healthy containers do not establish workload acceptance.",
+    "Historical replay uses the observed TradingView currency series; live worker retains the original stablecoin fallback.",
+    "Signal and intrabar parity remain unverified."
+  ]
+}

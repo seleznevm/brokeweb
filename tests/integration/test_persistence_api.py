@@ -207,3 +207,7 @@ def test_parity_prefers_full_reference_when_present(client,monkeypatch,tmp_path)
     assert client.get('/api/parity').json()['status']=='UNVERIFIED'
     (reports/'full-parity.json').write_text(json.dumps({'status':'FAIL','observed_status':'FAIL'}))
     assert client.get('/api/parity').json()['status']=='FAIL'
+    (reports/'context-parity.json').write_text(json.dumps({'status':'UNVERIFIED','scope':'Historical metrics; signal reference absent'}))
+    assert client.get('/api/parity').json()['scope']=='Historical metrics; signal reference absent'
+    monkeypatch.setenv('PARITY_REPORT_PATH',str(reports/'full-parity.json'))
+    assert client.get('/api/parity').json()['status']=='FAIL'

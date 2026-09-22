@@ -1,0 +1,2394 @@
+{
+  "status": "UNVERIFIED",
+  "engine_version": "1.15.2-interpreter.3",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "reference_records": 10117,
+  "python_records": 10117,
+  "metrics": [
+    {
+      "metric": "open",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "high",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "low",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "close",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "atr",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "ema_fast",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 5.551115123125783e-17,
+      "error_p95": 2.220446049250313e-16,
+      "relative_error_max": 6.062448202893413e-16,
+      "agreement_percent": 33.15212019373332,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": 0.43559648529954637,
+          "python": 0.4355964852995464,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": 0.4345063217523675,
+          "python": 0.43450632175236753,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771828200000,
+          "python_time": 1771828200000,
+          "pine": 0.43504857682357057,
+          "python": 0.4350485768235706,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771830000000,
+          "python_time": 1771830000000,
+          "pine": 0.43551061712608763,
+          "python": 0.4355106171260877,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771831800000,
+          "python_time": 1771831800000,
+          "pine": 0.4363381773997936,
+          "python": 0.43633817739979364,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "ema_slow",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 3.3306690738754696e-16,
+      "error_p95": 5.551115123125783e-16,
+      "relative_error_max": 1.845969891820036e-15,
+      "agreement_percent": 1.4431155480873776,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": 0.44339102527002716,
+          "python": 0.44339102527002755,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": 0.4427325536908104,
+          "python": 0.44273255369081077,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": 0.4422763751147002,
+          "python": 0.4422763751147005,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": 0.44185377216902566,
+          "python": 0.441853772169026,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": 0.44171048698592663,
+          "python": 0.4417104869859269,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "return_1h",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "return_6h",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "return_24h",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "natr_1h",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "volume_24h",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 4.656612873077393e-10,
+      "error_p95": 3.725290298461914e-09,
+      "relative_error_max": 2.114870797819735e-06,
+      "agreement_percent": 31.807848176336858,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": 2750013.944338061,
+          "python": 2750013.9443380623,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": 2746299.60277311,
+          "python": 2746299.602773111,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": 2746299.60277311,
+          "python": 2746299.602773111,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": 2797164.6455368404,
+          "python": 2797164.645536842,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": 2797164.6455368404,
+          "python": 2797164.645536842,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "direction",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "generation",
+      "pine": 1577,
+      "python": 1577,
+      "both_na": 8540,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "fsm",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "level",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "approach",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "formation",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "execution",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "geometry",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "context",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 5.320403215293418e-07,
+      "agreement_percent": 97.30157161213799,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771979400000,
+          "python_time": 1771979400000,
+          "pine": 54.812397926344076,
+          "python": 54.81239792634407,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771981200000,
+          "python_time": 1771981200000,
+          "pine": 59.578861520011394,
+          "python": 59.57886152001139,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771993800000,
+          "python_time": 1771993800000,
+          "pine": 75.34822680156098,
+          "python": 75.348226801561,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772038800000,
+          "python_time": 1772038800000,
+          "pine": 81.47224953134679,
+          "python": 81.47224953134678,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772047800000,
+          "python_time": 1772047800000,
+          "pine": 87.48465996866533,
+          "python": 87.48465996866531,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "exhaustion",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 1.1488884784240437e-11,
+      "agreement_percent": 96.73816348719976,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771981200000,
+          "python_time": 1771981200000,
+          "pine": 27.288253396769328,
+          "python": 27.288253396769356,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771984800000,
+          "python_time": 1771984800000,
+          "pine": 5.583989719376762,
+          "python": 5.5839897193767705,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772024400000,
+          "python_time": 1772024400000,
+          "pine": 1.0259685212454683,
+          "python": 1.025968521245485,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772026200000,
+          "python_time": 1772026200000,
+          "pine": 7.794941081101264,
+          "python": 7.7949410811013,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772029800000,
+          "python_time": 1772029800000,
+          "pine": 77.48929853575208,
+          "python": 77.48929853575179,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "mae",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 3.552713678800501e-15,
+      "relative_error_max": 7.267156287807456e-10,
+      "agreement_percent": 93.80251062567955,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771972200000,
+          "python_time": 1771972200000,
+          "pine": 24.30897199205348,
+          "python": 24.308971992053486,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771974000000,
+          "python_time": 1771974000000,
+          "pine": 13.459433004684325,
+          "python": 13.459433004684332,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771975800000,
+          "python_time": 1771975800000,
+          "pine": 39.95005760798667,
+          "python": 39.950057607986686,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771981200000,
+          "python_time": 1771981200000,
+          "pine": 43.696732998727214,
+          "python": 43.69673299872722,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771986600000,
+          "python_time": 1771986600000,
+          "pine": 46.931878547580354,
+          "python": 46.93187854758036,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "avg_setup",
+      "pine": 1577,
+      "python": 1577,
+      "both_na": 8540,
+      "error_median": 0.0,
+      "error_p95": 2.842170943040401e-14,
+      "relative_error_max": 3.833777464721174e-08,
+      "agreement_percent": 95.76949688642878,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771979400000,
+          "python_time": 1771979400000,
+          "pine": 61.602526291587196,
+          "python": 61.60252629158719,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771988400000,
+          "python_time": 1771988400000,
+          "pine": 64.28221360752718,
+          "python": 64.28221360752717,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772031600000,
+          "python_time": 1772031600000,
+          "pine": 62.50095820821959,
+          "python": 62.50095820821962,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772033400000,
+          "python_time": 1772033400000,
+          "pine": 62.75551618921052,
+          "python": 62.755516189210546,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772035200000,
+          "python_time": 1772035200000,
+          "pine": 65.11340414120468,
+          "python": 65.1134041412047,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "continuation",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 8.397545466474418e-08,
+      "agreement_percent": 96.30325195215973,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771981200000,
+          "python_time": 1771981200000,
+          "pine": 67.31265193247525,
+          "python": 67.31265193247523,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772029800000,
+          "python_time": 1772029800000,
+          "pine": 66.49579212800897,
+          "python": 66.495792128009,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772031600000,
+          "python_time": 1772031600000,
+          "pine": 64.07465070584325,
+          "python": 64.07465070584331,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772037000000,
+          "python_time": 1772037000000,
+          "pine": 60.681247015069445,
+          "python": 60.6812470150695,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1772042400000,
+          "python_time": 1772042400000,
+          "pine": 79.45210688794657,
+          "python": 79.4521068879466,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "btc_shock",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 7.105427357601002e-15,
+      "relative_error_max": 9.395214455422347e-16,
+      "agreement_percent": 84.47168132845705,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771830000000,
+          "python_time": 1771830000000,
+          "pine": 47.85915474313484,
+          "python": 47.85915474313483,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771831800000,
+          "python_time": 1771831800000,
+          "pine": 43.20832380667423,
+          "python": 43.20832380667422,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771835400000,
+          "python_time": 1771835400000,
+          "pine": 47.47190411874093,
+          "python": 47.47190411874094,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771844400000,
+          "python_time": 1771844400000,
+          "pine": 18.90903446737785,
+          "python": 18.909034467377847,
+          "reason": "NUMERIC_DIFFERENCE"
+        },
+        {
+          "time": 1771846200000,
+          "python_time": 1771846200000,
+          "pine": 51.86304368853718,
+          "python": 51.863043688537175,
+          "reason": "NUMERIC_DIFFERENCE"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "metric": "candidate_path",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "trigger_path",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "risk_path",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "sl",
+      "pine": 1577,
+      "python": 1577,
+      "both_na": 8540,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "t1",
+      "pine": 1577,
+      "python": 1577,
+      "both_na": 8540,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "rr",
+      "pine": 1571,
+      "python": 1571,
+      "both_na": 8546,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "r1",
+      "pine": 9716,
+      "python": 9716,
+      "both_na": 401,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "r2",
+      "pine": 7878,
+      "python": 7878,
+      "both_na": 2239,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "s1",
+      "pine": 9717,
+      "python": 9717,
+      "both_na": 400,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "s2",
+      "pine": 8486,
+      "python": 8486,
+      "both_na": 1631,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "mtf_trend",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "dynamic_support",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "htf_base",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "action",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "gate_liquidity",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "gate_structure",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "gate_trigger",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "gate_btc_shock",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    },
+    {
+      "metric": "fresh_trigger",
+      "pine": 10117,
+      "python": 10117,
+      "both_na": 0,
+      "error_median": 0.0,
+      "error_p95": 0.0,
+      "relative_error_max": 0.0,
+      "agreement_percent": 100.0,
+      "missing_columns": 0,
+      "missing_reference_columns": 0,
+      "missing_python_columns": 0,
+      "missing_values": 0,
+      "invalid_values": 0,
+      "first_differences": [],
+      "status": "PASS"
+    }
+  ],
+  "signals": [
+    {
+      "signal": "L WATCH",
+      "pine_events": null,
+      "python_events": 28,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "S WATCH",
+      "pine_events": null,
+      "python_events": 14,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG WATCH ENTRY",
+      "pine_events": null,
+      "python_events": 14,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT WATCH ENTRY",
+      "pine_events": null,
+      "python_events": 4,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "MATURED PRE-BREAK ENTRY",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG ARMED",
+      "pine_events": null,
+      "python_events": 11,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT ARMED",
+      "pine_events": null,
+      "python_events": 8,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "PINE READY LONG",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "PINE READY SHORT",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "BREAKOUT",
+      "pine_events": null,
+      "python_events": 26,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "BREAKDOWN",
+      "pine_events": null,
+      "python_events": 10,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "BRONZE",
+      "pine_events": null,
+      "python_events": 5,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "STRONG",
+      "pine_events": null,
+      "python_events": 5,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG REVERSAL RISK",
+      "pine_events": null,
+      "python_events": 28,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT REVERSAL RISK",
+      "pine_events": null,
+      "python_events": 8,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "ACTIVE PLAN DEGRADED",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "ACTIVE PLAN EXIT",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "ADD-ON",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG TP HIT",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT TP HIT",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG ARMED LOST",
+      "pine_events": null,
+      "python_events": 12,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT ARMED LOST",
+      "pine_events": null,
+      "python_events": 13,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "LONG BOUNCE WATCH",
+      "pine_events": null,
+      "python_events": 0,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "SHORT BOUNCE WATCH",
+      "pine_events": null,
+      "python_events": 1,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "AVG SETUP >= 70",
+      "pine_events": null,
+      "python_events": 49,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    },
+    {
+      "signal": "EXECUTION QUALITY >= 65",
+      "pine_events": null,
+      "python_events": 107,
+      "match_percent": null,
+      "positive_event_coverage": false,
+      "missing_columns": 10117,
+      "missing_reference_columns": 10117,
+      "missing_python_columns": 0,
+      "invalid_values": 0,
+      "first_differences": [
+        {
+          "time": 1771819200000,
+          "python_time": 1771819200000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771821000000,
+          "python_time": 1771821000000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771822800000,
+          "python_time": 1771822800000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771824600000,
+          "python_time": 1771824600000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        },
+        {
+          "time": 1771826400000,
+          "python_time": 1771826400000,
+          "pine": null,
+          "python": 0.0,
+          "reason": "MISSING_COLUMN"
+        }
+      ],
+      "status": "MISSING_REFERENCE"
+    }
+  ],
+  "realtime": false,
+  "reasons": [],
+  "matched_records": 10117,
+  "missing_records": 0,
+  "unexpected_python_records": 0,
+  "timestamp_error_max_ms": 0,
+  "metrics_status": "PASS",
+  "scope": "Historical metrics; signal reference absent",
+  "symbol": "ETHFIUSDT",
+  "timeframe": "30",
+  "history_start": 1735689600000,
+  "csv_sha256": "35fdf5b66bc7bd63cede1d6ddc8cf898c3e5fe2f5370d9386d531ff8aecdeb41",
+  "parameters_confirmed": true,
+  "intrabar_status": "UNVERIFIED",
+  "currency_source": "PARITY_CTX_quote_usd_requested; unavailable before reference window",
+  "limitations": [
+    "No signal columns in this capture; old signals are not merged across incompatible HTF observations.",
+    "Native exchange warmup/contexts can differ from TradingView.",
+    "Observed currency rates cover the reference window only; warmup and live worker still use the source fallback where rates are unavailable."
+  ]
+}

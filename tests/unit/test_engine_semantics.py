@@ -150,6 +150,75 @@ def test_higher_tf_closed_history_has_no_lookahead_and_gaps_off():
     assert run_bar(ex,candle(5))['contextClose']==21
 
 
+@pytest.mark.parametrize('manual,expected', [(False, 900), (True, 7)])
+def test_request_recalculates_transitive_timeframe_dependencies(manual, expected):
+    program=Program('''bool manual = input.bool(false)
+int seconds = timeframe.in_seconds()
+int window = manual ? 7 : seconds
+f_value(int length) =>
+    length
+float result = request.security("BINANCE:BTCUSDT.P", "15", f_value(window))''')
+    ex,_,_=provider_engine(program,{'BINANCE:BTCUSDT.P|15':[candle(0,tf=900000)]},'30')
+    ex.parameters={'manual':manual}
+    result=run_bar(ex,candle(0,tf=1800000))
+    assert result['window']==(7 if manual else 1800)
+    assert result['result']==expected
+
+
+def test_request_calculated_series_uses_own_history():
+    program=Program('''float change = close - close[1]
+float result = request.security("BINANCE:BTCUSDT.P", "5", change)''')
+    bars=[candle(0,tf=300000,close=20),candle(1,tf=300000,close=25)]
+    ex,_,_=provider_engine(program,{'BINANCE:BTCUSDT.P|5':bars},'15')
+    assert run_bar(ex,candle(0,tf=900000,close=1000))['result']==5
+
+
+def test_requested_function_global_dependency_is_recalculated():
+    program=Program('''int seconds = timeframe.in_seconds()
+f_value() =>
+    seconds
+float result = request.security("BINANCE:BTCUSDT.P", "5", f_value())''')
+    ex,_,_=provider_engine(program,{'BINANCE:BTCUSDT.P|5':[candle(0,tf=300000)]},'15')
+    assert run_bar(ex,candle(0,tf=900000))['result']==300
+
+
+def test_mutable_requested_global_fails_instead_of_using_chart_value():
+    program=Program('''float variable = close
+variable := close + 1
+float result = request.security("BINANCE:BTCUSDT.P", "5", variable)''')
+    ex,_,_=provider_engine(program,{'BINANCE:BTCUSDT.P|5':[candle(0,tf=300000)]},'15')
+    with pytest.raises(Exception,match='Unsupported mutable request dependency'):
+        run_bar(ex,candle(0,tf=900000))
+
+
+@pytest.mark.parametrize('parameters,move', [({}, .15), ({'tfProfileMode':'Manual','manualBtcShockTf':'15','manualBtcShockLookback':2}, .10)])
+def test_pinned_btc_shock_uses_requested_profile_but_preserves_manual_input(parameters,move):
+    from backend.engine.runtime import PineEngine
+    bars=[dict(start=i*900000,end=(i+1)*900000,open=100+i,close=100+i,
+               high=110+i,low=90+i,volume=100,confirmed=True) for i in range(42)]
+    engine=PineEngine('TESTUSDT','30',parameters=parameters)
+    result=engine.update(candle(20,tf=1800000),{'BINANCE:BTCUSDT.P|15':bars})
+    # Each BTC true range is exactly 20; 3-bar and 2-bar moves are 3 and 2.
+    assert result['metrics']['btcShockMoveAtr']==pytest.approx(move)
+
+
+@pytest.mark.parametrize('operation',['ta.sma','math.sum','ta.rma'])
+def test_recent_valid_optimization_preserves_bounded_na_window_and_sum_order(operation):
+    program=Program(f'float result = {operation}(sample, length)')
+    ex=Execution(program,history_limit=9)
+    values=[None,1e16,1.,-1e16,None,4.,7.,None,None,None,3.,6.,8.,None]*3
+    history=[];previous=math.nan
+    for i,raw in enumerate(values):
+        sample=math.nan if raw is None else raw
+        length=[3,5,2,11][i%4]
+        valid=[v for v in history[-8:]+[sample] if not is_na(v)][-length:]
+        initial=sum(valid)/length if len(valid)>=length else math.nan
+        expected=(previous if is_na(sample) else initial if is_na(previous) else sample/length+(1-1/length)*previous) if operation=='ta.rma' else (sum(valid) if operation=='math.sum' else initial) if len(valid)>=length else math.nan
+        actual=run_bar(ex,candle(i),outer={'sample':sample,'length':length})['result']
+        assert is_na(actual) if is_na(expected) else actual==expected
+        history.append(sample);previous=expected
+
+
 def test_developing_htf_recalculates_from_confirmed_context_checkpoint():
     program=Program('float contextEma = request.security("BINANCE:BTCUSDT.P", "5", ta.ema(close, 3))')
     closed=candle(0,tf=300000,close=10)
