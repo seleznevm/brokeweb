@@ -173,9 +173,15 @@ class Repository:
         if session is None:
             with self.session() as s: return self.settings(s)
         row=session.get(ServiceHealth,'settings')
-        return row.payload if row else {'snapshot_interval_sec':self.snapshot_interval_sec}
+        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,**(row.payload if row else {})}
     def set_settings(self,value):
-        with self.session.begin() as s: s.merge(ServiceHealth(name='settings',updated_at=now_ms(),payload=value))
-        return value
+        with self.session.begin() as s:
+            row=s.get(ServiceHealth,'settings',with_for_update=True)
+            merged={**self.settings(s),**value}
+            if row:
+                row.payload=merged;row.updated_at=now_ms()
+            else:
+                s.add(ServiceHealth(name='settings',updated_at=now_ms(),payload=merged))
+        return merged
     def heartbeat(self,name,payload):
         with self.session.begin() as s: s.merge(ServiceHealth(name=name,updated_at=now_ms(),payload=clean(payload)))

@@ -228,3 +228,27 @@ def test_parity_prefers_full_reference_when_present(client,monkeypatch,tmp_path)
     assert client.get('/api/parity').json()['scope']=='Historical metrics; signal reference absent'
     monkeypatch.setenv('PARITY_REPORT_PATH',str(reports/'full-parity.json'))
     assert client.get('/api/parity').json()['status']=='FAIL'
+
+
+def test_display_timezone_defaults_persists_and_preserves_other_settings(repo,client):
+    assert client.get('/api/settings').json()['timezone_offset_minutes']==420
+    # Existing deployments only stored the snapshot interval.
+    from backend.models.schema import ServiceHealth
+    with repo.session.begin() as session:
+        session.add(ServiceHealth(name='settings',updated_at=now_ms(),payload={'snapshot_interval_sec':9}))
+    assert client.get('/api/settings').json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':420}
+    saved=client.put('/api/settings',json={'timezone_offset_minutes':345})
+    assert saved.status_code==200
+    assert saved.json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':345}
+    assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()=={'snapshot_interval_sec':5,'timezone_offset_minutes':345}
+    assert Repository(str(repo.engine.url)).settings()['timezone_offset_minutes']==345
+    for invalid in (-721,841,421,True,'420',None):
+        assert client.put('/api/settings',json={'timezone_offset_minutes':invalid}).status_code==422
+    assert client.get('/api/settings').json()['timezone_offset_minutes']==345
+    # Display-only changes must not create a parameter version or shift raw data.
+    before=repo.parameters()['id']
+    original=snapshot(repo)
+    repo.save_snapshot(original)
+    assert client.put('/api/settings',json={'timezone_offset_minutes':-720}).status_code==200
+    assert repo.parameters()['id']==before
+    assert client.get('/api/setups/XYZUSDT/15').json()['event_time']==original['event_time']

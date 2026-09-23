@@ -1,9 +1,10 @@
+import {useDisplayTime} from './Timezone';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, send } from './api';
 import { Badge, Empty, ErrorMessage, JsonView, Section } from './common';
-import { format, timestamp } from './model';
+import { format } from './model';
 import { ConditionLeaf } from './ConditionLeaf';
 import type { FieldCatalog } from './ruleFields';
 import type { AlertRule, Condition, Data, Envelope, Snapshot } from './types';
@@ -17,6 +18,7 @@ function ConditionGroup({node,catalog,onChange,onDelete,depth=0}:{node:Condition
  {(node.op!=='NOT'||children.length===0)&&<div className="group-actions"><button type="button" onClick={()=>onChange({...node,conditions:[...children,leaf()]})}>+ Условие</button>{depth<8&&<button type="button" onClick={()=>onChange({...node,conditions:[...children,{op:'AND',conditions:[leaf()]}]})}>+ Группа</button>}</div>}</fieldset>;
 }
 export function Alerts(){
+ const {timestamp,label}=useDisplayTime();
  const fields=useQuery({queryKey:['alert-fields'],queryFn:()=>api<FieldCatalog>('/api/alerts/fields')});
  const cache=useQueryClient();const rules=useQuery({queryKey:['rules'],queryFn:()=>api<Envelope<AlertRule>>('/api/alerts/rules')});
  const deliveries=useQuery({queryKey:['deliveries'],queryFn:()=>api<Envelope<Data>>('/api/alerts/deliveries?limit=100'),refetchInterval:15000});
@@ -35,5 +37,5 @@ export function Alerts(){
  {matches&&<div className="match-results"><h3>Совпадения сейчас: {matches.total??matches.items.length}</h3>{matches.items.length?matches.items.map((item,i)=><Link key={i} to={`/setups/${item.exchange}/${item.symbol}/${item.timeframe}`}>{item.symbol} · {item.timeframe} · {format(item.action)}</Link>):<p>Текущие состояния не соответствуют условиям. Crossings требуют предыдущего состояния.</p>}</div>}
  <details><summary>JSON условия</summary><JsonView data={rule.conditions}/></details></Section></div>
  <Section title="Telegram connection"><p>Отправить одно тестовое сообщение в чат, настроенный на сервере.</p><button disabled={busy} onClick={()=>void perform(async()=>{setTelegramResult(await send('/api/alerts/test-telegram','POST',{}));setNotice('Запрос тестовой отправки выполнен. Проверьте результат ниже.');await cache.invalidateQueries({queryKey:['deliveries']});})}>Отправить test Telegram</button>{telegramResult!==undefined&&<JsonView data={telegramResult}/>}</Section>
- <Section title="История срабатываний / доставки"><ErrorMessage error={deliveries.error}/>{!deliveries.data?.items.length?<Empty>История отправок пуста.</Empty>:<div className="table-scroll"><table><thead><tr><th>UTC</th><th>Правило</th><th>Symbol / TF</th><th>Статус</th><th>Сообщение / ошибка</th></tr></thead><tbody>{deliveries.data.items.map((item,i)=><tr key={String(item.id??i)}><td>{timestamp(item.created_at??item.event_time)}</td><td>{format(item.rule_name??item.rule_id)}</td><td>{format(item.symbol)} / {format(item.timeframe)}</td><td>{format(item.status)}</td><td className="wrap">{format(item.error??item.message??item.payload)}</td></tr>)}</tbody></table></div>}</Section></>;
+ <Section title="История срабатываний / доставки"><ErrorMessage error={deliveries.error}/>{!deliveries.data?.items.length?<Empty>История отправок пуста.</Empty>:<div className="table-scroll"><table><thead><tr><th>{label}</th><th>Правило</th><th>Symbol / TF</th><th>Статус</th><th>Сообщение / ошибка</th></tr></thead><tbody>{deliveries.data.items.map((item,i)=><tr key={String(item.id??i)}><td>{timestamp(item.created_at??item.event_time)}</td><td>{format(item.rule_name??item.rule_id)}</td><td>{format(item.symbol)} / {format(item.timeframe)}</td><td>{format(item.status)}</td><td className="wrap">{format(item.error??item.message??item.payload)}</td></tr>)}</tbody></table></div>}</Section></>;
 }

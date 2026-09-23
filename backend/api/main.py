@@ -14,7 +14,9 @@ from backend.models.schema import ArchiveBatch
 from backend.alerts.rules import AlertRuleInput,matches,validate_condition
 
 class ParametersInput(BaseModel): values:dict
-class SettingsInput(BaseModel): snapshot_interval_sec:float=Field(ge=1,le=86400)
+class SettingsInput(BaseModel):
+    snapshot_interval_sec:float=Field(default=15,ge=1,le=86400)
+    timezone_offset_minutes:int=Field(default=420,ge=-720,le=840,multiple_of=15,strict=True)
 class RuleTestInput(BaseModel): conditions:dict
 
 def create_app(repository:Repository|None=None):
@@ -120,7 +122,7 @@ def create_app(repository:Repository|None=None):
     @app.get('/api/settings')
     def settings(): return repo.settings()
     @app.put('/api/settings')
-    def set_settings(body:SettingsInput): return repo.set_settings(body.model_dump())
+    def set_settings(body:SettingsInput): return repo.set_settings(body.model_dump(exclude_unset=True))
 
     @app.get('/api/alerts/fields')
     def alert_fields():

@@ -1,11 +1,13 @@
+import {useDisplayTime} from './Timezone';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from './api';
-import { columns, format, formatField, sortItems, timestamp, valueOf, type Sort } from './model';
+import { columns, format, formatField, sortItems, valueOf, type Sort } from './model';
 import type { Envelope, Snapshot } from './types';
 import { Badge, Empty, ErrorMessage, gateTone } from './common';
 export function Setups(){
+ const {timestamp}=useDisplayTime();
  const {data,error,isPending}=useQuery({queryKey:['setups'],queryFn:()=>api<Envelope<Snapshot>>('/api/setups?active_only=false&limit=10000'),refetchInterval:15000});
  const [search,setSearch]=useState(''),[filters,setFilters]=useState<Record<string,string>>({timeframe:"30"}),[sort,setSort]=useState<Sort[]>([{key:'avg_setup',direction:'desc'}]),[ranges,setRanges]=useState<Record<string,{min:string;max:string}>>({}),[showFilters,setShowFilters]=useState(false),[active,setActive]=useState(true);
  const items=useMemo(()=>data?.items??[],[data]);
