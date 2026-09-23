@@ -35,3 +35,46 @@ def test_notification_rounds_scores_without_changing_prices_or_inputs():
     message=render_message({'snapshot':snapshot,'template':'{avg_setup} {price} {sl}'})
     assert message=='65.12 0.00012345 0.00011234'
     assert snapshot['avg_setup']==65.123456
+
+
+@pytest.mark.parametrize('op,values,expected',[
+    ('contains_any',['BRONZE','STRONG'],True),('contains_all',['BRONZE','STRONG'],False),
+    ('contains_all',['BRONZE'],True),('contains_any',['STRONG'],False),
+])
+def test_list_presets_have_any_all_semantics(op,values,expected):
+    node={'field':'signals','op':op,'value':values}
+    validate_condition(node)
+    assert matches(node,{'signals':['BRONZE']}) is expected
+    assert not matches(node,{'signals':None})
+    assert not matches(node,{'signals':'BRONZE'})
+
+
+@pytest.mark.parametrize('node',[
+    {'field':'timeframe','op':'IN','value':[30,5]},
+    {'field':'direction','op':'==','value':'"LONG"'},
+    {'field':'direction','op':'>','value':'LONG'},
+    {'field':'confirmed','op':'==','value':'true'},
+    {'field':'metrics.gateStructure','op':'==','value':1},
+    {'field':'avg_setup','op':'>=','value':'70'},
+    {'field':'avg_setup','op':'>=','value':True},
+    {'field':'avg_setup','op':'BETWEEN','value':[80,60]},
+    {'field':'fsm','op':'==','value':'WATCH'},
+    {'field':'signals','op':'IN','value':['BRONZE']},
+    {'field':'signals','op':'contains_any','value':[]},
+])
+def test_known_field_type_or_preset_mistakes_rejected(node):
+    with pytest.raises(ValueError):validate_condition(node)
+
+
+def test_field_catalog_uses_actual_source_values_and_keeps_fsm_numeric():
+    from backend.alerts.fields import field_catalog,field_spec
+    from backend.engine.runtime import SIGNALS
+    assert field_spec('event')['options']==list(SIGNALS.values())
+    assert field_spec('fsm')['type']=='integer'
+    assert field_spec('fsm')['options']==list(range(9))
+    assert 'ACTIVE / INVALIDATED' in field_spec('setup_state')['options']
+    assert 'CHECK DOM/TAPE → ENTRY' in field_spec('action')['options']
+    assert field_spec('metrics.gateStructure')['options']==[True,False]
+    assert field_spec('metrics.formationQuality')['type']=='number'
+    assert len(field_catalog()['fields'])==len({s['key'] for s in field_catalog()['fields']})
+    validate_condition({'field':'metrics.custom_score','op':'>=','value':60})

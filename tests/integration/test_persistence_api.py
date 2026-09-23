@@ -85,6 +85,23 @@ def test_rule_versions_parameters_validation(repo,client):
     with repo.session() as s: assert len(s.scalars(select(RuleVersion)).all())==3
     assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()['snapshot_interval_sec']==5
 
+
+def test_alert_field_schema_and_multiselect_roundtrip(client):
+    response=client.get('/api/alerts/fields')
+    assert response.status_code==200
+    fields={f['key']:f for f in response.json()['fields']}
+    assert fields['direction']['options']==['LONG','SHORT','NONE']
+    conditions={'op':'AND','conditions':[
+        {'field':'timeframe','op':'IN','value':['30','5']},
+        {'field':'signals','op':'contains_any','value':['BRONZE','STRONG']},
+        {'field':'confirmed','op':'==','value':True}]}
+    saved=rule(client,enabled=False,conditions=conditions)
+    assert saved['conditions']==conditions
+    assert client.post('/api/alerts/rules/test',json={'conditions':conditions}).status_code==200
+    invalid={'field':'timeframe','op':'IN','value':[30,5]}
+    assert client.post('/api/alerts/rules/test',json={'conditions':invalid}).status_code==422
+    assert client.post('/api/alerts/rules',json={'name':'Bad type','conditions':invalid}).status_code==422
+
 def test_confirmed_generation_cooldown_and_stale(repo,client):
     rule(client,mode='confirmed',frequency='once_per_generation',cooldown_seconds=100)
     repo.save_snapshot(snapshot(repo)); assert client.get('/api/alerts/deliveries').json()['items']==[]

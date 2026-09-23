@@ -1,10 +1,10 @@
-# Отчёт реализации Brokeweb — обновлено 2026-09-22
+# Отчёт реализации Brokeweb — обновлено 2026-09-23
 
 В `C:\dev\brokeweb` работает локальный стенд с реальными публичными данными Bybit и Binance. **Полный Definition of Done ещё не принят:** исторические метрики нового reference прошли проверку, но сигналы этой сессии, intrabar, нагрузка всего universe и эксплуатационная приёмка хранения ещё требуют подтверждения.
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний Python suite: **256 passed**. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний Python suite: **334 passed**; frontend: **16 tests**, lint, typecheck и production build прошли. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
 
 ## Что реализовано
 
@@ -16,6 +16,22 @@
 - Правила AND/OR/NOT, comparisons/crossings, частоты/cooldown, confirmed/realtime modes, подавление replay/stale/recovering, версии и deduplication после restart. Telegram transport проверен mock-сервером; реальная отправка в чат в ходе проверки не выполнялась.
 - Checkpoint recovery, lossless compressed checkpoint storage с чтением прежнего JSON, backfill после обрыва, historical rebuild при исправленной confirmed kline, graceful stop с ожиданием текущих расчётов/транзакций до освобождения lease.
 - Docker Compose, миграции Alembic, healthchecks, localhost binding, тесты/CI, exporter/replay/comparator для внешней Pine-проверки.
+
+## Дополнение 2026-09-23: правила и intrabar replay
+
+Редактор условий получает каталог типов с сервера. Для ограниченных наборов значений доступны одиночный select и multiselect в зависимости от оператора; boolean сохраняется как boolean, TF — строкой, score — числом. `BETWEEN` показывает две границы, `changed` не требует значения. Добавлены `contains_any` / `contains_all` для списков событий и blockers. Сервер проверяет типы, операторы и пресеты при сохранении; старые неизвестные значения остаются видимыми для исправления. Все поля и примеры ввода описаны в [alert_rules.md](alert_rules.md).
+
+Добавлен offline replay recorder v3: исполняется исходный AST, а результаты десяти request-вызовов подаются из capture. Проверяются последовательность, начало бара, rollback/varip, повторные confirmed updates и 45 метрик / 26 сигналов. Отчёт разделяет поставленные входы и downstream-вычисления. Даже `DIAGNOSTIC_MATCH` сохраняет полный статус **UNVERIFIED**: native warmup не является проверенным checkpoint TradingView, а сами request-вычисления здесь обходятся. v1/v2 явно отклоняются, поскольку необходимых contexts в них нет. Запуск и ограничения: [tradingview_capture.md](tradingview_capture.md).
+
+Проверки этого дополнения: **334 Python tests**, compileall, **16 frontend tests**, ESLint, TypeScript и production build. Новые frontend tests проверяют преобразования типов и HTML контролов через React SSR; интерактивная браузерная проверка нового редактора в этот прогон не входила. Исходный Pine не изменён.
+
+До окончательной реализации и приёмки остаётся:
+
+1. Получить реальный recorder v3 capture после компиляции в TradingView: активные setup, положительные сигналы, согласованные настройки и начальное состояние. Проверить downstream-метрики и порядок intrabar-событий, затем расширить reference на другие символы/TF. Историческому reference текущей версии также нужны сигнальные колонки.
+2. Завершить full-universe capacity acceptance: выйти из восстановления, измерить lag/throughput и DB writes под устойчивой нагрузкой; подтвердить восстановление потоков BTC и полноту 30S/trades. При необходимости оптимизировать или разделить worker-нагрузку.
+3. Принять эксплуатацию хранения: sizing, WAL, retention вне preview, архивный диск и восстановление из backup с непустыми архивами на репрезентативном объёме.
+4. Проверить реальную Telegram-доставку отдельным явно запрошенным тестом и интерактивный цикл создания/редактирования правил в браузере. Mock transport и render tests не заменяют эти проверки.
+5. Закрыть оставшиеся ограничения источников: live FX и временное согласование native contexts с TradingView; отсутствующие внешние OI/CVD/input.source не подменять фиктивными данными.
 
 ## Сервисы и запуск
 
@@ -51,6 +67,7 @@ docker compose logs --tail=100 engine
 | `GET/PUT /api/parameters`, `/api/settings` | Source-derived inputs, версии, snapshot interval |
 | `GET/POST /api/alerts/rules`, `PUT/DELETE /api/alerts/rules/{id}` | Правила и версии |
 | `POST /api/alerts/rules/test` | Preview совпадений без отправки |
+| `GET /api/alerts/fields` | Типы полей, допустимые операторы и пресеты редактора |
 | `GET /api/alerts/deliveries`, `POST /api/alerts/test-telegram` | Журнал и явная тестовая отправка при настроенных credentials |
 | `GET /api/health`, `/api/parity`, `/api/storage`, `/metrics` | Health, честный статус parity, catalogue архивов, telemetry |
 | `WS /ws/setups` | Обновления setup из Redis |
@@ -92,7 +109,7 @@ docker compose logs --tail=100 engine
 
 | Ограничение | Причина / последствие |
 |---|---|
-| Полная parity ещё не принята | 45/45 исторических метрик прошли; новый CSV не содержит сигналов. Intrabar reference отсутствует. Live FX использует исходный fallback |
+| Полная parity ещё не принята | 45/45 исторических метрик прошли; новый CSV не содержит сигналов. Intrabar v1/v2 получены: ATR/EMA проверены, остальные вычисления пока не подтверждены. Нужен внешний capture v3 с синхронными request results и активными сигналами. Live FX использует исходный fallback |
 | Pine compatibility subset | Парсер/интерпретатор собственного изготовления; tie cases, barmerge и рекурсивные seeds требуют внешней проверки |
 | Историческое начало влияет на зоны/EMA | Persistent состояние может зависеть от данных за пределами конечного warmup; origin сохраняется, reference должен его учитывать |
 | Intrabar sampling отличается от возможного TradingView feed | Native exchange WS не доказывает тот же порядок/частоту executions у TradingView; источник BTC теперь streaming, но tick parity остаётся gate |
@@ -100,7 +117,7 @@ docker compose logs --tail=100 engine
 | External `input.source` / BTC symbol / TF | Произвольный внешний plot не предоставлен; поддерживаются native series. BTC adapter обслуживает BINANCE:BTCUSDT.P; изменение symbol или выбор ненативного TF требует отдельного adapter. Отсутствующий context не подменяется |
 | Масштаб всего universe | Испытано четыре symbol/TF; большие checkpoints и синхронное сохранение ограничивают throughput |
 | Retention и native partitions реализованы; sizing ещё не принят | Bounded archive/restore и месячные разделы snapshots/events проверены; по умолчанию preview. Остальные таблицы и archive disk требуют отдельной политики/backup; full-universe capacity не измерен |
-| Telegram live delivery не проверена | Credentials не заданы; transport/dedupe проверены без внешних сообщений |
+| Telegram live delivery не проверена | Transport/dedupe проверены mock-сервером; реальная доставка в чат ещё не принята |
 
 Ни один из этих обязательных acceptance gates не отнесён к optional enhancements. Дополнительные биржи, enhanced OI/CVD и косметические улучшения можно рассматривать отдельно после baseline parity.
 

@@ -122,6 +122,11 @@ def create_app(repository:Repository|None=None):
     @app.put('/api/settings')
     def set_settings(body:SettingsInput): return repo.set_settings(body.model_dump())
 
+    @app.get('/api/alerts/fields')
+    def alert_fields():
+        from backend.alerts.fields import field_catalog
+        return field_catalog()
+
     @app.get('/api/alerts/rules')
     def rules():
         with repo.session() as s: rows=s.scalars(select(Rule)).all()
