@@ -1,0 +1,86 @@
+{
+  "measured_at": "2026-09-24T00:37:25.668596+00:00",
+  "symbol": "AXSUSDT",
+  "timeframe": "30",
+  "engine_version": "1.15.2-interpreter.3",
+  "checkpoint_bytes": 1321137,
+  "lossless_status": "PASS",
+  "scope": "single saved state, no SQL writes, no market throughput measurement",
+  "median": {
+    "legacy": {
+      "export_ms": 141.7435859999614,
+      "clean_pack_ms": 684.3161210000517,
+      "total_ms": 820.349761999978
+    },
+    "optimized": {
+      "export_ms": 55.05812400008381,
+      "clean_pack_ms": 288.41474799992284,
+      "total_ms": 343.47287200000665
+    }
+  },
+  "speedup": 2.3883975384232445,
+  "runs": {
+    "legacy": [
+      {
+        "export_ms": 136.03364099992632,
+        "clean_pack_ms": 684.3161210000517,
+        "total_ms": 820.349761999978
+      },
+      {
+        "export_ms": 141.7435859999614,
+        "clean_pack_ms": 781.7967100000942,
+        "total_ms": 923.5402960000556
+      },
+      {
+        "export_ms": 214.4942520000086,
+        "clean_pack_ms": 353.05761999995866,
+        "total_ms": 567.5518719999673
+      }
+    ],
+    "optimized": [
+      {
+        "export_ms": 48.68694700007836,
+        "clean_pack_ms": 216.6953639999747,
+        "total_ms": 265.38231100005305
+      },
+      {
+        "export_ms": 95.01237599999968,
+        "clean_pack_ms": 540.7239969999864,
+        "total_ms": 635.7363729999861
+      },
+      {
+        "export_ms": 55.05812400008381,
+        "clean_pack_ms": 288.41474799992284,
+        "total_ms": 343.47287200000665
+      }
+    ]
+  },
+  "validation": {
+    "backend_full_suite_passed": 365,
+    "capacity_probe_targeted_passed": 17,
+    "pine_source_sha256": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e"
+  },
+  "post_deploy_probe": {
+    "readiness": "NOT_READY",
+    "capacity_status": "UNVERIFIED",
+    "scope": "short health probe; sustained throughput, storage growth and restart acceptance remain required",
+    "observed_seconds": 20.075,
+    "calculation_delta": 17,
+    "reasons": [
+      "Application is not HEALTHY",
+      "engine: Engine freshness coverage incomplete",
+      "engine: Engine is recovering or has errors",
+      "engine: Universe initialization incomplete"
+    ],
+    "last_engine": {
+      "updated_at": 1790210737031,
+      "selected": 777,
+      "initialized": 7,
+      "healthy_engines": 5,
+      "market_data_lag_ms": 34210,
+      "calculations_per_second": 0.8646827717509977,
+      "checkpoint_export_latency_ms": 190.99976338094484,
+      "db_write_latency_ms": 1067.8987191129181
+    }
+  }
+}

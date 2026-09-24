@@ -4,7 +4,7 @@
 
 Порядок: Postgres/Redis health → migrations/API → engine/notifier/frontend. Engine загружает inputs, получает весь universe и Binance contexts, загружает историю каждого выбранного контракта, восстанавливает checkpoint либо выполняет replay, затем подключает realtime. Docker healthcheck означает живой процесс; `/api/health` отдельно показывает RECOVERING/DEGRADED/HEALTHY расчётов.
 
-В `.env` тестового стенда четыре автоматически выбранных контракта. Поле `selected` в `/api/health` — мониторируемые, `universe` — все доступные. Установка `MAX_SYMBOLS=0` технически включает всю вселенную, но capacity для сотен инструментов не принята. Не разворачивать в публичный интернет без отдельной аутентификации и ограничения ресурсов: текущая конфигурация предназначена для localhost.
+Текущий стенд настроен на полный universe (`MAX_SYMBOLS=0`, TF30). Поле `selected` в `/api/health` — выбранные для shard, `initialized` — закончившие bootstrap, `universe` — все доступные. Capacity для сотен инструментов ещё не принята. Не разворачивать в публичный интернет без отдельной аутентификации и ограничения ресурсов: текущая конфигурация предназначена для localhost.
 
 ## Диагностика
 
@@ -16,6 +16,8 @@ curl http://localhost:8080/metrics
 docker stats --no-stream
 docker compose exec postgres psql -U brokeweb -d brokeweb -c "SELECT pg_size_pretty(pg_database_size('brokeweb'));"
 ```
+
+После частичного пересоздания API без frontend nginx может сохранять прежний IP upstream и отдавать 502. Обновите его DNS-разрешение командой `docker compose exec -T frontend nginx -s reload`, затем проверьте `/api/health` через порт 8080. При полном обновлении frontend пересоздаётся вместе с остальными сервисами.
 
 - Пустой `/setups`: проверить «показать WAIT SETUP», health и In-Play gates. Пустой список не является поводом менять baseline thresholds.
 - RECOVERING: смотреть initialized/selected, ошибки, часы backfill. History depth зависит от всех параметров и requested TF.
@@ -35,6 +37,21 @@ Named volumes переживают обычный restart. Изменение Pi
 Для backup использовать `pg_dump`, для restore — `psql` в отдельную БД и отдельно проверить provenance. Не редактировать persisted FSM вручную. Rule dedupe хранится в PostgreSQL, поэтому Redis restart не создаёт повторную рассылку.
 
 ## Capacity и известные эксплуатационные границы
+
+`healthy_engines` пересчитывается на каждом heartbeat: сохранённый HEALTHY перестаёт считаться свежим через 90 секунд с учётом исходного отставания. Общий HEALTHY требует всех выбранных symbol/TF, свежих WS/BTC contexts и отсутствия recovery/errors. Пустой universe не означает готовность. `stale_instruments` считает уникальные символы, а не symbol/TF пары.
+
+`market_data_lag_ms` — максимальное отставание snapshot среди загруженных engines, включая прошедшее после расчёта время; replay также попадает в эту метрику. `checkpoint_export_latency_ms` — средняя длительность последних 1000 экспортов состояния, отдельно от `db_write_latency_ms` (clean/JSON/compression/SQL). Ожидание потока входит в длительность. `calculation_latency_ms` — p95 последних 1000 расчётов; `calculations_per_second` включает replay. Все четыре метрики публикуются в `/metrics`. Это показатели worker, а не сквозная задержка доставки alert.
+
+Короткий probe работает и во время RECOVERING, не меняет subscriptions/настройки и не ждёт общего HEALTHY:
+
+```bash
+python3 -m tools.capacity_probe --samples 3 --interval 15
+docker compose run --rm --no-deps -T api python -m tools.checkpoint_benchmark
+```
+
+Первый сохраняет `artifacts/local/capacity-probe.json`: либо `NOT_READY` с причинами, либо `READY_FOR_SOAK`. В обоих случаях `capacity_status=UNVERIFIED`: короткая выборка не заменяет длительный прогон, sizing/WAL и restart acceptance. Проверяются heartbeat, полный набор shards, initialization, свежесть engines/streams/BTC, ошибки и прогресс calculations.
+
+Второй только читает один совместимый checkpoint и сравнивает прежний и оптимизированный обходы одного состояния (по три повтора с чередованием порядка), проверяет точное совпадение сжатых байтов и повторный restore/export. БД не изменяется; запускать отдельным процессом. Время SQL и throughput рынка этот benchmark не измеряет. Экспорт worker выполняется в потоке под прежней блокировкой символа; частота checkpoint, последовательность executions и сохранение intrabar/varip не сокращены.
 
 Движок интерпретирует source, а не pandas-пересчёт всей истории. EMA/RMA обновляются от предыдущего результата; history ограничена буферами. Однако snapshots/checkpoints сейчас объёмны, а main Python worker не оптимизирован для сотен FULL_REALTIME подписок. Уменьшение частоты обязательных Pine execution ради скорости не применяется незаметно.
 

@@ -56,6 +56,7 @@ class Worker:
         self.engines={};self.contexts={};self.instruments={};self.native_turnover24h={};self.aggregators={};self.full_charts={};self.full_since={};self.full=set();self.ready=set();self.recovering=set();self.locks=defaultdict(asyncio.Lock)
         self.messages=0;self.calculations=0;self.errors={};self.status='RECOVERING';self.universe_count=0;self.selected_count=0;self.last_events={};self.reconnects=0;self.latencies=[];self.parameter_id=None;self.parameters={};self.pending={};self.replay_skip_until={};self.replay_origins={};self.context_last=0;self.reconciliation_errors=0;self.db_latencies=[];self.backfilled={};self.previous_calculations=0;self.previous_heartbeat=time.monotonic()
         self.lease_token=uuid.uuid4().hex
+        self.checkpoint_latencies=[]
         self.stopping=False;self.background=set()
         self.shard_index=int(os.getenv('ENGINE_SHARD_INDEX','0'));self.shard_count=int(os.getenv('ENGINE_SHARD_COUNT','1'))
         if not 0<=self.shard_index<self.shard_count:raise ValueError('Invalid engine shard')
@@ -89,13 +90,36 @@ class Worker:
         else:
             by_time={b['start']:b for b in rows};by_time[bar['start']]=bar;rows[:]=[by_time[t] for t in sorted(by_time)]
         if len(rows)>self.context_limit:del rows[:-self.context_limit]
+    def runtime_health(self):
+        """Re-evaluate freshness even when no new calculation has completed."""
+        now=now_ms();healthy=0;lags=[];stale=set()
+        for (symbol,_),engine in self.engines.items():
+            snapshot=engine.snapshot
+            if not snapshot:continue
+            calculated=snapshot.get('calculation_timestamp')
+            lag=snapshot.get('market_data_lag_ms')
+            # Stored lag alone freezes when the feed/calculation stops.
+            age=lag+max(0,now-calculated) if calculated is not None and lag is not None else None
+            if age is not None:lags.append(age)
+            fresh=age is not None and age<=90000
+            if fresh and snapshot.get('data_health')=='HEALTHY' and symbol not in self.recovering:healthy+=1
+            if not fresh or snapshot.get('data_health') in ('STALE','DEGRADED'):stale.add(symbol)
+        expected=self.selected_count*len(self.timeframes)
+        streams=list(self.ws.health.values())
+        streams_ready=bool(streams) and all(s.connected and s.last_market_event and now-s.last_market_event<=90000 for s in streams)
+        ready=(expected>0 and len(self.ready)==self.selected_count and healthy==expected
+               and not self.errors and not self.recovering and streams_ready and self.btc_stream_ready())
+        return {'status':'HEALTHY' if ready else 'RECOVERING','healthy_engines':healthy,
+                'stale_instruments':len(stale),'market_data_lag_ms':max(lags,default=None)}
+
     async def heartbeat(self):
         while True:
-            states=[e.snapshot for e in self.engines.values() if e.snapshot]
-            healthy=sum(s['data_health']=='HEALTHY' for s in states)
-            payload={'status':self.status,'universe':self.universe_count,'selected':self.selected_count,'initialized':len(self.ready),'timeframes':self.timeframes,'healthy_engines':healthy,'engines':len(self.engines),'processed_market_messages':self.messages,'calculations':self.calculations,'calculation_ms_p95':sorted(self.latencies)[int(.95*(len(self.latencies)-1))] if self.latencies else None,'websocket_reconnects':self.reconnects,'errors':self.errors,'reconciliation_errors':self.reconciliation_errors,'parity_status':'UNVERIFIED','quality_mode':'KLINE_REALTIME; full trade OHLCV after complete chart boundary','max_symbols':int(os.getenv('MAX_SYMBOLS','0')),'shard_index':self.shard_index,'shard_count':self.shard_count,'context_updated_at':self.context_last,'last_market_event':max(self.last_events.values(),default=None)}
+            payload={'status':self.status,'universe':self.universe_count,'selected':self.selected_count,'initialized':len(self.ready),'timeframes':self.timeframes,'engines':len(self.engines),'processed_market_messages':self.messages,'calculations':self.calculations,'calculation_ms_p95':sorted(self.latencies)[int(.95*(len(self.latencies)-1))] if self.latencies else None,'websocket_reconnects':self.reconnects,'errors':self.errors,'reconciliation_errors':self.reconciliation_errors,'parity_status':'UNVERIFIED','quality_mode':'KLINE_REALTIME; full trade OHLCV after complete chart boundary','max_symbols':int(os.getenv('MAX_SYMBOLS','0')),'shard_index':self.shard_index,'shard_count':self.shard_count,'context_updated_at':self.context_last,'last_market_event':max(self.last_events.values(),default=None)}
             elapsed=max(time.monotonic()-self.previous_heartbeat,.001)
-            payload.update(btc_stream=asdict(self.btc_ws.health),btc_recovering=self.btc_recovering,btc_timeframe_events=self.btc_last_events,calculations_per_second=(self.calculations-self.previous_calculations)/elapsed,calculation_latency_ms=payload['calculation_ms_p95'],db_write_latency_ms=sum(self.db_latencies)/len(self.db_latencies) if self.db_latencies else None,stale_instruments=sum(s['data_health'] in ('STALE','DEGRADED') for s in states),last_successful_rest_backfill=self.backfilled,streams=[asdict(state) for state in self.ws.health.values()])
+            payload.update(btc_stream=asdict(self.btc_ws.health),btc_recovering=self.btc_recovering,btc_timeframe_events=self.btc_last_events,calculations_per_second=(self.calculations-self.previous_calculations)/elapsed,calculation_latency_ms=payload['calculation_ms_p95'],db_write_latency_ms=sum(self.db_latencies)/len(self.db_latencies) if self.db_latencies else None,last_successful_rest_backfill=self.backfilled,streams=[asdict(state) for state in self.ws.health.values()])
+            payload.update(self.runtime_health())
+            payload['checkpoint_export_latency_ms']=sum(self.checkpoint_latencies)/len(self.checkpoint_latencies) if self.checkpoint_latencies else None
+            self.status=payload['status']
             self.previous_heartbeat=time.monotonic();self.previous_calculations=self.calculations
             renewed=await self.redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('pexpire',KEYS[1],60000) else return 0 end",1,self.lease_key,self.lease_token)
             if not renewed:
@@ -122,7 +146,14 @@ class Worker:
         self.calculations+=1;self.latencies.append(snapshot['calculation_ms']);self.latencies=self.latencies[-1000:]
         # Intrabar state (especially varip) is checkpointed as well as closed bars.
         if not realtime and bar['start'] <= self.replay_skip_until.get((engine.symbol,engine.timeframe),-1):return snapshot
-        checkpoint=engine.export_state() if realtime or engine.runtime.count % 50 == 0 else None
+        checkpoint=None
+        if realtime or engine.runtime.count % 50 == 0:
+            export_started=time.perf_counter()
+            # The symbol lock still covers export + save. Do not block feed and
+            # lease heartbeats on this CPU-heavy traversal; cancellation drains it.
+            checkpoint=await self.blocking(engine.export_state)
+            self.checkpoint_latencies.append((time.perf_counter()-export_started)*1000)
+            self.checkpoint_latencies=self.checkpoint_latencies[-1000:]
         write_started=time.perf_counter()
         await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
         self.db_latencies.append((time.perf_counter()-write_started)*1000);self.db_latencies=self.db_latencies[-1000:]
@@ -399,7 +430,7 @@ class Worker:
                     # deterministic bootstrap path. Old parameter snapshots remain.
                     os._exit(75)
                 await self.subscriptions()
-                self.status='HEALTHY' if len(self.ready)==self.selected_count and not self.errors and self.btc_stream_ready() else 'RECOVERING'
+                self.status=self.runtime_health()['status']
             except Exception as exc:
                 self.status='DEGRADED';log.exception('context_refresh_failed');self.errors['context']=str(exc)
             await asyncio.sleep(float(os.getenv('CONTEXT_REFRESH_SEC','15')))

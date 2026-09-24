@@ -44,6 +44,23 @@ def test_compressed_checkpoint_exact_restore_and_legacy_upgrade(repo):
         assert row.checkpoint is None and row.checkpoint_blob is not None
 
 
+def test_save_snapshot_uses_supplied_parameter_version_without_query(repo,monkeypatch):
+    state=snapshot(repo)
+    def unexpected_query():raise AssertionError('Known parameter version must not be fetched again')
+    monkeypatch.setattr(repo,'parameters',unexpected_query)
+    repo.save_snapshot(state,{'varip':{'samples':17}})
+    assert repo.load_checkpoint('BYBIT','XYZUSDT','15')=={'varip':{'samples':17}}
+
+
+def test_metrics_exposes_checkpoint_cost_throughput_and_market_lag(repo,client):
+    repo.heartbeat('engine',{'status':'RECOVERING','checkpoint_export_latency_ms':123.5,
+        'market_data_lag_ms':95000,'calculations_per_second':2.5})
+    response=client.get('/metrics')
+    assert response.status_code==200
+    for metric,value in [('checkpoint_export_latency_ms',123.5),('market_data_lag_ms',95000),('calculations_per_second',2.5)]:
+        assert f'scalping_{metric}{{service="engine"}} {value}' in response.text
+
+
 def test_corrupt_checkpoint_is_rejected_instead_of_silently_reset(repo):
     import zlib
     repo.save_snapshot(snapshot(repo),{'state':123})

@@ -40,6 +40,11 @@ class Namespace:
 
 
 def encode(value):
+    # Histories are predominantly scalar leaves. Avoid walking every scalar
+    # through the container/UDT checks; preserve the exact JSON representation.
+    kind=type(value)
+    if kind is float:return value if math.isfinite(value) else None
+    if kind is int or kind is str or kind is bool or value is None:return value
     if isinstance(value,Record): return {'__pine_record__':value.type_name,'fields':encode(value.fields)}
     if isinstance(value,Namespace): return {'__pine_namespace__':value.name}
     if isinstance(value,dict): return {str(k):encode(v) for k,v in value.items()}

@@ -1,10 +1,10 @@
-# Отчёт реализации Brokeweb — обновлено 2026-09-23
+# Отчёт реализации Brokeweb — обновлено 2026-09-24
 
 В `C:\dev\brokeweb` работает локальный стенд с реальными публичными данными Bybit и Binance. **Полный Definition of Done ещё не принят:** исторические метрики нового reference прошли проверку, но сигналы этой сессии, intrabar, нагрузка всего universe и эксплуатационная приёмка хранения ещё требуют подтверждения.
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний Python suite: **335 passed**; frontend: **22 tests**, lint, typecheck и production build прошли. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **365 passed**, затем **17 capacity-probe tests passed** после добавления двух проверок покрытия universe/shards. Предыдущая frontend-проверка: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
 
 ## Что реализовано
 
@@ -16,6 +16,18 @@
 - Правила AND/OR/NOT, comparisons/crossings, частоты/cooldown, confirmed/realtime modes, подавление replay/stale/recovering, версии и deduplication после restart. Telegram transport проверен mock-сервером; реальная отправка в чат в ходе проверки не выполнялась.
 - Checkpoint recovery, lossless compressed checkpoint storage с чтением прежнего JSON, backfill после обрыва, historical rebuild при исправленной confirmed kline, graceful stop с ожиданием текущих расчётов/транзакций до освобождения lease.
 - Docker Compose, миграции Alembic, healthchecks, localhost binding, тесты/CI, exporter/replay/comparator для внешней Pine-проверки.
+
+## Дополнение 2026-09-24: checkpoint и достоверность health
+
+Ускорены скалярные ветви `encode`/`clean`, убран лишний запрос активной версии параметров при сохранении известного `parameter_set_id`. Формат checkpoint BWC1, Pine source и engine semantics не изменены. Экспорт перенесён из event loop в ожидаемый worker thread; блокировка символа и ожидание завершения при cancellation сохраняются. Каждый realtime execution по-прежнему сохраняет intrabar checkpoint.
+
+Read-only benchmark на реальном AXSUSDT TF30 checkpoint **1 321 137 bytes**, три пары запусков: медиана export + clean/pack **820,35 → 343,47 ms**, ускорение **2,39×**. Сжатые байты совпали во всех повторах, restore/export сохранил состояние. Замер выполнен при работающем стенде; это один checkpoint, без SQL write и без доказательства full-universe throughput. [Отчёт benchmark](../reports/checkpoint-optimization.json); воспроизведение: `tools/checkpoint_benchmark.py`.
+
+Health теперь учитывает старение последнего расчёта и lag, полноту symbol/TF, freshness WS/BTC и recovery. Старый HEALTHY не остаётся свежим при остановке данных. Добавлены export latency, максимальный market lag и calculations/s в Prometheus. `tools/capacity_probe.py` сохраняет ограниченную выборку даже при RECOVERING и перечисляет причины неготовности; положительная короткая проба означает только готовность к длительному испытанию.
+
+После обновления Docker все семь контейнеров healthy; API и Prometheus возвращают новые метрики. Короткий post-deploy probe: **NOT_READY / UNVERIFIED**, 7 из 777 инструментов восстановлены в последней пробе, +17 расчётов за 20.075 s. Это стартовое окно после restart, не устойчивый throughput. Причины и последний heartbeat включены в отчёт benchmark.
+
+До окончательной реализации остаются: внешний recorder v3 capture с активными сигналами и согласованным initial state/request contexts; оптимизация и длительная нагрузочная приёмка полного universe без пропуска обязательных executions; sizing БД/WAL и backup/restore с непустым архивным диском; реальная приёмка Telegram-доставки.
 
 ## Дополнение 2026-09-23: правила и intrabar replay
 

@@ -20,6 +20,9 @@ TRANSITIONS=('action','fsm','direction','setup_generation_id','locked_zone','can
 def now_ms(): return time.time_ns()//1_000_000
 
 def clean(value):
+    kind=type(value)
+    if kind is float:return value if math.isfinite(value) else None
+    if kind is int or kind is str or kind is bool or value is None:return value
     if dataclasses.is_dataclass(value): value=dataclasses.asdict(value)
     if isinstance(value,dict): return {str(k):clean(v) for k,v in value.items()}
     if isinstance(value,(list,tuple)): return [clean(v) for v in value]
@@ -116,7 +119,8 @@ class Repository:
         packed=pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None
         current.setdefault('exchange','BYBIT'); current.setdefault('event_time',now); current.setdefault('received_at',now)
         current.setdefault('setup_generation_id',''); current.setdefault('bar_start',current['event_time']); current.setdefault('confirmed',False)
-        current.setdefault('parameter_set_id',self.parameters()['id']); current.setdefault('engine_git_sha',os.getenv('GIT_SHA','unknown'))
+        if 'parameter_set_id' not in current:current['parameter_set_id']=self.parameters()['id']
+        current.setdefault('engine_git_sha',os.getenv('GIT_SHA','unknown'))
         current.setdefault('calculation_timestamp',now); current.setdefault('data_source',current['exchange'])
         key=tuple(current[x] for x in ('exchange','symbol','timeframe'))
         with self.session.begin() as s:

@@ -3,6 +3,7 @@ import asyncio
 from collections import defaultdict
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+import pytest
 from backend.worker import Worker
 from backend.marketdata.models import Bar
 
@@ -20,6 +21,53 @@ def worker_shell():
     worker.parameters={};worker.replay_origins={};worker.replay_skip_until={};worker.calculate=AsyncMock()
     worker.repo=SimpleNamespace(save_bar=lambda bar:None,save_bars=lambda bars:None,load_checkpoint=lambda *args:None)
     return worker
+
+
+@pytest.mark.parametrize('case', ['fresh','stopped','lagged','missing_timestamp','recovering','missing_engine','disconnected','stream_lagged','empty','btc_missing'])
+def test_runtime_health_requires_fresh_complete_coverage(monkeypatch,case):
+    import backend.worker as module
+    monkeypatch.setattr(module,'now_ms',lambda:200000)
+    worker=worker_shell();worker.selected_count=1
+    snapshot={'data_health':'HEALTHY','calculation_timestamp':199000,'market_data_lag_ms':500}
+    worker.engines['XUSDT','1']=SimpleNamespace(snapshot=snapshot)
+    stream=SimpleNamespace(connected=True,last_market_event=199000)
+    worker.ws=SimpleNamespace(health={0:stream});worker.btc_stream_ready=lambda:case!='btc_missing'
+    if case=='stopped':snapshot['calculation_timestamp']=100000
+    if case=='lagged':snapshot['market_data_lag_ms']=100000
+    if case=='missing_timestamp':snapshot.pop('calculation_timestamp')
+    if case=='recovering':worker.recovering.add('XUSDT')
+    if case=='missing_engine':worker.timeframes.append('5')
+    if case=='disconnected':stream.connected=False
+    if case=='stream_lagged':stream.last_market_event=100000
+    if case=='empty':worker.engines.clear();worker.selected_count=0;worker.ready.clear()
+    result=worker.runtime_health()
+    assert result['status']==('HEALTHY' if case=='fresh' else 'RECOVERING')
+    if case=='fresh':assert result['market_data_lag_ms']==1500
+    if case in ('stopped','lagged','missing_timestamp'):
+        assert result['healthy_engines']==0 and result['stale_instruments']==1
+
+
+def test_checkpoint_export_runs_off_event_loop_and_finishes_before_save():
+    import threading
+    async def scenario():
+        worker=worker_shell();events=[];loop_thread=threading.get_ident()
+        worker.context_last=0;worker.parameter_id='params';worker.native_turnover24h={}
+        worker.btc_stream_ready=lambda:True
+        worker.calculations=0;worker.latencies=[];worker.checkpoint_latencies=[];worker.db_latencies=[]
+        worker.redis=SimpleNamespace(publish=AsyncMock())
+        def update(*args):return {'calculation_ms':1,'data_health':'HEALTHY'}
+        def export():
+            assert threading.get_ident()!=loop_thread
+            events.append('export');return {'varip':{'samples':17}}
+        def save(snapshot,state):
+            assert events==['export'] and state=={'varip':{'samples':17}}
+            events.append('save')
+        worker.repo.save_snapshot=save
+        engine=SimpleNamespace(symbol='XUSDT',timeframe='1',update=update,export_state=export)
+        await worker.persist(engine,{'start':0,'received_at':0},True)
+        assert events==['export','save'] and len(worker.checkpoint_latencies)==1
+        worker.redis.publish.assert_awaited_once()
+    asyncio.run(scenario())
 
 
 def trade(ts,price,uid):return {'T':ts,'p':str(price),'v':'1','i':uid,'S':'Buy','s':'XUSDT'}
