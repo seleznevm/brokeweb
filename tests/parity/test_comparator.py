@@ -34,6 +34,8 @@ def test_exporter_preserves_source_and_covers_all_events(tmp_path):
     original=SOURCE.read_bytes();manifest=generate(tmp_path)
     assert SOURCE.read_bytes()==original
     assert len(manifest['groups']['signals']['plots'])==len(SIGNALS)
+    trace=(tmp_path/'Scalping_SMA_1.15.2_parity_intrabar.pine').read_text()
+    assert f'PARITY intrabar v{manifest["intrabar"]["recorder_revision"]}' in trace
     for file in tmp_path.glob('*.pine'):
         program=Program(file.read_text())
         assert len(program.statements)>1000

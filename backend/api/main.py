@@ -196,6 +196,14 @@ def create_app(repository:Repository|None=None):
             with open(path) as f: return json.load(f)
         except FileNotFoundError: pass
         return {'status':'UNVERIFIED','metrics':[],'signals':[],'reason':'No external TradingView reference dataset has been validated.'}
+    @app.get('/api/parity/intrabar')
+    def intrabar_parity(include_sessions:bool=False):
+        path=os.getenv('INTRABAR_REPORT_PATH','reports/intrabar-pool-ad4e4.json')
+        try:
+            with open(path) as f:report=json.load(f)
+        except FileNotFoundError:
+            return {'status':'UNVERIFIED','parity_status':'UNVERIFIED','sessions':0,'reason':'No intrabar pool report available.'}
+        return report if include_sessions else {k:v for k,v in report.items() if k!='items'}
     @app.get('/api/storage')
     def storage(limit:int=Query(50,ge=1,le=500)):
         from backend.partitions import inventory

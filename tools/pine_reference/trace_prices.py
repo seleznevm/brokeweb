@@ -18,13 +18,17 @@ from .trace import messages, unpack
 FIELDS={'atr':'atr','ema_fast':'emaFast','ema_slow':'emaSlow'}
 
 
-def check(session, warmup):
+def check(session, warmup, *, bounded=False):
     metadata=session['metadata'];rows=session['rows'];tf=metadata['timeframe']
     symbol=metadata['symbol'].removesuffix('.P');step=tf_seconds(tf)*1000
     origin=metadata['history_start'];start=rows[0]['bar_start']
     bars=[normalize_bar(b,symbol,tf) for b in warmup]
-    if not bars or bars[0]['start']!=origin or bars[-1]['end']!=start:
+    exact_origin=bool(bars and bars[0]['start']==origin)
+    if not bars or (not bounded and not exact_origin) or bars[0]['start']<origin or bars[-1]['end']!=start:
         raise ValueError('Warmup must cover exactly the recorded origin through the first open candle')
+    lengths=[metadata['parameters'][k] for k in ('atrLen','emaFastLen','emaSlowLen')]
+    if bounded and not exact_origin and len(bars)<20*max(lengths):
+        raise ValueError('Bounded TA diagnostic requires at least 20 times the longest TA length')
     if any(not b['confirmed'] for b in bars) or any(a['end']!=b['start'] for a,b in zip(bars,bars[1:])):
         raise ValueError('Warmup has unconfirmed bars or gaps')
     capture=session['report']
@@ -38,9 +42,12 @@ def check(session, warmup):
     for b in bars:
         ex.begin(b);ex.execute(statements);ex.commit()
     actual=[];previous=None
+    origin_grid_matches=all(row['bar_start']-origin==row['bar_index']*step for row in rows)
     for row in rows:
-        if row['bar_end']-row['bar_start']!=step or row['bar_start']-origin!=row['bar_index']*step:
+        if row['bar_end']-row['bar_start']!=step or (not bounded and row['bar_start']-origin!=row['bar_index']*step):
             raise ValueError('Trace chart origin/index/timeframe mismatch')
+        if previous and row['bar_index']!=previous['bar_index']+int(row['bar_start']!=previous['bar_start']):
+            raise ValueError('Trace bar_index changed inconsistently within the captured window')
         if previous and row['bar_start']!=previous['bar_start']:
             if not previous['confirmed'] or row['bar_start']!=previous['bar_end']:
                 raise ValueError('Cannot advance past an unclosed or missing candle')
@@ -65,13 +72,19 @@ def check(session, warmup):
         metrics.append(dict(metric=field,status='PASS' if passed else 'FAIL',pairs=len(errors),
                             invalid_pairs=invalid,error_median=percentile(errors,.5),error_p95=percentile(errors,.95),
                             relative_error_max=max(relative) if relative else None))
-    return actual,dict(status='PASS' if all(m['status']=='PASS' for m in metrics) else 'FAIL',
+    matched=all(m['status']=='PASS' for m in metrics)
+    return actual,dict(status=('DIAGNOSTIC_MATCH' if matched else 'DIAGNOSTIC_MISMATCH') if bounded else ('PASS' if matched else 'FAIL'),
                        scope='Only chart ATR and EMA calculations on supplied realtime OHLCV',
                        full_intrabar_status='UNVERIFIED',engine_version=ENGINE_VERSION,pine_source_hash=PINE_HASH,
                        session_id=session['session_id'],matched_updates=len(actual),warmup_bars=len(bars),
                        missing_prefix_updates=rows[0]['seq']-1,
                        history_start=origin,metrics=metrics,
+                       warmup_mode='bounded_native_diagnostic' if bounded else 'exact_origin',
+                       warmup_start=bars[0]['start'],exact_origin_covered=exact_origin,
+                       origin_grid_matches=origin_grid_matches,
                        limitations=['Native exchange warmup; captured chart OHLCV is supplied input.',
+                                    *(['Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.'] if bounded else []),
+                                    *(['Recorded history index is not a continuous wall-clock grid; unseen historical bars are not reconstructed.'] if not origin_grid_matches else []),
                                     'Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.',
                                     'No setup state, scores, request contexts or signal parity is established.'])
 

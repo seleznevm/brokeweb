@@ -1,7 +1,7 @@
 //@version=6
 indicator(
-     "Scalping_SMA 1.15.2 - PARITY intrabar",
-     shorttitle = "SMA-P-RT",
+     "Scalping_SMA 1.15.2 - PARITY intrabar v3",
+     shorttitle = "SMA-P-R3",
      overlay = true,
      max_labels_count = 500,
      max_boxes_count = 20

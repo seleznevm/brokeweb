@@ -73,3 +73,37 @@ def test_incomplete_or_misaligned_history_rejected(damage):
     elif damage == 'unclosed': session['rows'][2]['confirmed'] = False
     else: session['rows'][-1]['bar_index'] += 1
     with pytest.raises(ValueError): check(session, warmup)
+
+
+def test_bounded_ta_matches_without_claiming_origin_parity():
+    session,warmup=fixture();step=300000
+    template=warmup[0]
+    warmup=[dict(template,start=i*step,end=(i+1)*step) for i in range(1,1001)]
+    for row in session['rows']:
+        row['bar_index']+=981;row['bar_start']+=981*step;row['bar_end']+=981*step;row['event_time']+=981*step
+    with pytest.raises(ValueError,match='exactly'):check(session,warmup)
+    _,report=check(session,warmup,bounded=True)
+    assert report['status']=='DIAGNOSTIC_MATCH'
+    assert report['full_intrabar_status']=='UNVERIFIED'
+    assert report['warmup_mode']=='bounded_native_diagnostic' and not report['exact_origin_covered']
+    session['rows'][-1]['PARITY_ema_fast']+=1
+    assert check(session,warmup,bounded=True)[1]['status']=='DIAGNOSTIC_MISMATCH'
+    with pytest.raises(ValueError,match='20 times'):check(session,warmup[1:],bounded=True)
+
+
+def test_bounded_mode_never_upgrades_to_pass_even_with_full_origin():
+    session,warmup=fixture()
+    report=check(session,warmup,bounded=True)[1]
+    assert report['exact_origin_covered'] and report['status']=='DIAGNOSTIC_MATCH'
+
+
+def test_bounded_ta_reports_unknown_historical_grid_without_rewriting_indices():
+    session,warmup=fixture()
+    for row in session['rows']:row['bar_index']-=1
+    before=deepcopy(session)
+    with pytest.raises(ValueError,match='origin/index'):check(session,warmup)
+    report=check(session,warmup,bounded=True)[1]
+    assert report['status']=='DIAGNOSTIC_MATCH' and not report['origin_grid_matches']
+    assert session==before
+    session['rows'][1]['bar_index']+=1
+    with pytest.raises(ValueError,match='bar_index changed'):check(session,warmup,bounded=True)

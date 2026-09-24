@@ -61,6 +61,21 @@ def test_metrics_exposes_checkpoint_cost_throughput_and_market_lag(repo,client):
         assert f'scalping_{metric}{{service="engine"}} {value}' in response.text
 
 
+def test_intrabar_report_summary_does_not_replace_historical_parity(client,monkeypatch,tmp_path):
+    import json
+    intrabar=tmp_path/'intrabar.json';historical=tmp_path/'historical.json'
+    historical.write_text(json.dumps({'status':'UNVERIFIED','observed_status':'PASS','kind':'historical'}))
+    monkeypatch.setenv('PARITY_REPORT_PATH',str(historical));monkeypatch.setenv('INTRABAR_REPORT_PATH',str(intrabar))
+    assert client.get('/api/parity/intrabar').json()['sessions']==0
+    value={'status':'CAPTURE_IMPORTED','full_intrabar_status':'UNVERIFIED','sessions':2,
+           'items':[{'symbol':'X'},{'symbol':'Y'}],'ta_diagnostic_status_counts':{'DIAGNOSTIC_MATCH':2}}
+    intrabar.write_text(json.dumps(value))
+    summary=client.get('/api/parity/intrabar').json()
+    assert summary=={k:v for k,v in value.items() if k!='items'}
+    assert client.get('/api/parity/intrabar?include_sessions=true').json()==value
+    assert client.get('/api/parity').json()['kind']=='historical'
+
+
 def test_corrupt_checkpoint_is_rejected_instead_of_silently_reset(repo):
     import zlib
     repo.save_snapshot(snapshot(repo),{'state':123})

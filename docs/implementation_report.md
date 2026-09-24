@@ -4,7 +4,7 @@
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **365 passed**, затем **17 capacity-probe tests passed** после добавления двух проверок покрытия universe/shards. Предыдущая frontend-проверка: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **376 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
 
 ## Что реализовано
 
@@ -16,6 +16,18 @@
 - Правила AND/OR/NOT, comparisons/crossings, частоты/cooldown, confirmed/realtime modes, подавление replay/stale/recovering, версии и deduplication после restart. Telegram transport проверен mock-сервером; реальная отправка в чат в ходе проверки не выполнялась.
 - Checkpoint recovery, lossless compressed checkpoint storage с чтением прежнего JSON, backfill после обрыва, historical rebuild при исправленной confirmed kline, graceful stop с ожиданием текущих расчётов/транзакций до освобождения lease.
 - Docker Compose, миграции Alembic, healthchecks, localhost binding, тесты/CI, exporter/replay/comparator для внешней Pine-проверки.
+
+## Дополнение 2026-09-24: intrabar-пул 30m
+
+Обработан новый CSV ad4e4: **296 монет, 1815 пакетов, 13 551 обновление**, 55 активных setup-сессий, все captured inputs — defaults. Это **v2**, не v3. Запись длится 148.146 секунд и не содержит ни одного закрытия 30m-свечи. Три сессии имеют 32 потерянных исполнения.
+
+Добавлены воспроизводимый multi-symbol audit и отдельная bounded TA-диагностика. Итог: **281 DIAGNOSTIC_MATCH, 12 DIAGNOSTIC_MISMATCH, 3 NOT_ELIGIBLE**. В отдельном эксперименте все 12 расхождений исчезли после исключения zero-volume native history bars; исходные mismatch сохранены, production feed не изменён. Для подтверждения состава истории нужен обычный OHLCV CSV TradingView через нулевые интервалы. Детали, исходный SHA, метрики и причины по каждому инструменту: [parity.md](parity.md#intrabar-pool-ad4e4-2026-09-24), [JSON](../reports/intrabar-pool-ad4e4.json).
+
+На странице Parity и в `/api/parity/intrabar` опубликована отдельная сводка пула. Исторические 45/45 остаются отдельным отчётом. В название актуальной Pine-копии добавлена явная revision **PARITY intrabar v3 / SMA-P-R3**; содержание детектора не менялось. В [инструкции](tradingview_capture.md#текущий-шаг-после-pool-отчёта-ad4e4-2026-09-24) описаны пересоздание alerts, проверка metadata и запись 120 минут. В [правилах alerts](alert_rules.md) уточнено отличие latched флагов от числа уведомлений и числового условия `execution >= 65`.
+
+Проверка обновлённого стенда: API summary/detail возвращают 296 сессий; Chromium desktop/mobile проверил новую секцию Parity без JS errors и горизонтального переполнения. Evidence: `artifacts/local/intrabar-pool-browser/result.json` и PNG. API/frontend пересобраны и обновлены в Docker; семь контейнеров healthy, engine остаётся RECOVERING. Рабочие правила не менялись, сообщения не отправлялись.
+
+Полный intrabar gate остаётся **UNVERIFIED**. Следующие обязательные пункты: v3 capture с request results и закрытиями; согласование исторических баров/initial state, включая обнаруженные zero-volume интервалы; затем replay FSM/сигналов. Нагрузочная приёмка всего universe, хранение/WAL/backup с непустыми архивами и реальная Telegram-доставка также ещё не приняты.
 
 ## Дополнение 2026-09-24: checkpoint и достоверность health
 
