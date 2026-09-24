@@ -269,3 +269,29 @@ python3 -m tools.pine_reference.trace_pool \
 Без `--native-ta` выполняется только audit, без сети. `--resume` повторно использует native fixtures того же входного SHA/engine; исходный CSV не меняется. Concurrency ограничена 1..5, default 3. Exit 1 означает наличие TA mismatch, exit 2 — ошибку импорта/запуска; exit 0 сам по себе не является parity PASS. Недоступные данные и исключённые сессии остаются отдельными статусами в отчёте.
 
 На `/parity` добавлен отдельный intrabar-раздел; `GET /api/parity/intrabar` возвращает сводку, `?include_sessions=true` — подробности по всем 296 сессиям. Исторический отчёт 45/45 и его статус не заменяются новым capture. Полная intrabar parity остаётся **UNVERIFIED**: нужны v3 request results, закрытия свечей, непрерывная запись и согласованное начальное состояние. [Инструкция следующей записи](tradingview_capture.md#текущий-шаг-после-pool-отчёта-ad4e4-2026-09-24).
+
+
+## Intrabar 52214: recorder v3 (2026-09-24)
+
+[Отчёт](../reports/intrabar-pool-52214.json), исходный CSV `tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-24_52214.csv`, SHA-256 `881a819f3d3e2dc272b0d0e859a18a8cc0c406d9b31d21304a03996f5358ed03`.
+
+- 8 инструментов: ARPA, AVAX, DOGE, ETC, INJ, SAHARA, SOL, ZEC; TF30, recorder v3, captured inputs defaults.
+- 1016 пакетов, 3454 executions, 3454 синхронных request observations, дублей пакетов и отсутствующего начала seq нет.
+- Окно 14:25:32.085–15:15:00.616 UTC: 49 минут 28.531 секунды. 16 закрытых свечей по всем инструментам, из них **8 полных** (14:30–15:00 UTC, по одной на инструмент).
+- 121 dropped execution, только batch 2: SAHARA 23, INJ 19, DOGE 18, AVAX/ZEC/ETC по 17, SOL 10. ARPA без потерь. Глобальное состояние 7 сессий неполно; последующие свечи могут быть полными локально.
+- Исправлен подсчёт coverage: полнота определяется по каждой свече отдельно. Потери, исходные seq и запрет полного stateful replay сохраняются. Тесты покрывают начальный пропуск, локальные пропуски и отсутствие подходящей непрерывной части.
+- `--clean-bar-ta` выбирает непрерывную часть после последнего seq-gap, начиная с полной свечи. Номера seq не перенумеровываются. Native-прогрев до 20× наибольшей длины ATR/EMA — гипотеза initial seed; исходная сессия не объявляется восстановленной.
+- **8/8 DIAGNOSTIC_MATCH, 2868 обновлений** для ATR/EMA20/EMA50. 586 полученных стартовых обновлений исключены из этой отдельной проверки. Максимальная относительная ошибка среди всех пар около 3.023e-9 при прежнем допуске 0.0005. Проверка охватывает repeated confirmed executions и переход на следующую свечу.
+- Для ARPA исходный history_start/bar_index не соответствует непрерывной сетке (8 баров разницы); bounded TA допускает неизвестную историю, строгий origin replay не ослаблен.
+
+Положительные флаги присутствуют у шести семейств: LONG ARMED, LONG ARMED LOST, LONG REVERSAL RISK, BREAKOUT, AVG SETUP >=70 и EXECUTION QUALITY >=65. Это reference-наблюдения, не проверенная Python signal parity и не счётчик доставленных уведомлений. Полный intrabar статус остаётся **UNVERIFIED**: начальное persistent/varip состояние и native request calculations не подтверждены.
+
+Воспроизведение (новый output-dir):
+
+```bash
+python3 -m tools.pine_reference.trace_pool \
+  --input tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-24_52214.csv \
+  --output-dir artifacts/local/intrabar-52214-check --clean-bar-ta
+```
+
+Evidence: `artifacts/local/intrabar-52214-clean-ta/` (warmup JSON, Python JSONL, TA reports). `/api/parity/intrabar` теперь показывает 52214; прежний ad4e4 сохранён отдельным JSON. Исходный Pine, правила и production feed не менялись. Повторять запись только из-за отсутствия 160 минут не требуется; дальнейший capture нужен для покрытия без потерь, а historical CSV — для согласования истории.

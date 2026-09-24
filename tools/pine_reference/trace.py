@@ -154,16 +154,20 @@ def captured_parameters(envelope):
     return values,repairs,revision
 
 
-def coverage(rows, metadata, contiguous):
+def coverage(rows, metadata):
     bars={}
     for row in rows:bars.setdefault(row['bar_start'],[]).append(row)
     bar_coverage=[]
     for start,updates in bars.items():
         confirmed=sum(r['confirmed'] for r in updates)
+        # A startup gap invalidates the session, not every later candle.
+        # Keep per-candle coverage separate from stateful replay eligibility.
+        contiguous=all(b['seq']==a['seq']+1 for a,b in zip(updates,updates[1:]))
         bar_coverage.append(dict(bar_start=start,bar_end=updates[0]['bar_end'],updates=len(updates),
                                  first_seq=updates[0]['seq'],last_seq=updates[-1]['seq'],
                                  starts_with_new_bar=updates[0]['is_new'],confirmed_updates=confirmed,
-                                 complete=bool(contiguous and updates[0]['is_new'] and confirmed)))
+                                 sequence_contiguous=contiguous,
+                                 complete=bool(contiguous and updates[0]['is_new'] and updates[0]['bar_update']==1 and confirmed)))
     return dict(
         event_start_utc=datetime.fromtimestamp(rows[0]['event_time']/1000,timezone.utc).isoformat(),
         event_end_utc=datetime.fromtimestamp(rows[-1]['event_time']/1000,timezone.utc).isoformat(),
@@ -259,7 +263,7 @@ def unpack(envelopes):
         stamp=hashlib.sha256(json.dumps(ident,sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
         results.append({'session_id':stamp,'metadata':ident,'rows':rows,'report':{'status':'CAPTURE_IMPORTED','parity_status':'UNVERIFIED','rows':len(rows),'closed_bars':closed_bars,'reported_dropped_updates':dropped,'sequence_contiguous':contiguous and not dropped,'issues':issues,'omitted_parameters':OMITTED_PARAMETERS,'same_timestamp_updates':sum(a['event_time']==b['event_time'] for a,b in zip(rows,rows[1:])),'comparison_ready':False,'reason':'Recorded outputs need synchronized Python replay and request contexts; import alone does not prove parity.'}})
         received_contiguous=not dropped and all(b['seq']==a['seq']+1 for a,b in zip(rows,rows[1:]))
-        results[-1]['report'].update(coverage(rows,ident,received_contiguous),batches=len(session['batches']),
+        results[-1]['report'].update(coverage(rows,ident),batches=len(session['batches']),
                                      received_sequence_contiguous=received_contiguous,
                                      missing_prefix_updates=rows[0]['seq']-1,
                                      session_id=stamp,symbol=ident['symbol'],timeframe=ident['timeframe'],

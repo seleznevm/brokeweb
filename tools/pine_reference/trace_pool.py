@@ -73,6 +73,8 @@ def audit(sessions,duplicates):
             'received_sequence_contiguous','sequence_contiguous','active_setup_updates',
             'event_start_utc','event_end_utc','duration_seconds','nondefault_parameters')}
         item.update(history_start=m['history_start'],label=m['label'],signals=signal_coverage(rows))
+        item.update({key:r.get(key,0 if key!='bar_coverage' else []) for key in
+            ('request_boundary_updates','repeated_confirmed_updates','bar_coverage')})
         item['origin_grid_matches']=all(row['bar_start']-m['history_start']==row['bar_index']*tf_seconds(m['timeframe'])*1000 for row in rows)
         item['stateful_replay_blockers']=[]
         if m['recorder_revision']<3:item['stateful_replay_blockers'].append('REQUEST_CONTEXTS_NOT_CAPTURED')
@@ -89,7 +91,7 @@ def audit(sessions,duplicates):
         'pine_source_hash':PINE_HASH,'engine_version':ENGINE_VERSION,'sessions':len(items),
         'symbols':len({r['symbol'] for r in items}),'timeframes':dict(Counter(r['timeframe'] for r in items)),
         'recorder_revisions':dict(Counter(r['recorder_revision'] for r in items)),'duplicate_batches':duplicates,
-        **{key:sum(r[key] for r in items) for key in ('rows','batches','closed_bars','complete_bars','reported_dropped_updates','active_setup_updates')},
+        **{key:sum(r[key] for r in items) for key in ('rows','batches','closed_bars','complete_bars','reported_dropped_updates','active_setup_updates','request_boundary_updates','repeated_confirmed_updates')},
         'sessions_with_active_setups':sum(bool(r['active_setup_updates']) for r in items),
         'sessions_with_gaps_or_drops':sum(not r['received_sequence_contiguous'] for r in items),
         'sessions_with_missing_prefix':sum(bool(r['missing_prefix_updates']) for r in items),
@@ -123,6 +125,31 @@ async def diagnose(session,adapter,target):
     return report
 
 
+def clean_bar_suffix(session):
+    """Select an intact suffix for TA only; never repair the original sequence."""
+    rows=session['rows']
+    last_gap=max((i for i in range(1,len(rows)) if rows[i]['seq']!=rows[i-1]['seq']+1),default=0)
+    complete={b['bar_start'] for b in session['report'].get('bar_coverage',[]) if b['complete']}
+    start=next((i for i in range(last_gap,len(rows)) if rows[i]['is_new'] and rows[i]['bar_start'] in complete),None)
+    if start is None:return None
+    selected=rows[start:]
+    return {**session,'rows':selected,'report':{**session['report'],
+        'rows':len(selected),'received_sequence_contiguous':True,'sequence_contiguous':False,
+        'reported_dropped_updates':0,'missing_prefix_updates':selected[0]['seq']-1}}
+
+
+async def diagnose_clean_bars(session,adapter,target):
+    selected=clean_bar_suffix(session)
+    if selected is None:return {'status':'NOT_ELIGIBLE','reason':'No complete candle in the contiguous suffix'}
+    result=await diagnose(selected,adapter,target)
+    result.update(selection_scope='TA-only contiguous suffix beginning at a complete candle; no stateful replay or repaired capture.',
+        first_seq=selected['rows'][0]['seq'],last_seq=selected['rows'][-1]['seq'],
+        excluded_received_updates=len(session['rows'])-len(selected['rows']),
+        original_reported_dropped_updates=session['report']['reported_dropped_updates'])
+    dump(target/'ta-report.json',result)
+    return result
+
+
 async def run(args):
     sha=hashlib.sha256(args.input.read_bytes()).hexdigest()
     sessions,duplicates=unpack(messages(args.input));report=audit(sessions,duplicates)
@@ -134,18 +161,22 @@ async def run(args):
             raise ValueError('Choose a new output directory, or resume the same input/engine')
     args.output_dir.mkdir(parents=True,exist_ok=True);dump(args.output_dir/'manifest.json',manifest)
     dump(args.output_dir/'report.json',report)
-    if args.native_ta:
+    if args.native_ta or args.clean_bar_ta:
         adapter=BybitAdapter();limit=asyncio.Semaphore(args.concurrency);completed=0
         async def one(session):
             nonlocal completed
             async with limit:
-                try:result=await diagnose(session,adapter,args.output_dir/session['session_id'])
+                try:
+                    diagnose_fn=diagnose_clean_bars if args.clean_bar_ta else diagnose
+                    target=args.output_dir/session['session_id']
+                    result=await diagnose_fn(session,adapter,target/'clean-bars' if args.clean_bar_ta else target)
                 except Exception as exc:result={'status':'UNAVAILABLE','reason':str(exc),'error_type':type(exc).__name__}
                 completed+=1
                 print(f"TA {completed}/{len(sessions)} {session['metadata']['symbol']}: {result['status']}",flush=True)
                 return session['session_id'],result
         try:results=dict(await asyncio.gather(*(one(session) for session in sessions)))
         finally:await adapter.close()
+        report['ta_selection']='clean_bar_suffix' if args.clean_bar_ta else 'whole_received_session'
         for item in report['items']:item['ta_diagnostic']=results[item['session_id']]
         report['ta_diagnostic_status_counts']=dict(Counter(r['status'] for r in results.values()))
         report['ta_diagnostic_matched_updates']=sum(r.get('matched_updates',0) for r in results.values() if r['status']=='DIAGNOSTIC_MATCH')
@@ -159,6 +190,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input',type=Path,required=True);parser.add_argument('--output-dir',type=Path,required=True)
     parser.add_argument('--native-ta',action='store_true');parser.add_argument('--resume',action='store_true')
+    parser.add_argument('--clean-bar-ta',action='store_true',help='TA only on a continuous suffix starting at a complete candle; preserves original gap blockers')
     parser.add_argument('--concurrency',type=int,default=3);args=parser.parse_args()
     if not 1<=args.concurrency<=5:parser.error('concurrency must be 1..5')
     try:report=asyncio.run(run(args))

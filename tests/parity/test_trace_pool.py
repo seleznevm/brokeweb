@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 import pytest
 from backend.engine.runtime import SIGNALS
-from tools.pine_reference.trace_pool import signal_coverage, audit, diagnose, zero_volume_hypothesis
+from tools.pine_reference.trace_pool import signal_coverage, audit, diagnose, zero_volume_hypothesis, clean_bar_suffix
 from tools.pine_reference.trace import PARAMETERS
 
 
@@ -67,3 +67,20 @@ def test_pool_cli_reports_diagnostic_mismatch_as_failure(monkeypatch,tmp_path):
     async def mismatch(args):return {'ta_diagnostic_status_counts':{'DIAGNOSTIC_MATCH':281,'DIAGNOSTIC_MISMATCH':12}}
     monkeypatch.setattr(module,'run',mismatch)
     assert module.main()==1
+
+
+def test_clean_bar_suffix_keeps_original_identity_and_gap_blockers():
+    value=session('X')
+    value['rows']=[dict(row(seq,False),is_new=new,bar_start=bar) for seq,new,bar in
+        [(1,False,0),(4,False,0),(5,True,1800000),(6,False,1800000),(7,True,3600000)]]
+    value['report'].update(received_sequence_contiguous=False,sequence_contiguous=False,reported_dropped_updates=2,
+        bar_coverage=[{'bar_start':0,'complete':False},{'bar_start':1800000,'complete':True}])
+    before=deepcopy(value);selected=clean_bar_suffix(value)
+    assert value==before
+    assert [r['seq'] for r in selected['rows']]==[5,6,7]
+    assert selected['session_id']==value['session_id']
+    assert selected['report']['received_sequence_contiguous']
+    assert not selected['report']['sequence_contiguous']
+    # A later loss prevents using an earlier intact candle as a suffix.
+    value['rows'][-1]['seq']=9
+    assert clean_bar_suffix(value) is None

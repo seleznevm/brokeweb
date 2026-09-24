@@ -71,6 +71,7 @@ def test_same_millisecond_updates_are_retained():
 def test_missing_prefix_does_not_mark_later_complete_bars_as_missing():
     a,b=batch(2,2),batch(3,3)
     set_row(a,'is_new',1);set_row(b,'confirmed',1)
+    set_row(a,'bar_update',1);set_row(b,'bar_update',2)
     report=unpack([a,b])[0][0]['report']
     assert not report['sequence_contiguous']
     assert report['received_sequence_contiguous']
@@ -83,6 +84,21 @@ def test_internal_gap_still_blocks_received_sequence():
     report=unpack([batch(),batch(3,3)])[0][0]['report']
     assert not report['received_sequence_contiguous']
     assert report['complete_bars']==0
+
+
+def test_startup_drop_does_not_invalidate_later_complete_candle():
+    a=batch();a.update(last_seq=2,dropped=1)
+    b,c=batch(2,3),batch(3,4)
+    for e in (b,c):
+        set_row(e,'bar_start',1700000300000);set_row(e,'bar_end',1700000600000)
+        set_row(e,'event_time',1700000300000+e['first_seq'])
+    set_row(b,'is_new',1);set_row(b,'bar_update',1)
+    set_row(c,'confirmed',1);set_row(c,'bar_update',2)
+    report=unpack([a,b,c])[0][0]['report']
+    assert report['reported_dropped_updates']==1
+    assert not report['sequence_contiguous'] and not report['received_sequence_contiguous']
+    assert report['complete_bars']==1
+    assert report['bar_coverage'][1]['sequence_contiguous']
 
 
 def test_sessions_separate_and_metadata_cannot_change():

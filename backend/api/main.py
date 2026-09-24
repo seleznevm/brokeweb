@@ -198,7 +198,7 @@ def create_app(repository:Repository|None=None):
         return {'status':'UNVERIFIED','metrics':[],'signals':[],'reason':'No external TradingView reference dataset has been validated.'}
     @app.get('/api/parity/intrabar')
     def intrabar_parity(include_sessions:bool=False):
-        path=os.getenv('INTRABAR_REPORT_PATH','reports/intrabar-pool-ad4e4.json')
+        path=os.getenv('INTRABAR_REPORT_PATH','reports/intrabar-pool-52214.json')
         try:
             with open(path) as f:report=json.load(f)
         except FileNotFoundError:

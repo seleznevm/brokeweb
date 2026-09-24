@@ -12,6 +12,8 @@ export function Status({kind}:{kind:'health'|'parity'}){
  {parity&&<ErrorMessage error={intrabar.error}/>}
  {parity&&intrabar.data&&typeof intrabar.data.sessions==='number'&&intrabar.data.sessions>0&&<Section title="Intrabar — отдельная проверка">
   <p>Монет: {format(intrabar.data.symbols)} · обновлений: {format(intrabar.data.rows)} · полных свечей: {format(intrabar.data.complete_bars)} · потерянных обновлений: {format(intrabar.data.reported_dropped_updates)}</p>
+  <p>Файл: <code>{format(intrabar.data.input_file)}</code></p>
+  {intrabar.data.ta_selection==='clean_bar_suffix'&&<p>ATR/EMA проверены отдельно на непрерывной части записи после стартовых пропусков: {format(intrabar.data.ta_diagnostic_matched_updates)} обновлений. Пропуски исходной записи сохранены в отчёте.</p>}
   <p>Полная intrabar parity: {format(intrabar.data.full_intrabar_status)}. Совпадение ATR/EMA с ограниченным прогревом не подтверждает FSM, начальное состояние и сигналы. Повторяющиеся сигнальные флаги не равны числу уведомлений.</p>
   <JsonView data={intrabar.data.ta_diagnostic_status_counts??{}}/>
   <a href="/api/parity/intrabar?include_sessions=true" target="_blank" rel="noreferrer">Полный отчёт по монетам</a>

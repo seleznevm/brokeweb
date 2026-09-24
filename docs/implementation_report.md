@@ -4,7 +4,15 @@
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **376 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **379 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+
+## Последнее дополнение: recorder v3, файл 52214
+
+Принят реальный v3 capture: 8 монет × 30m, 3454 executions за 49 минут 29 секунд, все request observations доступны. Исправлен аудит полноты свечей: стартовый пропуск не делает более поздние непрерывные свечи неполными. Получено 8 полных свечей; отдельная TA-диагностика на 2868 последующих обновлениях совпала по ATR/EMA на всех 8 монетах. Исходные 121 dropped execution в семи сессиях сохранены как blocker полного replay, состояние не восстанавливалось догадками.
+
+Текущий отчёт в Parity: [52214](../reports/intrabar-pool-52214.json), [разбор и воспроизведение](parity.md#intrabar-52214-recorder-v3-2026-09-24). Старые результаты ниже остаются снимками прошлых прогонов. Исполнение recorder v3 подтверждено; открыты полная FSM/signal parity, initial-state/history alignment, native requests, full-universe capacity, хранение и реальная Telegram-приёмка. Запись не требуется переделывать только ради 160 минут.
+
+Проверки: 379 backend tests, 22 frontend tests, lint/typecheck/build, compileall; read-only Chromium desktop/mobile на обновлённом Docker API/frontend — PASS, JS errors и переполнения страницы нет. Evidence: `artifacts/local/intrabar-52214-browser/result.json`. Native warmup и результаты TA сохранены в `artifacts/local/intrabar-52214-ta-evidence.tar.gz`, SHA-256 `7dbc59a01ceaf54d2439f56467162d2cec98f30cdb95f699f93af4c8770d3152`.
 
 ## Что реализовано
 
