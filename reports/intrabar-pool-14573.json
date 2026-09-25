@@ -1,0 +1,1138 @@
+{
+  "status": "CAPTURE_IMPORTED",
+  "parity_status": "UNVERIFIED",
+  "full_intrabar_status": "UNVERIFIED",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "engine_version": "1.15.2-interpreter.3",
+  "sessions": 5,
+  "symbols": 5,
+  "timeframes": {
+    "30": 5
+  },
+  "recorder_revisions": {
+    "3": 5
+  },
+  "duplicate_batches": 0,
+  "rows": 4609,
+  "batches": 1797,
+  "closed_bars": 30,
+  "complete_bars": 25,
+  "reported_dropped_updates": 0,
+  "active_setup_updates": 2648,
+  "request_boundary_updates": 4609,
+  "repeated_confirmed_updates": 31,
+  "sessions_with_active_setups": 3,
+  "sessions_with_gaps_or_drops": 0,
+  "sessions_with_missing_prefix": 5,
+  "event_start_utc": "2026-09-24T23:58:38.984000+00:00",
+  "event_end_utc": "2026-09-25T02:44:20.654000+00:00",
+  "signals": {
+    "EXECUTION QUALITY >= 65": {
+      "positive_updates": 44,
+      "observed_rising_edges": 1,
+      "positive_after_unknown_prefix_or_gap": 0,
+      "sessions": 1
+    }
+  },
+  "items": [
+    {
+      "session_id": "7a4c3a68595cda73",
+      "symbol": "AVAXUSDT.P",
+      "timeframe": "30",
+      "recorder_revision": 3,
+      "rows": 966,
+      "batches": 363,
+      "closed_bars": 6,
+      "complete_bars": 5,
+      "reported_dropped_updates": 0,
+      "missing_prefix_updates": 193,
+      "received_sequence_contiguous": true,
+      "sequence_contiguous": false,
+      "active_setup_updates": 966,
+      "event_start_utc": "2026-09-24T23:58:39.274000+00:00",
+      "event_end_utc": "2026-09-25T02:44:00.845000+00:00",
+      "duration_seconds": 9921.571,
+      "nondefault_parameters": {},
+      "history_start": 1735689600000,
+      "label": "capture-001",
+      "signals": {
+        "EXECUTION QUALITY >= 65": {
+          "positive_updates": 44,
+          "observed_rising_edges": 1,
+          "positive_after_unknown_prefix_or_gap": 0
+        }
+      },
+      "request_boundary_updates": 966,
+      "repeated_confirmed_updates": 6,
+      "bar_coverage": [
+        {
+          "bar_start": 1790292600000,
+          "bar_end": 1790294400000,
+          "updates": 20,
+          "first_seq": 194,
+          "last_seq": 213,
+          "starts_with_new_bar": false,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": false
+        },
+        {
+          "bar_start": 1790294400000,
+          "bar_end": 1790296200000,
+          "updates": 204,
+          "first_seq": 214,
+          "last_seq": 417,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790296200000,
+          "bar_end": 1790298000000,
+          "updates": 200,
+          "first_seq": 418,
+          "last_seq": 617,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790298000000,
+          "bar_end": 1790299800000,
+          "updates": 168,
+          "first_seq": 618,
+          "last_seq": 785,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790299800000,
+          "bar_end": 1790301600000,
+          "updates": 165,
+          "first_seq": 786,
+          "last_seq": 950,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790301600000,
+          "bar_end": 1790303400000,
+          "updates": 148,
+          "first_seq": 951,
+          "last_seq": 1098,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790303400000,
+          "bar_end": 1790305200000,
+          "updates": 61,
+          "first_seq": 1099,
+          "last_seq": 1159,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 0,
+          "sequence_contiguous": true,
+          "complete": false
+        }
+      ],
+      "origin_grid_matches": true,
+      "stateful_replay_blockers": [
+        "SEQUENCE_INCOMPLETE",
+        "INITIAL_STATE_UNVERIFIED"
+      ],
+      "request_components": {
+        "status": "DIAGNOSTIC_MATCH",
+        "full_intrabar_status": "UNVERIFIED",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "engine_version": "1.15.2-interpreter.3",
+        "compared_updates": 966,
+        "metrics": [
+          {
+            "metric": "volume_24h",
+            "numeric_pairs": 966,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "mtf_trend",
+            "numeric_pairs": 966,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "htf_base",
+            "numeric_pairs": 966,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "btc_shock",
+            "numeric_pairs": 966,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 6.66481880446832e-16,
+            "examples": [],
+            "status": "MATCH"
+          }
+        ],
+        "scope": "Four pure source expressions evaluated independently on each recorded update using captured request results.",
+        "limitations": [
+          "Request results are supplied inputs; native request calculations are not verified.",
+          "No historical warmup, persistent state, FSM, signals or remaining scores are verified.",
+          "Missing prefix or gaps remain unreconstructed; stateless checks do not repair the session."
+        ]
+      },
+      "ta_diagnostic": {
+        "status": "DIAGNOSTIC_MATCH",
+        "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+        "full_intrabar_status": "UNVERIFIED",
+        "engine_version": "1.15.2-interpreter.3",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "session_id": "7a4c3a68595cda73",
+        "matched_updates": 966,
+        "warmup_bars": 1000,
+        "missing_prefix_updates": 193,
+        "history_start": 1735689600000,
+        "metrics": [
+          {
+            "metric": "atr",
+            "status": "PASS",
+            "pairs": 966,
+            "invalid_pairs": 0,
+            "error_median": 2.7755575615628914e-17,
+            "error_p95": 5.551115123125783e-17,
+            "relative_error_max": 4.831074529299128e-16
+          },
+          {
+            "metric": "ema_fast",
+            "status": "PASS",
+            "pairs": 966,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 1.7763568394002505e-15,
+            "relative_error_max": 1.7281064350137712e-16
+          },
+          {
+            "metric": "ema_slow",
+            "status": "PASS",
+            "pairs": 966,
+            "invalid_pairs": 0,
+            "error_median": 3.552713678800501e-15,
+            "error_p95": 5.329070518200751e-15,
+            "relative_error_max": 5.157612369272083e-16
+          }
+        ],
+        "warmup_mode": "bounded_native_diagnostic",
+        "warmup_start": 1788492600000,
+        "exact_origin_covered": false,
+        "origin_grid_matches": true,
+        "limitations": [
+          "Native exchange warmup; captured chart OHLCV is supplied input.",
+          "Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.",
+          "Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.",
+          "No setup state, scores, request contexts or signal parity is established."
+        ],
+        "warmup_sha256": "98e8249247f65ac257ce07f433f148ab6fc3c2b00670ea2c7992ec169d7f903e"
+      }
+    },
+    {
+      "session_id": "1e770929d3910fea",
+      "symbol": "BTCUSDT.P",
+      "timeframe": "30",
+      "recorder_revision": 3,
+      "rows": 969,
+      "batches": 390,
+      "closed_bars": 6,
+      "complete_bars": 5,
+      "reported_dropped_updates": 0,
+      "missing_prefix_updates": 197,
+      "received_sequence_contiguous": true,
+      "sequence_contiguous": false,
+      "active_setup_updates": 0,
+      "event_start_utc": "2026-09-24T23:58:46.539000+00:00",
+      "event_end_utc": "2026-09-25T02:44:11.469000+00:00",
+      "duration_seconds": 9924.93,
+      "nondefault_parameters": {},
+      "history_start": 1735689600000,
+      "label": "capture-001",
+      "signals": {},
+      "request_boundary_updates": 969,
+      "repeated_confirmed_updates": 7,
+      "bar_coverage": [
+        {
+          "bar_start": 1790292600000,
+          "bar_end": 1790294400000,
+          "updates": 17,
+          "first_seq": 198,
+          "last_seq": 214,
+          "starts_with_new_bar": false,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": false
+        },
+        {
+          "bar_start": 1790294400000,
+          "bar_end": 1790296200000,
+          "updates": 209,
+          "first_seq": 215,
+          "last_seq": 423,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 3,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790296200000,
+          "bar_end": 1790298000000,
+          "updates": 167,
+          "first_seq": 424,
+          "last_seq": 590,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790298000000,
+          "bar_end": 1790299800000,
+          "updates": 165,
+          "first_seq": 591,
+          "last_seq": 755,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790299800000,
+          "bar_end": 1790301600000,
+          "updates": 166,
+          "first_seq": 756,
+          "last_seq": 921,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790301600000,
+          "bar_end": 1790303400000,
+          "updates": 167,
+          "first_seq": 922,
+          "last_seq": 1088,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790303400000,
+          "bar_end": 1790305200000,
+          "updates": 78,
+          "first_seq": 1089,
+          "last_seq": 1166,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 0,
+          "sequence_contiguous": true,
+          "complete": false
+        }
+      ],
+      "origin_grid_matches": true,
+      "stateful_replay_blockers": [
+        "SEQUENCE_INCOMPLETE",
+        "INITIAL_STATE_UNVERIFIED"
+      ],
+      "request_components": {
+        "status": "DIAGNOSTIC_MATCH",
+        "full_intrabar_status": "UNVERIFIED",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "engine_version": "1.15.2-interpreter.3",
+        "compared_updates": 969,
+        "metrics": [
+          {
+            "metric": "volume_24h",
+            "numeric_pairs": 969,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "mtf_trend",
+            "numeric_pairs": 969,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "htf_base",
+            "numeric_pairs": 969,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "btc_shock",
+            "numeric_pairs": 969,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 6.67457732116434e-16,
+            "examples": [],
+            "status": "MATCH"
+          }
+        ],
+        "scope": "Four pure source expressions evaluated independently on each recorded update using captured request results.",
+        "limitations": [
+          "Request results are supplied inputs; native request calculations are not verified.",
+          "No historical warmup, persistent state, FSM, signals or remaining scores are verified.",
+          "Missing prefix or gaps remain unreconstructed; stateless checks do not repair the session."
+        ]
+      },
+      "ta_diagnostic": {
+        "status": "DIAGNOSTIC_MATCH",
+        "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+        "full_intrabar_status": "UNVERIFIED",
+        "engine_version": "1.15.2-interpreter.3",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "session_id": "1e770929d3910fea",
+        "matched_updates": 969,
+        "warmup_bars": 1000,
+        "missing_prefix_updates": 197,
+        "history_start": 1735689600000,
+        "metrics": [
+          {
+            "metric": "atr",
+            "status": "PASS",
+            "pairs": 969,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 0.0,
+            "relative_error_max": 0.0
+          },
+          {
+            "metric": "ema_fast",
+            "status": "PASS",
+            "pairs": 969,
+            "invalid_pairs": 0,
+            "error_median": 1.4551915228366852e-11,
+            "error_p95": 2.9103830456733704e-11,
+            "relative_error_max": 3.4538541878314963e-16
+          },
+          {
+            "metric": "ema_slow",
+            "status": "PASS",
+            "pairs": 969,
+            "invalid_pairs": 0,
+            "error_median": 4.3655745685100555e-11,
+            "error_p95": 5.820766091346741e-11,
+            "relative_error_max": 6.90634674914919e-16
+          }
+        ],
+        "warmup_mode": "bounded_native_diagnostic",
+        "warmup_start": 1788492600000,
+        "exact_origin_covered": false,
+        "origin_grid_matches": true,
+        "limitations": [
+          "Native exchange warmup; captured chart OHLCV is supplied input.",
+          "Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.",
+          "Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.",
+          "No setup state, scores, request contexts or signal parity is established."
+        ],
+        "warmup_sha256": "bd84f8d8bdfa303aedc2511865625d70a8c66b2f4c79847f47cd37271d6143bb"
+      }
+    },
+    {
+      "session_id": "0067b47b23e13e0e",
+      "symbol": "ETHUSDT.P",
+      "timeframe": "30",
+      "recorder_revision": 3,
+      "rows": 815,
+      "batches": 346,
+      "closed_bars": 6,
+      "complete_bars": 5,
+      "reported_dropped_updates": 0,
+      "missing_prefix_updates": 190,
+      "received_sequence_contiguous": true,
+      "sequence_contiguous": false,
+      "active_setup_updates": 0,
+      "event_start_utc": "2026-09-24T23:58:39.003000+00:00",
+      "event_end_utc": "2026-09-25T02:43:56.613000+00:00",
+      "duration_seconds": 9917.61,
+      "nondefault_parameters": {},
+      "history_start": 1735689600000,
+      "label": "capture-001",
+      "signals": {},
+      "request_boundary_updates": 815,
+      "repeated_confirmed_updates": 5,
+      "bar_coverage": [
+        {
+          "bar_start": 1790292600000,
+          "bar_end": 1790294400000,
+          "updates": 23,
+          "first_seq": 191,
+          "last_seq": 213,
+          "starts_with_new_bar": false,
+          "confirmed_updates": 1,
+          "sequence_contiguous": true,
+          "complete": false
+        },
+        {
+          "bar_start": 1790294400000,
+          "bar_end": 1790296200000,
+          "updates": 160,
+          "first_seq": 214,
+          "last_seq": 373,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790296200000,
+          "bar_end": 1790298000000,
+          "updates": 169,
+          "first_seq": 374,
+          "last_seq": 542,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790298000000,
+          "bar_end": 1790299800000,
+          "updates": 138,
+          "first_seq": 543,
+          "last_seq": 680,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790299800000,
+          "bar_end": 1790301600000,
+          "updates": 141,
+          "first_seq": 681,
+          "last_seq": 821,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790301600000,
+          "bar_end": 1790303400000,
+          "updates": 128,
+          "first_seq": 822,
+          "last_seq": 949,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790303400000,
+          "bar_end": 1790305200000,
+          "updates": 56,
+          "first_seq": 950,
+          "last_seq": 1005,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 0,
+          "sequence_contiguous": true,
+          "complete": false
+        }
+      ],
+      "origin_grid_matches": true,
+      "stateful_replay_blockers": [
+        "SEQUENCE_INCOMPLETE",
+        "INITIAL_STATE_UNVERIFIED"
+      ],
+      "request_components": {
+        "status": "DIAGNOSTIC_MATCH",
+        "full_intrabar_status": "UNVERIFIED",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "engine_version": "1.15.2-interpreter.3",
+        "compared_updates": 815,
+        "metrics": [
+          {
+            "metric": "volume_24h",
+            "numeric_pairs": 815,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "mtf_trend",
+            "numeric_pairs": 815,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "htf_base",
+            "numeric_pairs": 815,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 1.773851706816634e-16,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "btc_shock",
+            "numeric_pairs": 815,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 6.090746406117826e-16,
+            "examples": [],
+            "status": "MATCH"
+          }
+        ],
+        "scope": "Four pure source expressions evaluated independently on each recorded update using captured request results.",
+        "limitations": [
+          "Request results are supplied inputs; native request calculations are not verified.",
+          "No historical warmup, persistent state, FSM, signals or remaining scores are verified.",
+          "Missing prefix or gaps remain unreconstructed; stateless checks do not repair the session."
+        ]
+      },
+      "ta_diagnostic": {
+        "status": "DIAGNOSTIC_MATCH",
+        "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+        "full_intrabar_status": "UNVERIFIED",
+        "engine_version": "1.15.2-interpreter.3",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "session_id": "0067b47b23e13e0e",
+        "matched_updates": 815,
+        "warmup_bars": 1000,
+        "missing_prefix_updates": 190,
+        "history_start": 1735689600000,
+        "metrics": [
+          {
+            "metric": "atr",
+            "status": "PASS",
+            "pairs": 815,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 0.0,
+            "relative_error_max": 0.0
+          },
+          {
+            "metric": "ema_fast",
+            "status": "PASS",
+            "pairs": 815,
+            "invalid_pairs": 0,
+            "error_median": 4.547473508864641e-13,
+            "error_p95": 9.094947017729282e-13,
+            "relative_error_max": 3.390008946702049e-16
+          },
+          {
+            "metric": "ema_slow",
+            "status": "PASS",
+            "pairs": 815,
+            "invalid_pairs": 0,
+            "error_median": 1.8189894035458565e-12,
+            "error_p95": 1.8189894035458565e-12,
+            "relative_error_max": 8.47758282369043e-16
+          }
+        ],
+        "warmup_mode": "bounded_native_diagnostic",
+        "warmup_start": 1788492600000,
+        "exact_origin_covered": false,
+        "origin_grid_matches": true,
+        "limitations": [
+          "Native exchange warmup; captured chart OHLCV is supplied input.",
+          "Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.",
+          "Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.",
+          "No setup state, scores, request contexts or signal parity is established."
+        ],
+        "warmup_sha256": "0cb8e5b28d6575ff6d02f3e60561768fea36ec652f1b0a645966b6e0477f02af"
+      }
+    },
+    {
+      "session_id": "2e3423458137703f",
+      "symbol": "SOLUSDT.P",
+      "timeframe": "30",
+      "recorder_revision": 3,
+      "rows": 935,
+      "batches": 351,
+      "closed_bars": 6,
+      "complete_bars": 5,
+      "reported_dropped_updates": 0,
+      "missing_prefix_updates": 192,
+      "received_sequence_contiguous": true,
+      "sequence_contiguous": false,
+      "active_setup_updates": 758,
+      "event_start_utc": "2026-09-24T23:59:01.520000+00:00",
+      "event_end_utc": "2026-09-25T02:44:01.520000+00:00",
+      "duration_seconds": 9900.0,
+      "nondefault_parameters": {},
+      "history_start": 1735689600000,
+      "label": "capture-001",
+      "signals": {},
+      "request_boundary_updates": 935,
+      "repeated_confirmed_updates": 7,
+      "bar_coverage": [
+        {
+          "bar_start": 1790292600000,
+          "bar_end": 1790294400000,
+          "updates": 17,
+          "first_seq": 193,
+          "last_seq": 209,
+          "starts_with_new_bar": false,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": false
+        },
+        {
+          "bar_start": 1790294400000,
+          "bar_end": 1790296200000,
+          "updates": 207,
+          "first_seq": 210,
+          "last_seq": 416,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790296200000,
+          "bar_end": 1790298000000,
+          "updates": 204,
+          "first_seq": 417,
+          "last_seq": 620,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 3,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790298000000,
+          "bar_end": 1790299800000,
+          "updates": 162,
+          "first_seq": 621,
+          "last_seq": 782,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790299800000,
+          "bar_end": 1790301600000,
+          "updates": 143,
+          "first_seq": 783,
+          "last_seq": 925,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790301600000,
+          "bar_end": 1790303400000,
+          "updates": 149,
+          "first_seq": 926,
+          "last_seq": 1074,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790303400000,
+          "bar_end": 1790305200000,
+          "updates": 53,
+          "first_seq": 1075,
+          "last_seq": 1127,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 0,
+          "sequence_contiguous": true,
+          "complete": false
+        }
+      ],
+      "origin_grid_matches": true,
+      "stateful_replay_blockers": [
+        "SEQUENCE_INCOMPLETE",
+        "INITIAL_STATE_UNVERIFIED"
+      ],
+      "request_components": {
+        "status": "DIAGNOSTIC_MATCH",
+        "full_intrabar_status": "UNVERIFIED",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "engine_version": "1.15.2-interpreter.3",
+        "compared_updates": 935,
+        "metrics": [
+          {
+            "metric": "volume_24h",
+            "numeric_pairs": 935,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "mtf_trend",
+            "numeric_pairs": 935,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "htf_base",
+            "numeric_pairs": 935,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "btc_shock",
+            "numeric_pairs": 935,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 9.90097414011381e-16,
+            "examples": [],
+            "status": "MATCH"
+          }
+        ],
+        "scope": "Four pure source expressions evaluated independently on each recorded update using captured request results.",
+        "limitations": [
+          "Request results are supplied inputs; native request calculations are not verified.",
+          "No historical warmup, persistent state, FSM, signals or remaining scores are verified.",
+          "Missing prefix or gaps remain unreconstructed; stateless checks do not repair the session."
+        ]
+      },
+      "ta_diagnostic": {
+        "status": "DIAGNOSTIC_MATCH",
+        "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+        "full_intrabar_status": "UNVERIFIED",
+        "engine_version": "1.15.2-interpreter.3",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "session_id": "2e3423458137703f",
+        "matched_updates": 935,
+        "warmup_bars": 1000,
+        "missing_prefix_updates": 192,
+        "history_start": 1735689600000,
+        "metrics": [
+          {
+            "metric": "atr",
+            "status": "PASS",
+            "pairs": 935,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 0.0,
+            "relative_error_max": 0.0
+          },
+          {
+            "metric": "ema_fast",
+            "status": "PASS",
+            "pairs": 935,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 1.4210854715202004e-14,
+            "relative_error_max": 1.220546538794664e-16
+          },
+          {
+            "metric": "ema_slow",
+            "status": "PASS",
+            "pairs": 935,
+            "invalid_pairs": 0,
+            "error_median": 9.947598300641403e-14,
+            "error_p95": 9.947598300641403e-14,
+            "relative_error_max": 9.7877063985751e-16
+          }
+        ],
+        "warmup_mode": "bounded_native_diagnostic",
+        "warmup_start": 1788492600000,
+        "exact_origin_covered": false,
+        "origin_grid_matches": true,
+        "limitations": [
+          "Native exchange warmup; captured chart OHLCV is supplied input.",
+          "Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.",
+          "Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.",
+          "No setup state, scores, request contexts or signal parity is established."
+        ],
+        "warmup_sha256": "b629bc8dfd1bcde47614825c47d5b4d462b8aea2c1ca401b751154cf9cfff7eb"
+      }
+    },
+    {
+      "session_id": "aeb1b553eff95690",
+      "symbol": "ZECUSDT.P",
+      "timeframe": "30",
+      "recorder_revision": 3,
+      "rows": 924,
+      "batches": 347,
+      "closed_bars": 6,
+      "complete_bars": 5,
+      "reported_dropped_updates": 0,
+      "missing_prefix_updates": 192,
+      "received_sequence_contiguous": true,
+      "sequence_contiguous": false,
+      "active_setup_updates": 924,
+      "event_start_utc": "2026-09-24T23:58:38.984000+00:00",
+      "event_end_utc": "2026-09-25T02:44:20.654000+00:00",
+      "duration_seconds": 9941.67,
+      "nondefault_parameters": {},
+      "history_start": 1735689600000,
+      "label": "capture-001",
+      "signals": {},
+      "request_boundary_updates": 924,
+      "repeated_confirmed_updates": 6,
+      "bar_coverage": [
+        {
+          "bar_start": 1790292600000,
+          "bar_end": 1790294400000,
+          "updates": 13,
+          "first_seq": 193,
+          "last_seq": 205,
+          "starts_with_new_bar": false,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": false
+        },
+        {
+          "bar_start": 1790294400000,
+          "bar_end": 1790296200000,
+          "updates": 210,
+          "first_seq": 206,
+          "last_seq": 415,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790296200000,
+          "bar_end": 1790298000000,
+          "updates": 203,
+          "first_seq": 416,
+          "last_seq": 618,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790298000000,
+          "bar_end": 1790299800000,
+          "updates": 170,
+          "first_seq": 619,
+          "last_seq": 788,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790299800000,
+          "bar_end": 1790301600000,
+          "updates": 140,
+          "first_seq": 789,
+          "last_seq": 928,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790301600000,
+          "bar_end": 1790303400000,
+          "updates": 128,
+          "first_seq": 929,
+          "last_seq": 1056,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 2,
+          "sequence_contiguous": true,
+          "complete": true
+        },
+        {
+          "bar_start": 1790303400000,
+          "bar_end": 1790305200000,
+          "updates": 60,
+          "first_seq": 1057,
+          "last_seq": 1116,
+          "starts_with_new_bar": true,
+          "confirmed_updates": 0,
+          "sequence_contiguous": true,
+          "complete": false
+        }
+      ],
+      "origin_grid_matches": true,
+      "stateful_replay_blockers": [
+        "SEQUENCE_INCOMPLETE",
+        "INITIAL_STATE_UNVERIFIED"
+      ],
+      "request_components": {
+        "status": "DIAGNOSTIC_MATCH",
+        "full_intrabar_status": "UNVERIFIED",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "engine_version": "1.15.2-interpreter.3",
+        "compared_updates": 924,
+        "metrics": [
+          {
+            "metric": "volume_24h",
+            "numeric_pairs": 924,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "mtf_trend",
+            "numeric_pairs": 924,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "htf_base",
+            "numeric_pairs": 924,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 0.0,
+            "relative_error_max": 0.0,
+            "examples": [],
+            "status": "MATCH"
+          },
+          {
+            "metric": "btc_shock",
+            "numeric_pairs": 924,
+            "both_na": 0,
+            "mismatches": 0,
+            "error_max": 1.4210854715202004e-14,
+            "relative_error_max": 6.67457732116434e-16,
+            "examples": [],
+            "status": "MATCH"
+          }
+        ],
+        "scope": "Four pure source expressions evaluated independently on each recorded update using captured request results.",
+        "limitations": [
+          "Request results are supplied inputs; native request calculations are not verified.",
+          "No historical warmup, persistent state, FSM, signals or remaining scores are verified.",
+          "Missing prefix or gaps remain unreconstructed; stateless checks do not repair the session."
+        ]
+      },
+      "ta_diagnostic": {
+        "status": "DIAGNOSTIC_MATCH",
+        "scope": "Only chart ATR and EMA calculations on supplied realtime OHLCV",
+        "full_intrabar_status": "UNVERIFIED",
+        "engine_version": "1.15.2-interpreter.3",
+        "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+        "session_id": "aeb1b553eff95690",
+        "matched_updates": 924,
+        "warmup_bars": 1000,
+        "missing_prefix_updates": 192,
+        "history_start": 1735689600000,
+        "metrics": [
+          {
+            "metric": "atr",
+            "status": "PASS",
+            "pairs": 924,
+            "invalid_pairs": 0,
+            "error_median": 0.0,
+            "error_p95": 0.0,
+            "relative_error_max": 0.0
+          },
+          {
+            "metric": "ema_fast",
+            "status": "PASS",
+            "pairs": 924,
+            "invalid_pairs": 0,
+            "error_median": 2.2737367544323206e-13,
+            "error_p95": 2.2737367544323206e-13,
+            "relative_error_max": 2.956355068659233e-16
+          },
+          {
+            "metric": "ema_slow",
+            "status": "PASS",
+            "pairs": 924,
+            "invalid_pairs": 0,
+            "error_median": 6.821210263296962e-13,
+            "error_p95": 9.094947017729282e-13,
+            "relative_error_max": 5.933607923893192e-16
+          }
+        ],
+        "warmup_mode": "bounded_native_diagnostic",
+        "warmup_start": 1788492600000,
+        "exact_origin_covered": false,
+        "origin_grid_matches": true,
+        "limitations": [
+          "Native exchange warmup; captured chart OHLCV is supplied input.",
+          "Bounded TA warmup does not establish the TradingView recursive seed; no origin parity claimed.",
+          "Missing updates before the first supplied row are not reconstructed; this check uses only closed-bar TA history.",
+          "No setup state, scores, request contexts or signal parity is established."
+        ],
+        "warmup_sha256": "f2612cee1cd596c79b5426b908533898fa2e5c67a028c673515781027bed9187"
+      }
+    }
+  ],
+  "limitations": [
+    "Positive flags are sampled latched states, not delivered alerts or unique events.",
+    "Observed 0->1 transitions exclude unknown prefixes/gaps; they do not establish signal parity.",
+    "No full intrabar PASS from capture import or bounded ATR/EMA diagnostics.",
+    "Unknown unsent tails are not reconstructed."
+  ],
+  "input_file": "tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-25_14573.csv",
+  "input_sha256": "2d0bc3bd5ab41e5e4f9cfcd92feb2fcad511e132a1c8c22229e6408c4a0d01ef",
+  "request_component_status_counts": {
+    "DIAGNOSTIC_MATCH": 5
+  },
+  "request_component_compared_updates": 4609,
+  "ta_selection": "whole_received_session",
+  "ta_diagnostic_status_counts": {
+    "DIAGNOSTIC_MATCH": 5
+  },
+  "ta_diagnostic_matched_updates": 4609,
+  "ta_warmup_scope": "Up to 20x longest TA length; original recursive seed not established. Strict origin replay unchanged."
+}

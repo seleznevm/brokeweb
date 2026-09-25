@@ -61,10 +61,11 @@ def test_zero_volume_hypothesis_is_separate_and_preserves_original_inputs():
     assert 'no TradingView historical OHLCV proof' in report['scope']
 
 
-def test_pool_cli_reports_diagnostic_mismatch_as_failure(monkeypatch,tmp_path):
+@pytest.mark.parametrize('family',['ta_diagnostic_status_counts','request_component_status_counts'])
+def test_pool_cli_reports_diagnostic_mismatch_as_failure(monkeypatch,tmp_path,family):
     import tools.pine_reference.trace_pool as module
     monkeypatch.setattr('sys.argv',['trace_pool','--input',str(tmp_path/'input.csv'),'--output-dir',str(tmp_path/'output'),'--native-ta'])
-    async def mismatch(args):return {'ta_diagnostic_status_counts':{'DIAGNOSTIC_MATCH':281,'DIAGNOSTIC_MISMATCH':12}}
+    async def mismatch(args):return {family:{'DIAGNOSTIC_MATCH':281,'DIAGNOSTIC_MISMATCH':12}}
     monkeypatch.setattr(module,'run',mismatch)
     assert module.main()==1
 

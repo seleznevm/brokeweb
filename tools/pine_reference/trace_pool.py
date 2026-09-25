@@ -161,6 +161,21 @@ async def run(args):
             raise ValueError('Choose a new output directory, or resume the same input/engine')
     args.output_dir.mkdir(parents=True,exist_ok=True);dump(args.output_dir/'manifest.json',manifest)
     dump(args.output_dir/'report.json',report)
+    if args.request_components:
+        from .trace_components import check as check_components
+        results={}
+        for session in sessions:
+            try:
+                actual,result=await asyncio.to_thread(check_components,session)
+                target=args.output_dir/session['session_id']/'request-components'
+                dump(target/'report.json',result)
+                (target/'python.jsonl').write_text(''.join(json.dumps(r,allow_nan=False)+'\n' for r in actual))
+            except ValueError as exc:result={'status':'NOT_ELIGIBLE','reason':str(exc)}
+            results[session['session_id']]=result
+        for item in report['items']:item['request_components']=results[item['session_id']]
+        report['request_component_status_counts']=dict(Counter(r['status'] for r in results.values()))
+        report['request_component_compared_updates']=sum(r.get('compared_updates',0) for r in results.values())
+        dump(args.output_dir/'report.json',report)
     if args.native_ta or args.clean_bar_ta:
         adapter=BybitAdapter();limit=asyncio.Semaphore(args.concurrency);completed=0
         async def one(session):
@@ -191,12 +206,14 @@ def main():
     parser.add_argument('--input',type=Path,required=True);parser.add_argument('--output-dir',type=Path,required=True)
     parser.add_argument('--native-ta',action='store_true');parser.add_argument('--resume',action='store_true')
     parser.add_argument('--clean-bar-ta',action='store_true',help='TA only on a continuous suffix starting at a complete candle; preserves original gap blockers')
+    parser.add_argument('--request-components',action='store_true',help='Check four stateless source calculations using recorded v3 request results')
     parser.add_argument('--concurrency',type=int,default=3);args=parser.parse_args()
     if not 1<=args.concurrency<=5:parser.error('concurrency must be 1..5')
     try:report=asyncio.run(run(args))
     except (OSError,ValueError) as exc:
         print(json.dumps({'status':'INVALID_INPUT','error':str(exc)}));return 2
-    return 1 if report.get('ta_diagnostic_status_counts',{}).get('DIAGNOSTIC_MISMATCH') else 0
+    return 1 if any(report.get(key,{}).get('DIAGNOSTIC_MISMATCH') for key in
+        ('ta_diagnostic_status_counts','request_component_status_counts')) else 0
 
 
 if __name__=='__main__':raise SystemExit(main())

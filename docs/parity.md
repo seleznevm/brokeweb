@@ -295,3 +295,34 @@ python3 -m tools.pine_reference.trace_pool \
 ```
 
 Evidence: `artifacts/local/intrabar-52214-clean-ta/` (warmup JSON, Python JSONL, TA reports). `/api/parity/intrabar` теперь показывает 52214; прежний ad4e4 сохранён отдельным JSON. Исходный Pine, правила и production feed не менялись. Повторять запись только из-за отсутствия 160 минут не требуется; дальнейший capture нужен для покрытия без потерь, а historical CSV — для согласования истории.
+
+
+## Intrabar 14573 (2026-09-25)
+
+[Отчёт](../reports/intrabar-pool-14573.json), CSV `tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-25_14573.csv`, SHA-256 `2d0bc3bd5ab41e5e4f9cfcd92feb2fcad511e132a1c8c22229e6408c4a0d01ef`.
+
+5 сессий / инструментов: AVAX, BTC, ETH, SOL, ZEC, TF30, recorder v3, captured inputs defaults. Получено 1797 пакетов, 4609 executions с request observations, 30 закрытых свечей, 25 полных. Время 2026-09-24 23:58:38.984 — 2026-09-25 02:44:20.654 UTC (165 минут 41.670 секунды). Внутренних seq-пропусков и reported drops нет; однако у каждой сессии отсутствует начало.
+
+| Символ | Первый batch | Первый seq | Отсутствует начальных executions |
+|---|---:|---:|---:|
+| AVAX | 48 | 194 | 193 |
+| BTC | 48 | 198 | 197 |
+| ETH | 48 | 191 | 190 |
+| SOL | 49 | 193 | 192 |
+| ZEC | 48 | 193 | 192 |
+
+`sequence_contiguous=false` сохраняется, несмотря на `received_sequence_contiguous=true`. Отсутствующие 964 executions не восстановлены догадками. Начало alerts 23:41:23–23:41:26 UTC; все history_start/bar_index соответствуют непрерывной временной сетке, но это не доказывает одинаковый historical OHLCV или initial state. В 3 сессиях есть активные setup; положительный сигнал в этой выборке — только EXECUTION QUALITY >=65 у AVAX (44 положительных флага, 1 наблюдаемый переход 0→1).
+
+**TA: 5/5 DIAGNOSTIC_MATCH, все 4609 полученных обновлений**, ATR/EMA20/EMA50, native warmup до 20× наибольшей длины, прежний допуск 0.0005. В отличие от 52214, стартовая полученная часть не вырезалась: внутри неё нет потерь.
+
+**Request components: 5/5 DIAGNOSTIC_MATCH, все 4609 обновлений.** Новый `trace_components.py` исполняет только 11 выбранных исходных AST-присваиваний и их чистые helper-функции: выходы `volume24hProxy`, `mtfTrendQualityLong`, `htfBaseQualityLong`, `btcShockScore`. Зависимости — captured parameters, quote/volume metadata и записанные request results. Текущие reference scores не подаются обратно на вход. История/requests/stateful calls в выбранных выражениях запрещены; остальные 41 метрика и 26 сигналов здесь не проверяются. Погрешность четырёх выходов не превышает 1.422e-14, допуски не менялись.
+
+Результаты запросов здесь **поставлены как входы**, поэтому совпадение последующих формул не подтверждает расчёт самих `request.security`/currency/lower-TF на native feeds. Полный intrabar статус **UNVERIFIED**: missing prefix, initial state, FSM/alerts и native requests остаются отдельными gates.
+
+```bash
+python3 -m tools.pine_reference.trace_pool \
+  --input tradingview_data/intrabar/TradingView_Alerts_Log_2026-09-25_14573.csv \
+  --output-dir artifacts/local/intrabar-14573-check --native-ta --request-components
+```
+
+`--request-components` доступен отдельно от TA: ему не нужен warmup, каждое полученное исполнение проверяется независимо. v1/v2 или повреждённые observations отклоняются. Exit 1 при mismatch TA либо request components; успешная диагностика не означает full parity PASS. Evidence: `artifacts/local/intrabar-14573-pool/` с native warmup, TA и component Python JSONL. Текущая страница Parity/API показывает 14573; 52214/ad4e4 сохранены отдельно. Следующий запрос данных — недостающие первые пакеты этих же пяти alerts, см. [инструкцию](tradingview_capture.md).
