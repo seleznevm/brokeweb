@@ -53,6 +53,14 @@ docker compose run --rm --no-deps -T api python -m tools.checkpoint_benchmark
 
 Второй только читает один совместимый checkpoint и сравнивает прежний и оптимизированный обходы одного состояния (по три повтора с чередованием порядка), проверяет точное совпадение сжатых байтов и повторный restore/export. БД не изменяется; запускать отдельным процессом. Время SQL и throughput рынка этот benchmark не измеряет. Экспорт worker выполняется в потоке под прежней блокировкой символа; частота checkpoint, последовательность executions и сохранение intrabar/varip не сокращены.
 
+Для воспроизводимой offline-проверки индекса контекстов:
+
+```bash
+python3 -m tools.context_benchmark --fixture artifacts/local/contexts-ethfi/fixture.json --bars 100 --repeats 3 --output artifacts/local/context-index.json
+```
+
+Нужен сохранённый native fixture с обычными закрытыми chart bars. Сравниваются все snapshots без wall-clock telemetry и итоговый checkpoint; индекс строится отдельно для каждой пары замеров. В worker он повторно используется до обновления соответствующего потока. Будущие свечи не становятся доступными раньше, developing candle пересчитывается по прежним правилам. Source hash, engine version и формат checkpoint не менялись.
+
 Движок интерпретирует source, а не pandas-пересчёт всей истории. EMA/RMA обновляются от предыдущего результата; history ограничена буферами. Однако snapshots/checkpoints сейчас объёмны, а main Python worker не оптимизирован для сотен FULL_REALTIME подписок. Уменьшение частоты обязательных Pine execution ради скорости не применяется незаметно.
 
 Не хватает production acceptance: полный нагрузочный прогон universe, sizing/WAL/archive-backup acceptance, external TradingView golden/reference наборы, проверка последовательности Binance/TradingView updates. Эти пункты не являются декоративными optional enhancements. UI и API предоставляют исследовательский локальный стенд до их закрытия.

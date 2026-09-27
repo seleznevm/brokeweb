@@ -79,3 +79,15 @@ docker compose run --rm --no-deps retention python -m tools.retention_smoke
 ```
 
 PostgreSQL smoke использует временную схему и временный каталог внутри archive mount, проверяет upgrade со старой схемы, valid concurrent indexes, конкурирующую блокировку, archive/restore, sequence, corruption и защиту catalogue при downgrade. В конце временные записи/файлы удаляются; рабочая история не затрагивается. Evidence: `artifacts/local/retention-smoke.json`.
+
+## Проверка резервной копии с непустым архивом (2026-09-27)
+
+Добавлен воспроизводимый isolated DR smoke:
+
+```bash
+python3 -m tools.disaster_recovery_smoke --output artifacts/local/disaster-recovery.json
+```
+
+Запускать с хоста в корне проекта при работающих Compose `api` и `postgres`. Используется локальная роль `brokeweb` с правом создания временных БД. Команда создаёт две базы с уникальными именами `brokeweb_dr_*`; рабочая БД, правила и archive mount не изменяются. Подготавливает тестовую историю и непустой архив, делает настоящий `pg_dump -Fc`, восстанавливает через `pg_restore --exit-on-error`, переносит архивные файлы через отдельный backup-каталог и удаляет исходную тестовую базу/архивы перед проверкой целевой. Временные базы и файлы убираются после прогона.
+
+Результат: **16 таблиц** совпали по количеству строк и SHA-256 канонических значений; **8 archive batches / 16 строк** восстановлены в точности. Checkpoint, idempotence и sequence после restore проверены. [Отчёт](../reports/disaster-recovery-validation.json). Это функциональная проверка всего пути БД + archive disk на маленьком fixture. Production-sized RTO/RPO, скорость backup, sizing/WAL и доступное место остаются отдельными измерениями.

@@ -17,7 +17,7 @@ def worker_shell():
     worker.instruments={'XUSDT':SimpleNamespace(symbol='XUSDT',tick_size=.01)}
     worker.timeframes=['1'];worker.engines={};worker.errors={}
     worker.locks=defaultdict(asyncio.Lock)
-    worker.contexts={};worker.context_limit=100;worker.history_span_ms=600000
+    worker.contexts={};worker.context_views={};worker.context_limit=100;worker.history_span_ms=600000
     worker.parameters={};worker.replay_origins={};worker.replay_skip_until={};worker.calculate=AsyncMock()
     worker.repo=SimpleNamespace(save_bar=lambda bar:None,save_bars=lambda bars:None,load_checkpoint=lambda *args:None)
     return worker

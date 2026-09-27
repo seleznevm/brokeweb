@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "tables_verified": 16,
+  "archive_batches": 8,
+  "archive_rows_restored": 16,
+  "checkpoint_unchanged": true,
+  "idempotent_restore": true,
+  "sequence_after_restore": true,
+  "live_database_modified": false,
+  "telegram_sent": false,
+  "measured_at": "2026-09-27T01:03:38.445444+00:00",
+  "dump_bytes": 85215,
+  "dump_sha256": "b4c0b0c91da23428ea6250a9000f78ae35ec3fe56996a27804aa1bd0e3d8b481",
+  "source_removed_before_archive_restore": true,
+  "scope": "isolated fixture databases and copied nonempty archives; not a production-sized RTO/RPO test"
+}

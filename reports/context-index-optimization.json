@@ -1,0 +1,141 @@
+{
+  "measured_at": "2026-09-27T00:55:31.503261+00:00",
+  "status": "PASS",
+  "scope": "offline context traversal equivalence; not TradingView parity or live capacity",
+  "fixture_sha256": "5e49b0f5ec749e7f9bfb8ffcbc98da8778918ab94b6be63012f243739587b6a1",
+  "symbol": "ETHFIUSDT",
+  "timeframe": "30",
+  "bars": 100,
+  "context_bars": {
+    "BYBIT:ETHFIUSDT.P|5": 181634,
+    "BYBIT:ETHFIUSDT.P|15": 60878,
+    "BYBIT:ETHFIUSDT.P|60": 15594,
+    "BYBIT:ETHFIUSDT.P|240": 4273,
+    "BYBIT:ETHFIUSDT.P|D": 917,
+    "BINANCE:BTCUSDT.P|15": 60878,
+    "BINANCE:BTCUSDT.P|30": 30689
+  },
+  "engine_version": "1.15.2-interpreter.3",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "median_total_ms": {
+    "linear": 12140.143860029639,
+    "indexed": 2972.732566995546
+  },
+  "speedup": 4.083833169123358,
+  "runs": {
+    "linear": [
+      {
+        "index_ms": 0.0006960035534575582,
+        "calculation_ms": 12140.143164026085,
+        "total_ms": 12140.143860029639,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      },
+      {
+        "index_ms": 0.0003569948603399098,
+        "calculation_ms": 9738.873921960476,
+        "total_ms": 9738.874278955336,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      },
+      {
+        "index_ms": 0.0004039975465275347,
+        "calculation_ms": 19590.240875986638,
+        "total_ms": 19590.241279984184,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      }
+    ],
+    "indexed": [
+      {
+        "index_ms": 150.9439720030059,
+        "calculation_ms": 2821.7885949925403,
+        "total_ms": 2972.732566995546,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      },
+      {
+        "index_ms": 120.2698299966869,
+        "calculation_ms": 2320.702792989323,
+        "total_ms": 2440.97262298601,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      },
+      {
+        "index_ms": 235.57118700409774,
+        "calculation_ms": 4058.5150929837255,
+        "total_ms": 4294.086279987823,
+        "snapshot_sha256": "13399ef425c6afbf523322ad72c0500ef503985536c9646a2f4e348e443fe822",
+        "checkpoint_sha256": "7b01395510522a230ce2be8343afec6f43f8cee15d5b765df49d5896e346e6dd"
+      }
+    ]
+  },
+  "post_deploy_probe": {
+    "readiness": "NOT_READY",
+    "capacity_status": "UNVERIFIED",
+    "scope": "short health probe; sustained throughput, storage growth and restart acceptance remain required",
+    "observed_seconds": 33.256,
+    "calculation_delta": 10,
+    "reasons": [
+      "Application is not HEALTHY",
+      "engine: Engine freshness coverage incomplete",
+      "engine: Engine is recovering or has errors",
+      "engine: Universe initialization incomplete"
+    ],
+    "last_engine": {
+      "errors": {},
+      "status": "RECOVERING",
+      "engines": 5,
+      "selected": 777,
+      "universe": 777,
+      "btc_stream": {
+        "error": null,
+        "messages": 130,
+        "connected": true,
+        "reconnects": 0,
+        "last_received": 1790470801517,
+        "last_market_event": 1790470804602
+      },
+      "timeframes": [
+        "30"
+      ],
+      "initialized": 5,
+      "max_symbols": 0,
+      "shard_count": 1,
+      "shard_index": 0,
+      "calculations": 20,
+      "quality_mode": "KLINE_REALTIME; full trade OHLCV after complete chart boundary",
+      "parity_status": "UNVERIFIED",
+      "btc_recovering": false,
+      "healthy_engines": 4,
+      "last_market_event": 1790470798690,
+      "stale_instruments": 0,
+      "calculation_ms_p95": 63.833177999185864,
+      "context_updated_at": 1790470801517,
+      "market_data_lag_ms": 23894,
+      "db_write_latency_ms": 997.5322356840479,
+      "btc_timeframe_events": {
+        "15": 1790470801858,
+        "30": 1790470801858
+      },
+      "websocket_reconnects": 0,
+      "reconciliation_errors": 0,
+      "calculation_latency_ms": 63.833177999185864,
+      "calculations_per_second": 0.5964463703188335,
+      "processed_market_messages": 96,
+      "checkpoint_export_latency_ms": 177.2448035007983,
+      "updated_at": 1790470801939,
+      "stale": false
+    }
+  },
+  "storage_observation": {
+    "captured_at": 1790470864667.264,
+    "database_bytes": 9859602099,
+    "current_states": 254,
+    "checkpoint_bytes": 372006975,
+    "wal_bytes_since_reset": 1166774451,
+    "wal_stats_reset": "2026-09-26T08:49:28.067358+00:00",
+    "host_c_free_gib_approx": 9.8,
+    "scope": "single observation, includes older TF states; no growth rate or full-universe projection"
+  }
+}

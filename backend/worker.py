@@ -17,6 +17,7 @@ from dataclasses import asdict
 from contextlib import suppress
 from redis.asyncio import Redis
 from backend.engine.runtime import PineEngine, ENGINE_VERSION, PINE_HASH
+from backend.engine.context_bars import ContextBars
 from backend.engine.parameters import required_history, parameter_hash
 from backend.engine.interpreter import tf_seconds
 from backend.marketdata import BybitAdapter,BinanceBtcContextAdapter
@@ -57,6 +58,7 @@ class Worker:
         self.messages=0;self.calculations=0;self.errors={};self.status='RECOVERING';self.universe_count=0;self.selected_count=0;self.last_events={};self.reconnects=0;self.latencies=[];self.parameter_id=None;self.parameters={};self.pending={};self.replay_skip_until={};self.replay_origins={};self.context_last=0;self.reconciliation_errors=0;self.db_latencies=[];self.backfilled={};self.previous_calculations=0;self.previous_heartbeat=time.monotonic()
         self.lease_token=uuid.uuid4().hex
         self.checkpoint_latencies=[]
+        self.context_views={}
         self.stopping=False;self.background=set()
         self.shard_index=int(os.getenv('ENGINE_SHARD_INDEX','0'));self.shard_count=int(os.getenv('ENGINE_SHARD_COUNT','1'))
         if not 0<=self.shard_index<self.shard_count:raise ValueError('Invalid engine shard')
@@ -83,6 +85,7 @@ class Worker:
         return task
 
     def put_context(self,key,bar):
+        self.context_views.pop(key,None)
         rows=self.contexts.setdefault(key,[])
         if rows and rows[-1]['start']==bar['start']:
             if not rows[-1]['confirmed'] or bar['confirmed']:rows[-1]=bar
@@ -90,6 +93,13 @@ class Worker:
         else:
             by_time={b['start']:b for b in rows};by_time[bar['start']]=bar;rows[:]=[by_time[t] for t in sorted(by_time)]
         if len(rows)>self.context_limit:del rows[:-self.context_limit]
+    def context_view(self,symbol):
+        view={}
+        for key,rows in self.contexts.items():
+            if key.startswith(f'BYBIT:{symbol}.P|') or key.startswith('BINANCE:BTCUSDT.P|'):
+                if key not in self.context_views:self.context_views[key]=ContextBars(rows)
+                view[key]=self.context_views[key]
+        return view
     def runtime_health(self):
         """Re-evaluate freshness even when no new calculation has completed."""
         now=now_ms();healthy=0;lags=[];stale=set()
@@ -127,7 +137,7 @@ class Worker:
             await self.blocking(self.repo.heartbeat,'engine' if self.shard_count==1 else f'engine:{self.shard_index}',payload)
             await asyncio.sleep(10)
     async def persist(self,engine,bar,realtime):
-        context_view={k:tuple(v) for k,v in self.contexts.items() if k.startswith(f'BYBIT:{engine.symbol}.P|') or k.startswith('BINANCE:BTCUSDT.P|')}
+        context_view=self.context_view(engine.symbol)
         snapshot=await self.blocking(engine.update,bar,context_view,realtime)
         snapshot['parameter_set_id']=self.parameter_id
         snapshot['native_turnover']=bar.get('turnover')

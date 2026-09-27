@@ -16,7 +16,7 @@ def message(ts=1000,closed=False):
 
 def shell():
     worker=Worker.__new__(Worker)
-    worker.stopping=False;worker.contexts={};worker.context_limit=100
+    worker.stopping=False;worker.contexts={};worker.context_views={};worker.context_limit=100
     worker.btc_last_events={};worker.context_last=0;worker.btc_recovering=True
     worker.btc_ws=SimpleNamespace(health=SimpleNamespace(connected=True))
     worker.btc_refresh_lock=asyncio.Lock();worker.parameters={};worker.timeframes=['1']

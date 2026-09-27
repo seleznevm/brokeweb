@@ -4,6 +4,7 @@ from collections import deque
 from .interpreter import Execution, tf_seconds, qualified
 from .values import NA, is_na, encode, decode
 from .request_dependencies import declarations_for
+from .context_bars import ContextBars
 
 class ContextProvider:
     def __init__(self,engine):self.engine=engine;self.streams={};self.dependencies={}
@@ -30,7 +31,10 @@ class ContextProvider:
         asof=parent.bar.get('received_at',parent.bar['end']) if parent.realtime else parent.bar['end']
         asof=min(asof,parent.bar['end'])
         last=ex.last_value
-        for raw in bars:
+        # Skip already committed and future candles without changing the
+        # closed/open availability checks, rollback or lower-TF result order.
+        candidates=bars.after_until(ex.last_start,asof) if isinstance(bars,ContextBars) else bars
+        for raw in candidates:
             bar=raw.to_dict() if hasattr(raw,'to_dict') else raw
             if ex.last_start is not None and bar['start']<=ex.last_start:continue
             closed=bar.get('confirmed',True) and bar['end']<=asof
