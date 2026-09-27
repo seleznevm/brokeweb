@@ -72,3 +72,37 @@ def test_indexed_context_matches_linear_traversal_through_restore_and_live_revis
             # Index is an ephemeral view; checkpoint format/state is unchanged.
             for ex,provider,_ in (linear,indexed):
                 ex.restore_state(ex.export_state());provider.restore_state(provider.export_state())
+
+
+def test_pinned_checkpoint_continuation_matches_full_and_shortened_context_history():
+    from copy import deepcopy
+    from backend.engine.runtime import PineEngine
+    from backend.engine.interpreter import tf_seconds
+    from backend.worker import restored_context_anchor
+    from backend.models.checkpoints import pack_checkpoint
+    def bar(tf,index,confirmed=True):
+        value=candle(index,tf=int(tf_seconds(tf)*1000),close=100+index*.01,confirmed=confirmed)
+        value.update(open=value['close']-.02,low=value['close']-1,high=value['close']+1,volume=100)
+        return value
+    own={f'BYBIT:TESTUSDT.P|{tf}':[bar(tf,i) for i in range(int(3*86400/tf_seconds(tf)))]
+         for tf in ('5','15','60','240','D')}
+    contexts={**own,**{f'BINANCE:BTCUSDT.P|{tf}':[bar(tf,i) for i in range(int(3*86400/tf_seconds(tf)))] for tf in ('15','30')}}
+    original=PineEngine('TESTUSDT','30')
+    indexed={k:ContextBars(rows) for k,rows in contexts.items()}
+    for i in range(96):original.update(bar('30',i),indexed)
+    checkpoint=original.export_state()
+    full=PineEngine('TESTUSDT','30');full.restore_state(deepcopy(checkpoint))
+    resumed=PineEngine('TESTUSDT','30');resumed.restore_state(deepcopy(checkpoint))
+    anchor=restored_context_anchor([resumed],2*86400000,10*86400000)
+    assert anchor==86400000
+    short={k:ContextBars([b for b in rows if b['start']>=anchor-5*tf_seconds(k.split('|')[1])*1000]) for k,rows in contexts.items()}
+    assert sum(map(len,short.values()))<sum(map(len,indexed.values()))
+    updates=[bar('30',i) for i in range(96,100)]
+    live=bar('30',100,False);live['received_at']=live['start']+60000
+    updates.extend([live,{**live,'close':live['close']+.1,'received_at':live['received_at']+1000}])
+    for update in updates:
+        for engine,streams in ((full,indexed),(resumed,short)):
+            snapshot=engine.update(update,streams,not update['confirmed'])
+            snapshot.pop('calculation_timestamp');snapshot.pop('calculation_ms')
+        assert full.snapshot==resumed.snapshot
+        assert pack_checkpoint(full.export_state())==pack_checkpoint(resumed.export_state())

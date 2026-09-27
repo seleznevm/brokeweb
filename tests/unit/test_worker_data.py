@@ -224,3 +224,53 @@ def test_semantics_upgrade_replays_original_origin_and_rejects_truncated_history
             assert all(call.args[2] is False for call in worker.persist.await_args_list)
             assert 'XUSDT' in worker.ready
     asyncio.run(scenario(False));asyncio.run(scenario(True))
+
+
+@pytest.mark.parametrize('invalid',['none','missing_request','uncommitted','cold_chart','too_old','future','valid'])
+def test_restored_backfill_anchor_requires_all_committed_requests(invalid):
+    from backend.worker import restored_context_anchor,checkpoint_request_ids
+    streams={key+'|BYBIT:XUSDT.P|60':(SimpleNamespace(last_start=120000,count=5),[]) for key in checkpoint_request_ids()}
+    first=next(iter(streams))
+    engine=SimpleNamespace(runtime=SimpleNamespace(last_start=180000,count=10),provider=SimpleNamespace(streams=streams))
+    streams[first][0].last_start=60000
+    if invalid=='none':streams.clear()
+    if invalid=='missing_request':streams.pop(first)
+    if invalid=='uncommitted':streams[first][0].last_start=None
+    if invalid=='cold_chart':engine.runtime.count=0
+    if invalid=='too_old':streams[first][0].last_start=-60000
+    if invalid=='future':streams[first][0].last_start=300000
+    assert restored_context_anchor([engine],240000,240000)==(60000 if invalid=='valid' else None)
+
+
+@pytest.mark.parametrize('reject',[False,True])
+def test_bootstrap_validates_checkpoint_before_shortening_rest(monkeypatch,reject):
+    from contextlib import contextmanager
+    from backend.worker import checkpoint_request_ids
+    import backend.worker as module
+    monkeypatch.setattr(module,'context_requirements',lambda *args:({'1'},set()))
+    monkeypatch.setattr(module,'required_history',lambda *args:500)
+    monkeypatch.setattr(module,'now_ms',lambda:240000)
+    class Engine:
+        def __init__(self,*args):
+            self.runtime=SimpleNamespace(last_start=None,count=0)
+            self.provider=SimpleNamespace(streams={})
+        def restore_state(self,state):
+            self.runtime.last_start=120000;self.runtime.count=50
+            self.provider.streams={key+'|BYBIT:XUSDT.P|1':(SimpleNamespace(last_start=60000,count=50),[]) for key in checkpoint_request_ids()}
+            if reject:raise ValueError('partially restored checkpoint rejected')
+    monkeypatch.setattr(module,'PineEngine',Engine)
+    async def scenario():
+        worker=worker_shell();worker.ready.clear();worker.backfilled={};worker.selected_count=1;worker.parameter_id='params'
+        saved=SimpleNamespace(payload={'parameter_set_id':'params','bar_start':120000})
+        @contextmanager
+        def session():yield SimpleNamespace(get=lambda *args:saved)
+        worker.repo=SimpleNamespace(session=session,read_checkpoint=lambda row:{'version':module.ENGINE_VERSION},save_bars=lambda bars:None)
+        worker.bybit=SimpleNamespace(backfill=AsyncMock(return_value=[Bar('BYBIT','XUSDT','1',ts,ts+60000,10,12,8,11,5) for ts in (60000,120000,180000)]))
+        worker.persist=AsyncMock()
+        await worker.bootstrap(worker.instruments['XUSDT'])
+        count=worker.bybit.backfill.await_args.args[2]
+        assert count==(500 if reject else 10)
+        expected=[60000,120000,180000] if reject else [180000]
+        assert [call.args[1]['start'] for call in worker.persist.await_args_list]==expected
+        assert 'XUSDT' in worker.ready and not worker.errors
+    asyncio.run(scenario())

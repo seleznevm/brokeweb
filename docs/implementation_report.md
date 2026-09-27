@@ -4,7 +4,15 @@
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **396 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **406 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+
+## Продолжение 2026-09-27: дозагрузка после восстановления checkpoint
+
+Worker сначала восстанавливает и проверяет checkpoint, затем выбирает глубину native REST backfill. Сокращение включается только при наличии подтверждённого chart state и всех девяти request callsites исходника. Начало — самый старый committed chart/request timestamp с перекрытием; не время intrabar snapshot. Cold/missing/незавершённые/слишком старые/future states сохраняют полный прогрев. При отклонении частично восстановленного checkpoint создаётся чистый engine. Semantics upgrade по-прежнему пересчитывает исходную историю от сохранённого origin. Reconnect recovery оставлен прежним.
+
+На реальном LTCUSDT TF30 checkpoint запланировано **733 native bars вместо 9 660** по шести TF. Это read-only расчёт размеров REST-запросов на конкретном состоянии, не замер сетевой задержки и не full-universe acceptance. [Отчёт](../reports/checkpoint-resume-validation.json).
+
+Проверки: **406 backend tests**. Прогон pinned Pine на полной и сокращённой истории после restore дал одинаковые snapshots и BWC1 checkpoints, включая confirmed и повторные intrabar updates. Проверены строгие fallback-условия и сохранение origin при смене semantics. Формулы, source hash, engine version, guards и частота checkpoint не менялись.
 
 ## Продолжение 2026-09-27: подготовка checkpoint перед SQL
 

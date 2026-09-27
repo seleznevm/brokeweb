@@ -1,0 +1,43 @@
+{
+  "captured_at": 1790511754256,
+  "symbol": "LTCUSDT",
+  "timeframe": "30",
+  "engine_version": "1.15.2-interpreter.3",
+  "pine_source_hash": "782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e",
+  "committed_requests": 9,
+  "resume_anchor": 1790380800000,
+  "planned_native_bars": {
+    "5": {
+      "full": 4780,
+      "resumed": 441
+    },
+    "15": {
+      "full": 1660,
+      "resumed": 150
+    },
+    "30": {
+      "full": 880,
+      "resumed": 77
+    },
+    "60": {
+      "full": 780,
+      "resumed": 41
+    },
+    "240": {
+      "full": 780,
+      "resumed": 14
+    },
+    "D": {
+      "full": 780,
+      "resumed": 10
+    }
+  },
+  "full_total": 9660,
+  "resumed_total": 733,
+  "scope": "read-only calculation of REST request sizes for one restored checkpoint; not measured exchange latency or capacity",
+  "tests": {
+    "suite_passed": 406,
+    "pinned_full_vs_short_history": "PASS: identical snapshots and compressed checkpoints, confirmed and repeated intrabar updates",
+    "fallbacks": "missing/uncommitted/old/future/rejected checkpoints; original history origin for semantics upgrade"
+  }
+}

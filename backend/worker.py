@@ -15,11 +15,13 @@ import signal
 from collections import defaultdict
 from dataclasses import asdict
 from contextlib import suppress
+from functools import lru_cache
 from redis.asyncio import Redis
 from backend.engine.runtime import PineEngine, ENGINE_VERSION, PINE_HASH
 from backend.engine.context_bars import ContextBars
 from backend.engine.parameters import required_history, parameter_hash
-from backend.engine.interpreter import tf_seconds
+from backend.engine.interpreter import tf_seconds,qualified
+from backend.engine.syntax import load_program
 from backend.marketdata import BybitAdapter,BinanceBtcContextAdapter
 from backend.marketdata.websocket import BybitWebSocketManager
 from backend.marketdata.trades import TradeAggregator
@@ -45,6 +47,43 @@ def context_requirements(parameters,timeframes):
         shock=('1' if sec<=300 else '5' if sec<=900 else '15' if sec<=3600 else '60' if sec<=14400 else '240') if auto else parameters['manualBtcShockTf']
         own.add(micro);btc.add(shock)
     return own,btc
+
+
+@lru_cache(maxsize=1)
+def checkpoint_request_ids():
+    ids=set()
+    def expression(node):
+        if node.kind=='call' and qualified(node.args[0]) in ('request.security','request.security_lower_tf'):
+            ids.add(node.uid)
+        for child in node.args:expression(child)
+    def statements(nodes):
+        for node in nodes:
+            if node.expr:expression(node.expr)
+            statements(node.body);statements(node.otherwise)
+    program=load_program();statements(program.statements)
+    for function in program.functions.values():statements(function.body)
+    return frozenset(ids)
+
+
+def restored_context_anchor(engines, now, history_span):
+    """Only shorten REST history when every restored request has committed state.
+
+    Rolling/recursive request history lives in the checkpoint. Fetch from the
+    oldest committed chart/request candle (plus the caller's overlap), never
+    from the last snapshot timestamp or an unconfirmed intrabar execution.
+    Cold, incomplete, or older-than-loaded-BTC checkpoints keep full bootstrap.
+    """
+    starts=[]
+    for engine in engines:
+        streams=getattr(getattr(engine,'provider',None),'streams',{})
+        if not streams or {key.split('|',1)[0] for key in streams}!=checkpoint_request_ids():return None
+        executions=[engine.runtime,*(execution for execution,_ in streams.values())]
+        for execution in executions:
+            start=execution.last_start
+            if type(start) is not int or type(execution.count) is not int or execution.count<=0 or not now-history_span<=start<=now:
+                return None
+            starts.append(start)
+    return min(starts) if starts else None
 
 class Worker:
     def __init__(self):
@@ -250,21 +289,8 @@ class Worker:
                     self.history_span_ms=now_ms()-rebuild_start
                     self.context_limit=max(self.context_limit,int(self.history_span_ms/30000)+1000)
                     await self.refresh_btc(True)
-                for tf in sorted(own|set(self.timeframes),key=tf_seconds):
-                    if tf=='30S':
-                        def stored_micro():
-                            with self.repo.session() as session:
-                                rows=session.scalars(select(MarketBar).where(MarketBar.exchange=='BYBIT',MarketBar.symbol==symbol,MarketBar.timeframe=='30S').order_by(MarketBar.start.desc()).limit(self.context_limit)).all()
-                                return [{c.name:getattr(row,c.name) for c in MarketBar.__table__.columns} for row in reversed(rows)]
-                        for value in await self.blocking(stored_micro):self.put_context(f'BYBIT:{symbol}.P|30S',value)
-                        continue
-                    count=max(required_history(self.parameters,tf),int(self.history_span_ms/(tf_seconds(tf)*1000))+100)
-                    if rebuild_start is not None:count=max(count,int((now_ms()-rebuild_start)/(tf_seconds(tf)*1000))+500)
-                    if recover and rebuild_start is None:count=max(10,int((now_ms()-min((e.runtime.last_start or now_ms()) for (s,t),e in self.engines.items() if s==symbol))/(tf_seconds(tf)*1000))+5)
-                    bars=await self.bybit.backfill(symbol,tf,count)
-                    values=[bar_dict(b) for b in bars]
-                    for value in values:self.put_context(f'BYBIT:{symbol}.P|{tf}',value)
-                    if values:await self.blocking(self.repo.save_bars,values)
+                # Validate/restore before choosing REST depth. A rejected or
+                # partial checkpoint cannot authorize a shortened bootstrap.
                 for tf in self.timeframes:
                     key=(symbol,tf)
                     if key not in self.engines:
@@ -275,8 +301,32 @@ class Worker:
                             try:
                                 engine.restore_state(checkpoint)
                                 log.info('checkpoint_restored',extra={'symbol':symbol,'timeframe':tf,'processed':engine.runtime.count,'bar_timestamp':engine.runtime.last_start})
-                            except ValueError as exc:log.warning('checkpoint_requires_replay',extra={'symbol':symbol,'timeframe':tf,'error':str(exc)})
+                            except ValueError as exc:
+                                log.warning('checkpoint_requires_replay',extra={'symbol':symbol,'timeframe':tf,'error':str(exc)})
+                                engine=PineEngine(symbol,tf,instrument.tick_size,self.parameters)
                         self.engines[key]=engine
+                resume_start=None if rebuild_start is not None or recover else restored_context_anchor(
+                    [self.engines[symbol,tf] for tf in self.timeframes],now_ms(),self.history_span_ms)
+                if resume_start is not None:
+                    log.info('checkpoint_incremental_backfill',extra={'symbol':symbol,'history_start':resume_start})
+                for tf in sorted(own|set(self.timeframes),key=tf_seconds):
+                    if tf=='30S':
+                        def stored_micro():
+                            with self.repo.session() as session:
+                                rows=session.scalars(select(MarketBar).where(MarketBar.exchange=='BYBIT',MarketBar.symbol==symbol,MarketBar.timeframe=='30S').order_by(MarketBar.start.desc()).limit(self.context_limit)).all()
+                                return [{c.name:getattr(row,c.name) for c in MarketBar.__table__.columns} for row in reversed(rows)]
+                        for value in await self.blocking(stored_micro):self.put_context(f'BYBIT:{symbol}.P|30S',value)
+                        continue
+                    count=max(required_history(self.parameters,tf),int(self.history_span_ms/(tf_seconds(tf)*1000))+100)
+                    if rebuild_start is not None:count=max(count,int((now_ms()-rebuild_start)/(tf_seconds(tf)*1000))+500)
+                    if resume_start is not None:count=max(10,int((now_ms()-resume_start)/(tf_seconds(tf)*1000))+5)
+                    if recover and rebuild_start is None and resume_start is None:count=max(10,int((now_ms()-min((e.runtime.last_start or now_ms()) for (s,t),e in self.engines.items() if s==symbol))/(tf_seconds(tf)*1000))+5)
+                    bars=await self.bybit.backfill(symbol,tf,count)
+                    values=[bar_dict(b) for b in bars]
+                    for value in values:self.put_context(f'BYBIT:{symbol}.P|{tf}',value)
+                    if values:await self.blocking(self.repo.save_bars,values)
+                for tf in self.timeframes:
+                    key=(symbol,tf)
                     engine=self.engines[key]
                     rows=self.contexts.get(f'BYBIT:{symbol}.P|{tf}',[])
                     limit=required_history(self.parameters,tf)
