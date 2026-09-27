@@ -40,18 +40,21 @@ Named volumes переживают обычный restart. Изменение Pi
 
 `healthy_engines` пересчитывается на каждом heartbeat: сохранённый HEALTHY перестаёт считаться свежим через 90 секунд с учётом исходного отставания. Общий HEALTHY требует всех выбранных symbol/TF, свежих WS/BTC contexts и отсутствия recovery/errors. Пустой universe не означает готовность. `stale_instruments` считает уникальные символы, а не symbol/TF пары.
 
-`market_data_lag_ms` — максимальное отставание snapshot среди загруженных engines, включая прошедшее после расчёта время; replay также попадает в эту метрику. `checkpoint_export_latency_ms` — средняя длительность последних 1000 экспортов состояния, отдельно от `db_write_latency_ms` (clean/JSON/compression/SQL). Ожидание потока входит в длительность. `calculation_latency_ms` — p95 последних 1000 расчётов; `calculations_per_second` включает replay. Все четыре метрики публикуются в `/metrics`. Это показатели worker, а не сквозная задержка доставки alert.
+`market_data_lag_ms` — максимальное отставание snapshot среди загруженных engines, включая прошедшее после расчёта время; replay также попадает в эту метрику. `checkpoint_export_latency_ms` — средняя длительность последних 1000 экспортов состояния, отдельно от `db_write_latency_ms` (нормализация snapshot и SQL; с 2026-09-27 упаковка engine checkpoint измеряется отдельно). Ожидание потока входит в длительность. `calculation_latency_ms` — p95 последних 1000 расчётов; `calculations_per_second` включает replay. `checkpoint_pack_latency_ms` — средняя длительность JSON/compression последних 1000 engine checkpoints. Все эти метрики публикуются в `/metrics`. Это показатели worker, а не сквозная задержка доставки alert.
 
 Короткий probe работает и во время RECOVERING, не меняет subscriptions/настройки и не ждёт общего HEALTHY:
 
 ```bash
 python3 -m tools.capacity_probe --samples 3 --interval 15
 docker compose run --rm --no-deps -T api python -m tools.checkpoint_benchmark
+docker compose run --rm --no-deps -T api python -m tools.checkpoint_benchmark --prepared --repeats 5
 ```
 
 Первый сохраняет `artifacts/local/capacity-probe.json`: либо `NOT_READY` с причинами, либо `READY_FOR_SOAK`. В обоих случаях `capacity_status=UNVERIFIED`: короткая выборка не заменяет длительный прогон, sizing/WAL и restart acceptance. Проверяются heartbeat, полный набор shards, initialization, свежесть engines/streams/BTC, ошибки и прогресс calculations.
 
 Второй только читает один совместимый checkpoint и сравнивает прежний и оптимизированный обходы одного состояния (по три повтора с чередованием порядка), проверяет точное совпадение сжатых байтов и повторный restore/export. БД не изменяется; запускать отдельным процессом. Время SQL и throughput рынка этот benchmark не измеряет. Экспорт worker выполняется в потоке под прежней блокировкой символа; частота checkpoint, последовательность executions и сохранение intrabar/varip не сокращены.
+
+`--prepared` сравнивает прежний export + повторный `clean` с новым canonical export + подготовленными BWC1-байтами. Каждый realtime execution по-прежнему сохраняется в той же SQL-транзакции вместе со snapshot; частота checkpoint и durable alerts не менялись. Обычные dictionary checkpoints сохраняют прежнюю нормализацию. Reader, формат BWC1 и engine version прежние. После изменения нельзя сравнивать один `db_write_latency_ms` до/после как общее ускорение: теперь нужно учитывать отдельно export + pack + DB.
 
 Для воспроизводимой offline-проверки индекса контекстов:
 

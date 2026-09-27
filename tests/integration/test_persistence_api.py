@@ -52,12 +52,35 @@ def test_save_snapshot_uses_supplied_parameter_version_without_query(repo,monkey
     assert repo.load_checkpoint('BYBIT','XYZUSDT','15')=={'varip':{'samples':17}}
 
 
+def test_prepared_checkpoint_bytes_survive_save_rollback_and_subsequent_writes(repo,monkeypatch):
+    from backend.models.checkpoints import PackedCheckpoint,pack_checkpoint
+    state={'varip':{'sum':.1+.2,'count':17},'history':[None,-0.0,2**60,'Зона']}
+    prepared=PackedCheckpoint.from_state(state)
+    repo.save_snapshot(snapshot(repo),prepared)
+    with repo.session() as session:
+        assert session.get(Current,('BYBIT','XYZUSDT','15')).checkpoint_blob==pack_checkpoint(state)
+    assert repo.load_checkpoint('BYBIT','XYZUSDT','15')==state
+    def fail(*args):raise RuntimeError('rollback test')
+    with monkeypatch.context() as patch:
+        patch.setattr(repo,'_save_research',fail)
+        with pytest.raises(RuntimeError,match='rollback test'):
+            repo.save_snapshot(snapshot(repo,price=999),PackedCheckpoint.from_state({'next':1}))
+    with repo.session() as session:
+        row=session.get(Current,('BYBIT','XYZUSDT','15'))
+        assert row.payload['price']==100 and row.checkpoint_blob==prepared.blob
+    repo.save_snapshot(snapshot(repo,price=101))
+    assert repo.load_checkpoint('BYBIT','XYZUSDT','15')==state
+    # Callers providing ordinary dictionaries keep the old normalization path.
+    repo.save_snapshot(snapshot(repo),{True:float('inf')})
+    assert repo.load_checkpoint('BYBIT','XYZUSDT','15')=={'True':None}
+
+
 def test_metrics_exposes_checkpoint_cost_throughput_and_market_lag(repo,client):
-    repo.heartbeat('engine',{'status':'RECOVERING','checkpoint_export_latency_ms':123.5,
+    repo.heartbeat('engine',{'status':'RECOVERING','checkpoint_export_latency_ms':123.5,'checkpoint_pack_latency_ms':42.5,
         'market_data_lag_ms':95000,'calculations_per_second':2.5})
     response=client.get('/metrics')
     assert response.status_code==200
-    for metric,value in [('checkpoint_export_latency_ms',123.5),('market_data_lag_ms',95000),('calculations_per_second',2.5)]:
+    for metric,value in [('checkpoint_export_latency_ms',123.5),('checkpoint_pack_latency_ms',42.5),('market_data_lag_ms',95000),('calculations_per_second',2.5)]:
         assert f'scalping_{metric}{{service="engine"}} {value}' in response.text
 
 

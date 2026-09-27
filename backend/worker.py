@@ -25,6 +25,7 @@ from backend.marketdata.websocket import BybitWebSocketManager
 from backend.marketdata.trades import TradeAggregator
 from backend.marketdata.binance_websocket import BinanceBtcWebSocket
 from backend.models.repository import Repository,now_ms
+from backend.models.checkpoints import PackedCheckpoint
 from backend.models.schema import Current,MarketBar
 from sqlalchemy import select
 from backend.logging_config import configure_logging
@@ -58,6 +59,7 @@ class Worker:
         self.messages=0;self.calculations=0;self.errors={};self.status='RECOVERING';self.universe_count=0;self.selected_count=0;self.last_events={};self.reconnects=0;self.latencies=[];self.parameter_id=None;self.parameters={};self.pending={};self.replay_skip_until={};self.replay_origins={};self.context_last=0;self.reconciliation_errors=0;self.db_latencies=[];self.backfilled={};self.previous_calculations=0;self.previous_heartbeat=time.monotonic()
         self.lease_token=uuid.uuid4().hex
         self.checkpoint_latencies=[]
+        self.checkpoint_pack_latencies=[]
         self.context_views={}
         self.stopping=False;self.background=set()
         self.shard_index=int(os.getenv('ENGINE_SHARD_INDEX','0'));self.shard_count=int(os.getenv('ENGINE_SHARD_COUNT','1'))
@@ -129,6 +131,7 @@ class Worker:
             payload.update(btc_stream=asdict(self.btc_ws.health),btc_recovering=self.btc_recovering,btc_timeframe_events=self.btc_last_events,calculations_per_second=(self.calculations-self.previous_calculations)/elapsed,calculation_latency_ms=payload['calculation_ms_p95'],db_write_latency_ms=sum(self.db_latencies)/len(self.db_latencies) if self.db_latencies else None,last_successful_rest_backfill=self.backfilled,streams=[asdict(state) for state in self.ws.health.values()])
             payload.update(self.runtime_health())
             payload['checkpoint_export_latency_ms']=sum(self.checkpoint_latencies)/len(self.checkpoint_latencies) if self.checkpoint_latencies else None
+            payload['checkpoint_pack_latency_ms']=sum(self.checkpoint_pack_latencies)/len(self.checkpoint_pack_latencies) if self.checkpoint_pack_latencies else None
             self.status=payload['status']
             self.previous_heartbeat=time.monotonic();self.previous_calculations=self.calculations
             renewed=await self.redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('pexpire',KEYS[1],60000) else return 0 end",1,self.lease_key,self.lease_token)
@@ -161,9 +164,13 @@ class Worker:
             export_started=time.perf_counter()
             # The symbol lock still covers export + save. Do not block feed and
             # lease heartbeats on this CPU-heavy traversal; cancellation drains it.
-            checkpoint=await self.blocking(engine.export_state)
+            state=await self.blocking(engine.export_state)
             self.checkpoint_latencies.append((time.perf_counter()-export_started)*1000)
             self.checkpoint_latencies=self.checkpoint_latencies[-1000:]
+            pack_started=time.perf_counter()
+            checkpoint=await self.blocking(PackedCheckpoint.from_state,state)
+            self.checkpoint_pack_latencies.append((time.perf_counter()-pack_started)*1000)
+            self.checkpoint_pack_latencies=self.checkpoint_pack_latencies[-1000:]
         write_started=time.perf_counter()
         await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
         self.db_latencies.append((time.perf_counter()-write_started)*1000);self.db_latencies=self.db_latencies[-1000:]

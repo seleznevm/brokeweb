@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, select, text, update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from backend.models.schema import *
-from backend.models.checkpoints import pack_checkpoint,unpack_checkpoint
+from backend.models.checkpoints import PackedCheckpoint,pack_checkpoint,unpack_checkpoint
 from backend.alerts.outbox import digest,enqueue_matching
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -116,7 +116,8 @@ class Repository:
         return unpack_checkpoint(row.checkpoint_blob) if row.checkpoint_blob is not None else row.checkpoint
     def save_snapshot(self,snapshot,checkpoint=None):
         current=clean(snapshot); now=now_ms()
-        packed=pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None
+        packed=(checkpoint.blob if isinstance(checkpoint,PackedCheckpoint)
+                else pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None)
         current.setdefault('exchange','BYBIT'); current.setdefault('event_time',now); current.setdefault('received_at',now)
         current.setdefault('setup_generation_id',''); current.setdefault('bar_start',current['event_time']); current.setdefault('confirmed',False)
         if 'parameter_set_id' not in current:current['parameter_set_id']=self.parameters()['id']

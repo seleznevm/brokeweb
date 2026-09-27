@@ -69,7 +69,14 @@ class PineEngine:
             self.chart_bars=self.chart_bars[-self.runtime.history_limit:]
         self.snapshot=snapshot
         return snapshot
-    def export_state(self):return {'version':ENGINE_VERSION,'pine_source_hash':PINE_HASH,'parameter_hash':parameter_hash(self.parameters),'currency_rates':self.currency_rates.records,'first_bar_start':self.first_bar_start,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'chart_bars':self.chart_bars,'snapshot':self.snapshot}
+    def export_state(self):
+        # Execution/provider exports already encode their histories and UDTs.
+        # Normalize the remaining native inputs and worker-added snapshot fields
+        # here so storage does not need a second walk over the large histories.
+        return {'version':ENGINE_VERSION,'pine_source_hash':PINE_HASH,'parameter_hash':parameter_hash(self.parameters),
+                'currency_rates':encode(self.currency_rates.records),'first_bar_start':self.first_bar_start,
+                'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),
+                'chart_bars':encode(self.chart_bars),'snapshot':encode(self.snapshot)}
     def restore_state(self,payload):
         if payload['pine_source_hash']!=PINE_HASH or payload['version']!=ENGINE_VERSION or payload['parameter_hash']!=parameter_hash(self.parameters):raise ValueError('Checkpoint source/engine/parameter version mismatch; explicit replay required')
         if payload.get('currency_rates',{})!=self.currency_rates.records:raise ValueError('Checkpoint currency inputs mismatch; explicit replay required')

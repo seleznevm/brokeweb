@@ -53,14 +53,16 @@ def test_checkpoint_export_runs_off_event_loop_and_finishes_before_save():
         worker=worker_shell();events=[];loop_thread=threading.get_ident()
         worker.context_last=0;worker.parameter_id='params';worker.native_turnover24h={}
         worker.btc_stream_ready=lambda:True
-        worker.calculations=0;worker.latencies=[];worker.checkpoint_latencies=[];worker.db_latencies=[]
+        worker.calculations=0;worker.latencies=[];worker.checkpoint_latencies=[];worker.checkpoint_pack_latencies=[];worker.db_latencies=[]
         worker.redis=SimpleNamespace(publish=AsyncMock())
         def update(*args):return {'calculation_ms':1,'data_health':'HEALTHY'}
         def export():
             assert threading.get_ident()!=loop_thread
             events.append('export');return {'varip':{'samples':17}}
         def save(snapshot,state):
-            assert events==['export'] and state=={'varip':{'samples':17}}
+            from backend.models.checkpoints import PackedCheckpoint,unpack_checkpoint
+            assert events==['export'] and isinstance(state,PackedCheckpoint)
+            assert unpack_checkpoint(state.blob)=={'varip':{'samples':17}}
             events.append('save')
         worker.repo.save_snapshot=save
         engine=SimpleNamespace(symbol='XUSDT',timeframe='1',update=update,export_state=export)

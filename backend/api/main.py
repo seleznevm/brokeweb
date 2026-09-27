@@ -219,7 +219,7 @@ def create_app(repository:Repository|None=None):
             current=s.scalars(select(Current)).all(); services=s.scalars(select(ServiceHealth)).all()
             failed=len(s.scalars(select(Delivery.id).where(Delivery.status.in_(['failed','uncertain']))).all())
         lines=['# TYPE scalping_active_setups gauge',f'scalping_active_setups {sum(r.payload.get("action")!="WAIT SETUP" for r in current)}',f'scalping_telegram_failures {failed}']
-        names=('processed_market_messages','market_data_lag_ms','calculations','calculations_per_second','calculation_latency_ms','checkpoint_export_latency_ms','websocket_reconnects','db_write_latency_ms','stale_instruments','parity_failures')
+        names=('processed_market_messages','market_data_lag_ms','calculations','calculations_per_second','calculation_latency_ms','checkpoint_export_latency_ms','checkpoint_pack_latency_ms','websocket_reconnects','db_write_latency_ms','stale_instruments','parity_failures')
         for name in names:
             for service in services:
                 value=service.payload.get(name)

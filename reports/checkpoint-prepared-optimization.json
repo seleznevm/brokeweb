@@ -1,0 +1,79 @@
+{
+  "measured_at": "2026-09-27T01:38:19.656583+00:00",
+  "symbol": "XRPUSDT",
+  "timeframe": "30",
+  "engine_version": "1.15.2-interpreter.3",
+  "checkpoint_bytes": 1531171,
+  "lossless_status": "PASS",
+  "scope": "single saved state, no SQL writes, no market throughput measurement",
+  "mode": "prepared",
+  "median": {
+    "previous": {
+      "export_ms": 157.89519600366475,
+      "clean_pack_ms": 602.4480250052875,
+      "total_ms": 835.0562470004661
+    },
+    "prepared": {
+      "export_ms": 132.10383299883688,
+      "clean_pack_ms": 386.538444996404,
+      "total_ms": 510.698644000513
+    }
+  },
+  "speedup": 1.6351252481485485,
+  "runs": {
+    "previous": [
+      {
+        "export_ms": 157.89519600366475,
+        "clean_pack_ms": 792.8518560001976,
+        "total_ms": 950.7470520038623
+      },
+      {
+        "export_ms": 237.44179499772144,
+        "clean_pack_ms": 602.4480250052875,
+        "total_ms": 839.8898200030089
+      },
+      {
+        "export_ms": 157.07762399688363,
+        "clean_pack_ms": 677.9786230035825,
+        "total_ms": 835.0562470004661
+      },
+      {
+        "export_ms": 267.95531900279457,
+        "clean_pack_ms": 498.65408000187017,
+        "total_ms": 766.6093990046647
+      },
+      {
+        "export_ms": 138.68421799998032,
+        "clean_pack_ms": 329.09874799952377,
+        "total_ms": 467.7829659995041
+      }
+    ],
+    "prepared": [
+      {
+        "export_ms": 124.16019900410902,
+        "clean_pack_ms": 386.538444996404,
+        "total_ms": 510.698644000513
+      },
+      {
+        "export_ms": 128.17658399580978,
+        "clean_pack_ms": 359.1323159998865,
+        "total_ms": 487.30889999569627
+      },
+      {
+        "export_ms": 132.10383299883688,
+        "clean_pack_ms": 400.56720900611253,
+        "total_ms": 532.6710420049494
+      },
+      {
+        "export_ms": 141.97320899984334,
+        "clean_pack_ms": 408.16743400500854,
+        "total_ms": 550.1406430048519
+      },
+      {
+        "export_ms": 155.4205569991609,
+        "clean_pack_ms": 294.17223400378134,
+        "total_ms": 449.59279100294225
+      }
+    ]
+  }
+}

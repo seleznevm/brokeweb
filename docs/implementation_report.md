@@ -4,7 +4,15 @@
 
 Исходный Pine сохранён без изменений, SHA-256: `782ff6575c9e6e997dea386d429264ea277de22f170e29c0886c62a63c76881e`. Engine version: `1.15.2-interpreter.3`. Новый CSV `30_22f96` с подтверждёнными defaults: **45/45 метрик PASS, 10 117 закрытых свечей**, без пропусков. FSM/ACTION, пути, gates, уровни, SL/T1 совпали точно; для численных метрик применены прежние допуски. Общий статус UNVERIFIED: сигнальные колонки отсутствуют. FX взят из отдельного диагностического request; для live пока остаётся исходный fallback. [Текущий отчёт](../reports/context-parity.json).
 
-Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **393 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+Ниже сохранены более ранние эксплуатационные проверки; их дата и ограниченный universe не описывают текущую нагрузку. Последний локальный Python suite: **396 passed**. Frontend: **22 tests**, lint, typecheck и production build. Прежние сравнения семи обычных CSV и первого полного ETHFI CSV сохранены отдельно. Формулы исполняются из AST исходника; совпадение одного исторического набора не означает полной совместимости с Pine.
+
+## Продолжение 2026-09-27: подготовка checkpoint перед SQL
+
+Устранён повторный полный обход уже нормализованного состояния при сохранении engine checkpoint. Engine нормализует оставшиеся native поля при экспорте, worker под блокировкой символа готовит immutable BWC1 bytes, Repository записывает их в прежней транзакции snapshot/checkpoint. Обычные dictionary checkpoints по-прежнему проходят `clean`. Каждый realtime execution сохраняется, reader/формат/Pine source/engine version не менялись.
+
+Read-only benchmark на реальном XRPUSDT TF30 checkpoint **1 531 171 bytes**, пять пар с чередованием порядка: медиана подготовки **835,06 → 510,70 ms (1,64×)**. Сжатые байты совпали во всех парах; restore/export также совпал. Замер выполнен при работающем стенде, результаты отдельных повторов варьируются; SQL и full-universe throughput он не измеряет. [Отчёт](../reports/checkpoint-prepared-optimization.json).
+
+Добавлена `checkpoint_pack_latency_ms` в heartbeat/Prometheus. Export измеряется отдельно; DB latency теперь исключает упаковку engine checkpoint. Падение одного DB-показателя не трактуется как ускорение SQL. Проверки: **396 backend tests**, включая canonical/native-field normalization, прежние dictionary checkpoints, точные bytes, rollback целой транзакции, сохранение checkpoint при записи без нового состояния и восстановление. `compileall` прошёл. Full-universe capacity остаётся **UNVERIFIED**.
 
 ## Продолжение 2026-09-27: индекс контекстов и эксплуатационная проверка
 

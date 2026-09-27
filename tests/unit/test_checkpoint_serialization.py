@@ -29,3 +29,28 @@ def test_storage_clean_preserves_dataclass_and_scalar_subclass_semantics():
     value=State((float('nan'),FloatSubclass('inf'),FloatSubclass(.25),False,None,{'v':-0.0}))
     expected={'values':[None,None,.25,False,None,{'v':-0.0}]}
     assert pack_checkpoint(clean(value))==pack_checkpoint(expected)
+
+
+def test_engine_export_is_canonical_and_detached_for_native_fields():
+    from backend.engine.runtime import PineEngine
+    from backend.models.checkpoints import PackedCheckpoint
+    engine=PineEngine('TESTUSDT','30')
+    engine.chart_bars=[{'start':0,'close':1.2345678901234567,'turnover':float('nan')}]
+    engine.snapshot={'native_turnover':float('inf'),'nested':{True:(-0.0,2**70,'Зона')}}
+    state=engine.export_state()
+    blob=PackedCheckpoint.from_state(state).blob
+    assert blob==pack_checkpoint(clean(state))
+    engine.chart_bars[0]['close']=99
+    engine.snapshot['nested'].clear()
+    restored=unpack_checkpoint(blob)
+    assert restored['snapshot']=={'native_turnover':None,'nested':{'True':[-0.0,2**70,'Зона']}}
+    assert state['chart_bars'][0]['close']==1.2345678901234567
+    assert restored['chart_bars'][0]['turnover'] is None
+
+
+def test_prepared_checkpoint_rejects_noncanonical_nonfinite_input():
+    import pytest
+    from backend.models.checkpoints import PackedCheckpoint
+    with pytest.raises(ValueError):PackedCheckpoint.from_state({'invalid':float('nan')})
+    for invalid in (b'unknown',bytearray(b'BWC1')):
+        with pytest.raises(ValueError,match='immutable BWC1'):PackedCheckpoint(invalid)
