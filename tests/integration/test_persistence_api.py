@@ -291,11 +291,11 @@ def test_display_timezone_defaults_persists_and_preserves_other_settings(repo,cl
     from backend.models.schema import ServiceHealth
     with repo.session.begin() as session:
         session.add(ServiceHealth(name='settings',updated_at=now_ms(),payload={'snapshot_interval_sec':9}))
-    assert client.get('/api/settings').json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':420}
+    assert client.get('/api/settings').json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000}
     saved=client.put('/api/settings',json={'timezone_offset_minutes':345})
     assert saved.status_code==200
-    assert saved.json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':345}
-    assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()=={'snapshot_interval_sec':5,'timezone_offset_minutes':345}
+    assert saved.json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000}
+    assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()=={'snapshot_interval_sec':5,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000}
     assert Repository(str(repo.engine.url)).settings()['timezone_offset_minutes']==345
     for invalid in (-721,841,421,True,'420',None):
         assert client.put('/api/settings',json={'timezone_offset_minutes':invalid}).status_code==422
@@ -307,3 +307,20 @@ def test_display_timezone_defaults_persists_and_preserves_other_settings(repo,cl
     assert client.put('/api/settings',json={'timezone_offset_minutes':-720}).status_code==200
     assert repo.parameters()['id']==before
     assert client.get('/api/setups/XYZUSDT/15').json()['event_time']==original['event_time']
+
+
+def test_universe_turnover_setting_and_exclusion_preserve_checkpoint(repo,client):
+    assert client.get('/api/settings').json()['universe_min_turnover24h_usdt']==10_000_000
+    for value in (-1,True,'10000000',None):
+        assert client.put('/api/settings',json={'universe_min_turnover24h_usdt':value}).status_code==422
+    assert client.put('/api/settings',json={'universe_min_turnover24h_usdt':25_000_000}).status_code==200
+    assert repo.settings()['universe_min_turnover24h_usdt']==25_000_000
+    repo.save_snapshot(snapshot(repo),{'state':[1,2,3]})
+    repo.exclude_from_universe(['XYZUSDT'])
+    with repo.session() as s:
+        row=s.get(Current,('BYBIT','XYZUSDT','15'))
+        assert row.payload['universe_excluded'] and row.payload['action']=='WAIT SETUP'
+        assert row.payload['data_health']=='STALE' and row.payload['signals']==[]
+        assert repo.read_checkpoint(row)=={'state':[1,2,3]}
+    assert client.get('/api/setups').json()['total']==0
+    assert client.put('/api/settings',json={'universe_min_turnover24h_usdt':0}).status_code==200

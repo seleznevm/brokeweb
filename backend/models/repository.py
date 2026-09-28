@@ -178,7 +178,7 @@ class Repository:
         if session is None:
             with self.session() as s: return self.settings(s)
         row=session.get(ServiceHealth,'settings')
-        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,**(row.payload if row else {})}
+        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,**(row.payload if row else {})}
     def set_settings(self,value):
         with self.session.begin() as s:
             row=s.get(ServiceHealth,'settings',with_for_update=True)
@@ -188,5 +188,13 @@ class Repository:
             else:
                 s.add(ServiceHealth(name='settings',updated_at=now_ms(),payload=merged))
         return merged
+    def exclude_from_universe(self,symbols):
+        # Preserve history/checkpoints, but never expose a stopped calculation
+        # as an actionable current setup. No alert/outbox event is generated.
+        if not symbols:return
+        with self.session.begin() as session:
+            for row in session.scalars(select(Current).where(Current.exchange=='BYBIT',Current.symbol.in_(symbols)).with_for_update()):
+                row.payload={**row.payload,'universe_excluded':True,'data_health':'STALE','action':'WAIT SETUP','signals':[]}
+
     def heartbeat(self,name,payload):
         with self.session.begin() as s: s.merge(ServiceHealth(name=name,updated_at=now_ms(),payload=clean(payload)))

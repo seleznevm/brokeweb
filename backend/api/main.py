@@ -15,6 +15,7 @@ from backend.alerts.rules import AlertRuleInput,matches,validate_condition
 
 class ParametersInput(BaseModel): values:dict
 class SettingsInput(BaseModel):
+    universe_min_turnover24h_usdt:float=Field(default=10000000,ge=0,le=1e12,allow_inf_nan=False,strict=True)
     snapshot_interval_sec:float=Field(default=15,ge=1,le=86400)
     timezone_offset_minutes:int=Field(default=420,ge=-720,le=840,multiple_of=15,strict=True)
 class RuleTestInput(BaseModel): conditions:dict

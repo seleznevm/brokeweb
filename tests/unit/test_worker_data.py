@@ -325,3 +325,37 @@ def test_bootstrap_validates_checkpoint_before_shortening_rest(monkeypatch,rejec
         assert [call.args[1]['start'] for call in worker.persist.await_args_list]==expected
         assert 'XUSDT' in worker.ready and not worker.errors
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('minimum,expected', [(10_000_000,['HIGH','EDGE']),(0,['HIGH','EDGE','LOW','UNKNOWN'])])
+def test_discovery_filters_before_bootstrap_and_clears_excluded_state(monkeypatch,minimum,expected):
+    from backend.marketdata.models import Instrument
+    async def scenario():
+        worker=worker_shell();worker.shard_index=0;worker.shard_count=1
+        items=[Instrument('BYBIT',name,.01,name,'USDT','Trading','LinearPerpetual',0) for name in ('LOW','HIGH','EDGE','UNKNOWN')]
+        worker.bybit=SimpleNamespace(instruments=AsyncMock(return_value=items),tickers=AsyncMock(return_value=[
+            {'symbol':'HIGH','turnover24h':'25000000'}, {'symbol':'EDGE','turnover24h':'10000000'},
+            {'symbol':'LOW','turnover24h':'9999999'}, {'symbol':'UNKNOWN','turnover24h':'NaN'}]))
+        excluded=[]
+        worker.repo.settings=lambda:{'universe_min_turnover24h_usdt':minimum}
+        worker.repo.save_instruments=lambda *args:None
+        worker.repo.exclude_from_universe=lambda names:excluded.extend(names)
+        worker.ready={'LOW'};worker.engines={('LOW','1'):SimpleNamespace(snapshot={})}
+        worker.contexts={'BYBIT:LOW.P|1':[{}]};worker.context_views={'BYBIT:LOW.P|1':object()}
+        worker.errors={'LOW':'old failure'}
+        worker.subscriptions=AsyncMock();worker.bootstrap=AsyncMock()
+        monkeypatch.setenv('MAX_SYMBOLS','0')
+        await worker.discover()
+        assert list(worker.instruments)==expected
+        assert worker.selected_count==len(expected) and worker.universe_count==4
+        assert [c.args[0].symbol for c in worker.bootstrap.await_args_list]==[s for s in expected if s!='LOW']
+        if minimum:
+            assert set(excluded)=={'LOW','UNKNOWN'}
+            assert not worker.engines and not worker.contexts and not worker.context_views
+            assert not worker.errors and not worker.ready
+    asyncio.run(scenario())
+
+
+def test_native_turnover_rejects_unknown_nonfinite_negative_values():
+    from backend.worker import turnover_values
+    assert turnover_values([{'symbol':str(i),'turnover24h':v} for i,v in enumerate([None,'','bad','NaN','inf','-1','0','12.5'])])=={'6':0.,'7':12.5}

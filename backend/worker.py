@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import math
 import os
 import time
 import uuid
@@ -84,6 +85,15 @@ def restored_context_anchor(engines, now, history_span):
                 return None
             starts.append(start)
     return min(starts) if starts else None
+
+def turnover_values(tickers):
+    values={}
+    for row in tickers:
+        try:value=float(row.get('turnover24h'))
+        except (TypeError,ValueError):continue
+        if math.isfinite(value) and value>=0:values[row['symbol']]=value
+    return values
+
 
 class Worker:
     def __init__(self):
@@ -178,6 +188,7 @@ class Worker:
             elapsed=max(time.monotonic()-self.previous_heartbeat,.001)
             payload.update(btc_stream=asdict(self.btc_ws.health),btc_recovering=self.btc_recovering,btc_timeframe_events=self.btc_last_events,calculations_per_second=(self.calculations-self.previous_calculations)/elapsed,calculation_latency_ms=payload['calculation_ms_p95'],db_write_latency_ms=sum(self.db_latencies)/len(self.db_latencies) if self.db_latencies else None,last_successful_rest_backfill=self.backfilled,streams=[asdict(state) for state in self.ws.health.values()])
             payload.update(self.runtime_health())
+            payload.update(universe_min_turnover24h_usdt=getattr(self,'universe_min_turnover',None),liquidity_excluded=getattr(self,'liquidity_excluded_count',0))
             payload['checkpoint_export_latency_ms']=sum(self.checkpoint_latencies)/len(self.checkpoint_latencies) if self.checkpoint_latencies else None
             payload['checkpoint_pack_latency_ms']=sum(self.checkpoint_pack_latencies)/len(self.checkpoint_pack_latencies) if self.checkpoint_pack_latencies else None
             self.status=payload['status']
@@ -189,6 +200,7 @@ class Worker:
         snapshot=await self.blocking(engine.update,bar,context_view,realtime)
         snapshot['parameter_set_id']=self.parameter_id
         snapshot['native_turnover']=bar.get('turnover')
+        snapshot['universe_excluded']=False
         snapshot['native_turnover24h']=self.native_turnover24h.get(engine.symbol)
         age=max(0,now_ms()-bar.get('exchange_time',bar['received_at']))
         if realtime and age>90000:snapshot['data_health']='STALE'
@@ -267,6 +279,7 @@ class Worker:
     async def bootstrap(self,instrument,recover=False):
         symbol=instrument.symbol
         async with self.locks[symbol]:
+            if symbol not in self.instruments:return
             self.recovering.add(symbol)
             succeeded=False
             try:
@@ -447,6 +460,7 @@ class Worker:
         symbol=bar['symbol'];key=(symbol,bar['timeframe']);engine=self.engines.get(key)
         if engine is None or symbol in self.recovering:return
         async with self.locks[symbol]:
+            if self.engines.get(key) is not engine:return
             if engine.runtime.last_start is not None and bar['start']<=engine.runtime.last_start:return
             if engine.runtime.last_start is not None and bar['start']>engine.runtime.last_start+tf_seconds(bar['timeframe'])*1000:
                 self.recovering.add(symbol);self.launch(self.bootstrap(self.instruments[symbol],True));return
@@ -470,23 +484,35 @@ class Worker:
         await self.ws.update_subscriptions(sorted(self.ready),sorted(own|set(self.timeframes),key=tf_seconds),self.full)
     async def discover(self):
         instruments=await self.bybit.instruments();self.universe_count=len(instruments)
-        tickers=await self.bybit.tickers();self.native_turnover24h={row['symbol']:float(row['turnover24h']) for row in tickers if row.get('turnover24h')}
+        tickers=await self.bybit.tickers();self.native_turnover24h=turnover_values(tickers)
+        settings=await self.blocking(self.repo.settings)
+        minimum=settings['universe_min_turnover24h_usdt']
+        self.universe_min_turnover=minimum
         metadata=[{**item.to_dict(),'native_turnover24h':self.native_turnover24h.get(item.symbol)} for item in instruments]
         await self.blocking(self.repo.save_instruments,metadata,True)
-        instruments=sorted(instruments,key=lambda x:(x.launch_time,x.symbol))
+        excluded=[i.symbol for i in instruments if minimum>0 and self.native_turnover24h.get(i.symbol,-1)<minimum]
+        self.liquidity_excluded_count=len(excluded)
+        excluded_set=set(excluded)
+        instruments=[i for i in instruments if i.symbol not in excluded_set]
+        instruments=sorted(instruments,key=lambda x:(-self.native_turnover24h.get(x.symbol,0),x.symbol))
         maximum=int(os.getenv('MAX_SYMBOLS','0'))
         if maximum:instruments=instruments[:maximum]
         selected=[i for i in instruments if int(hashlib.sha256(i.symbol.encode()).hexdigest(),16)%self.shard_count==self.shard_index]
         self.instruments={i.symbol:i for i in selected};self.selected_count=len(selected)
-        removed=self.ready-set(self.instruments)
+        removed=(self.ready|{s for s,t in self.engines})-set(self.instruments)
         for symbol in removed:
-            self.ready.remove(symbol)
-            for key in list(self.engines):
-                if key[0]==symbol:
-                    engine=self.engines.pop(key)
-                    if engine.snapshot:
-                        state=dict(engine.snapshot);state.update(data_health='STALE',action='WAIT SETUP',signals=[],delisted=True)
-                        await self.blocking(self.repo.save_snapshot,state)
+            async with self.locks[symbol]:
+                self.ready.discard(symbol);self.recovering.discard(symbol)
+                self.errors.pop(symbol,None);self.aggregators.pop(symbol,None)
+                self.full.discard(symbol);self.full_since.pop(symbol,None);self.last_events.pop(symbol,None)
+                for mapping in (self.engines,self.full_charts,self.replay_origins,self.replay_skip_until):
+                    for key in list(mapping):
+                        if key[0]==symbol:del mapping[key]
+                for key in list(self.contexts):
+                    if key.startswith(f'BYBIT:{symbol}.P|'):
+                        del self.contexts[key];self.context_views.pop(key,None)
+        await self.subscriptions()
+        await self.blocking(self.repo.exclude_from_universe,sorted(set(excluded)|removed))
         for instrument in selected:
             if instrument.symbol not in self.ready:
                 await self.bootstrap(instrument)
