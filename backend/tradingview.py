@@ -8,7 +8,7 @@ import secrets
 import os
 from collections import Counter
 from fastapi import APIRouter, HTTPException, Query, Request
-from sqlalchemy import delete, select, func
+from sqlalchemy import BigInteger, cast, delete, select, func
 from backend.models.repository import now_ms
 from backend.models.schema import TradingViewAlert, Signal
 
@@ -92,7 +92,7 @@ def compare(repo,limit):
                     query=query.where(Signal.event_time.between(row.received_at-90000,row.received_at+90000))
                 else:
                     # SQL JSON extraction works on PostgreSQL and SQLite; indexed market/name bounds keep this narrow.
-                    query=query.where(Signal.payload['bar_start'].as_integer()==row.bar_start)
+                    query=query.where(cast(Signal.payload['bar_start'].as_string(),BigInteger)==row.bar_start)
                 candidates=session.scalars(query.order_by(Signal.event_time).limit(100)).all()
                 candidates=[s for s in candidates if s.payload.get('exchange')==row.exchange and s.payload.get('direction')==row.payload.get('direction')]
                 item['candidates']=[{'id':s.id,'event_time':s.event_time,'bar_start':s.payload.get('bar_start'),'parameter_set_id':s.parameter_set_id,
