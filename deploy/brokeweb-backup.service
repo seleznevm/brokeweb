@@ -1,0 +1,10 @@
+[Unit]
+Description=Brokeweb PostgreSQL backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /docker/brokeweb/deploy/backup.sh
+Nice=19
+IOSchedulingClass=idle

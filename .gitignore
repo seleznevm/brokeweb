@@ -10,3 +10,6 @@ artifacts/local/
 data/archives/
 
 *.tsbuildinfo
+
+.env.vps
+secrets/

@@ -8,3 +8,6 @@ frontend/dist
 *.db
 artifacts/local
 data/archives
+
+.env.vps
+secrets/
