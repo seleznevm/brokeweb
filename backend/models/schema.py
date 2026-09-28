@@ -121,6 +121,27 @@ class TradingViewAlert(Base):
     payload: Mapped[dict] = mapped_column(J)
     __table_args__=(Index('ix_tv_market_bar','exchange','symbol','timeframe','bar_start'),)
 
+class WTCurrent(Base):
+    __tablename__='wt_current'
+    exchange: Mapped[str] = mapped_column(String(30),primary_key=True)
+    symbol: Mapped[str] = mapped_column(String(60),primary_key=True)
+    timeframe: Mapped[str] = mapped_column(String(16),primary_key=True)
+    signal_source: Mapped[str] = mapped_column(String(20),primary_key=True)
+    updated_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)
+
+class WTEvent(Base):
+    __tablename__='wt_events'
+    id: Mapped[int] = mapped_column(Integer,primary_key=True)
+    dedupe_key: Mapped[str] = mapped_column(String(64),unique=True)
+    received_at: Mapped[int] = mapped_column(BigInteger,index=True)
+    exchange: Mapped[str] = mapped_column(String(30))
+    symbol: Mapped[str] = mapped_column(String(60))
+    timeframe: Mapped[str] = mapped_column(String(16))
+    signal_source: Mapped[str] = mapped_column(String(20))
+    payload: Mapped[dict] = mapped_column(J)
+    __table_args__=(Index('ix_wt_event_market','exchange','symbol','timeframe','received_at'),)
+
 class Rule(Base):
     __tablename__='alert_rules'
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

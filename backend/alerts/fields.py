@@ -4,6 +4,7 @@ from functools import lru_cache
 from backend.engine.parameters import input_schema
 from backend.engine.runtime import SIGNALS
 from backend.engine.syntax import load_program
+from backend.engine.wt import COMBINATIONS
 
 SCALAR_OPS = ['==', '!=', 'IN', 'NOT IN', 'changed', 'changed_to']
 NUMBER_OPS = ['==', '!=', '>', '>=', '<', '<=', 'IN', 'NOT IN', 'BETWEEN', 'changed', 'changed_to', 'crosses_above', 'crosses_below']
@@ -72,10 +73,12 @@ def field_catalog():
         canonical.append(field(key, kind, options, description))
     for name in ('symbol', 'setup_generation_id', 'parameter_set_id', 'engine_version'):
         add(name, 'text')
-    add('exchange', 'enum', ['BYBIT'])
+    add('strategy','enum',['BROKE_SETUPS','WT_SETUPS'])
+    add('signal_source','enum',['engine','tradingview'])
+    add('exchange', 'enum', ['BYBIT','BINANCE'])
     add('timeframe', 'enum', ['1','3','5','15','30','60','120','240','360','720','D','W','M'], 'Строка: 30 = 30 минут, 60 = 1 час, D = день. Расчёт TF должен быть включён в ACTIVE_TIMEFRAMES сервера.')
     add('direction', 'enum', ['LONG', 'SHORT', 'NONE'])
-    add('action', 'enum', finite_strings(declarations['actionText'].expr))
+    add('action', 'enum', sorted(set(finite_strings(declarations['actionText'].expr)+['WAIT SIGNAL','ENTER NOW','WAIT RETEST','TOO LATE','SKIP','SIGNAL'])))
     add('setup_state', 'enum', finite_strings(declarations['setupState'].expr))
     add('family', 'enum', finite_strings(declarations['setupFamily'].expr))
     add('fsm', 'integer', list(range(9)), 'Код: 0 NONE, 1 FORMING, 2 WATCH, 3 APPROACH, 4 ARMED, 5 TRIGGERED, 6 RETEST, 7 READY, 8 ACTIVE. Для текста используйте setup_state.')
@@ -87,8 +90,13 @@ def field_catalog():
     add('data_health', 'enum', ['HEALTHY','RECOVERING','DEGRADED','STALE','FULL_REALTIME','KLINE_REALTIME'])
     add('data_quality', 'enum', ['FULL_REALTIME','KLINE_REALTIME'])
     add('parity_status', 'enum', ['UNVERIFIED'])
-    for name in ('event', 'last_signal'): add(name, 'enum', list(SIGNALS.values()))
-    add('signals', 'list', list(SIGNALS.values()), 'Список событий текущего snapshot. contains = одно; contains_any/all = несколько.')
+    for name in ('event', 'last_signal'): add(name, 'enum', [*SIGNALS.values(),*COMBINATIONS,'READY TO ENTER'])
+    add('signals', 'list', [*SIGNALS.values(),*COMBINATIONS,'READY TO ENTER'], 'События текущего snapshot. WT T1+T3 означает одновременные T1 и T3 одного направления; возможны дополнительные T2/T4.')
+    add('setup_combination','enum',COMBINATIONS,'Точная комбинация последнего плана WT. Для события используйте signals.')
+    add('setups','list',['T1','T2','T3','T4'],'Типы последнего плана WT.')
+    for name in ('entry_quality','score','score_long','score_short','entry','managed_sl','tp1','tp2','tp3','tp4','liquidity_target','position_usdt','risk_usdt','rr_liquidity','move_r','volume_ratio','adx','signal_age'):
+        add(name,'number',description='Атрибут WT_SETUPS.')
+    for name in ('broke_enabled','broke_valid','broke_agree','broke_quality_pass','compression','be_active'):add(name,'boolean')
     blockers = set()
     def scan(nodes):
         for st in nodes:

@@ -39,7 +39,7 @@ def bar_dict(b):
     out['received_at']=out.get('received_at') or now_ms()
     return out
 
-def context_requirements(parameters,timeframes):
+def context_requirements(parameters,timeframes,wt_parameters=None):
     own={'60',parameters['htfBaseTf'],*(parameters[f'mtfTrendTf{i}'] for i in range(1,5))};btc=set(timeframes)
     for tf in timeframes:
         sec=tf_seconds(tf)
@@ -47,6 +47,9 @@ def context_requirements(parameters,timeframes):
         micro=('30S' if sec<=60 else '1' if sec<=300 else '5' if sec<=3600 else '30' if sec<=14400 else '60') if auto else parameters['manualMicroTf']
         shock=('1' if sec<=300 else '5' if sec<=900 else '15' if sec<=3600 else '60' if sec<=14400 else '240') if auto else parameters['manualBtcShockTf']
         own.add(micro);btc.add(shock)
+    if wt_parameters is not None:
+        from backend.engine.wt import context_requirements as wt_context_requirements
+        wt_own,wt_btc=wt_context_requirements(wt_parameters,timeframes);own.update(wt_own);btc.update(wt_btc)
     return own,btc
 
 
@@ -110,6 +113,7 @@ class Worker:
         self.checkpoint_latencies=[]
         self.checkpoint_pack_latencies=[]
         self.context_views={}
+        self.wt_parameters=None
         self.stopping=False;self.background=set()
         self.shard_index=int(os.getenv('ENGINE_SHARD_INDEX','0'));self.shard_count=int(os.getenv('ENGINE_SHARD_COUNT','1'))
         if not 0<=self.shard_index<self.shard_count:raise ValueError('Invalid engine shard')
@@ -213,6 +217,22 @@ class Worker:
         snapshot['market_data_lag_ms']=age
         # Historical replay persists results for research but must never enqueue alerts.
         snapshot['replay']=not realtime
+        if getattr(self,'wt_parameters',None) is not None:
+            def update_wt():
+                from backend.engine.wt import WTEngine
+                if not hasattr(engine,'wt'):
+                    engine.wt=WTEngine(engine.symbol,engine.timeframe,engine.tick_size,self.wt_parameters)
+                    state=getattr(engine,'wt_checkpoint',None)
+                    if state:
+                        try:engine.wt.restore_state(state)
+                        except ValueError:pass
+                    if not engine.wt.runtime.count:
+                        for past in engine.chart_bars:
+                            if past['start']<bar['start']:engine.wt.update(past,context_view,False)
+                value=engine.wt.update(bar,context_view,realtime,snapshot)
+                if snapshot['data_health']!='HEALTHY':value['data_health']=snapshot['data_health']
+                return value
+            snapshot['wt']=await self.blocking(update_wt)
         self.calculations+=1;self.latencies.append(snapshot['calculation_ms']);self.latencies=self.latencies[-1000:]
         # Intrabar state (especially varip) is checkpointed as well as closed bars.
         if not realtime and bar['start'] <= self.replay_skip_until.get((engine.symbol,engine.timeframe),-1):return snapshot
@@ -222,6 +242,8 @@ class Worker:
             # The symbol lock still covers export + save. Do not block feed and
             # lease heartbeats on this CPU-heavy traversal; cancellation drains it.
             state=await self.blocking(engine.export_state)
+            state.get('snapshot',{}).pop('wt',None)
+            if hasattr(engine,'wt'):state['wt']=await self.blocking(engine.wt.export_state)
             self.checkpoint_latencies.append((time.perf_counter()-export_started)*1000)
             self.checkpoint_latencies=self.checkpoint_latencies[-1000:]
             pack_started=time.perf_counter()
@@ -231,10 +253,10 @@ class Worker:
         write_started=time.perf_counter()
         await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
         self.db_latencies.append((time.perf_counter()-write_started)*1000);self.db_latencies=self.db_latencies[-1000:]
-        if realtime:await self.redis.publish('setups',json.dumps({'type':'snapshot','data':snapshot},ensure_ascii=False))
+        if realtime:await self.redis.publish('setups',json.dumps({'type':'snapshot','data':{k:v for k,v in snapshot.items() if k!='wt'}},ensure_ascii=False))
         return snapshot
     def btc_stream_ready(self):
-        _,tfs=context_requirements(self.parameters,self.timeframes)
+        _,tfs=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))
         return (self.btc_ws.health.connected and not self.btc_recovering
                 and all(now_ms()-self.btc_last_events.get(tf,0)<90000 for tf in tfs))
 
@@ -257,7 +279,7 @@ class Worker:
 
     async def refresh_btc(self,initial=False):
         async with self.btc_refresh_lock:
-            _,tfs=context_requirements(self.parameters,self.timeframes)
+            _,tfs=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))
             for tf in sorted(tfs,key=tf_seconds):
                 key=f'BINANCE:BTCUSDT.P|{tf}';rows=self.contexts.get(key,[])
                 last_closed=next((b['end'] for b in reversed(rows) if b['confirmed']),None)
@@ -296,12 +318,19 @@ class Worker:
                             return (self.repo.read_checkpoint(row),row.payload) if row else (None,None)
                     checkpoint,saved=await self.blocking(saved_state)
                     saved_states[tf]=(checkpoint,saved)
+                    if checkpoint and getattr(self,'wt_parameters',None):
+                        from backend.engine.wt import WTEngine
+                        probe=WTEngine(symbol,tf,instrument.tick_size,self.wt_parameters)
+                        try:probe.restore_state(checkpoint.get('wt',{}))
+                        except ValueError:
+                            if self.wt_parameters.get('useBrokeCorrelation') and isinstance(checkpoint.get('first_bar_start'),int):
+                                self.replay_origins[key]=checkpoint['first_bar_start']
                     if checkpoint and checkpoint.get('parameter_hash')==parameter_hash(self.parameters) and (checkpoint.get('version')!=ENGINE_VERSION or checkpoint.get('pine_source_hash')!=PINE_HASH):
                         origin=checkpoint.get('first_bar_start')
                         if isinstance(origin,int):
                             self.replay_origins[key]=origin
                             log.info('checkpoint_semantics_upgrade_replay',extra={'symbol':symbol,'timeframe':tf,'history_start':origin,'previous_version':checkpoint.get('version'),'engine_version':ENGINE_VERSION})
-                own,_=context_requirements(self.parameters,self.timeframes)
+                own,_=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))
                 origins=[origin for (s,t),origin in self.replay_origins.items() if s==symbol]
                 rebuild_start=min(origins) if origins else None
                 if rebuild_start is not None and now_ms()-rebuild_start>self.history_span_ms:
@@ -319,6 +348,7 @@ class Worker:
                         if checkpoint and key not in self.replay_origins:
                             try:
                                 engine.restore_state(checkpoint)
+                                engine.wt_checkpoint=checkpoint.get('wt')
                                 log.info('checkpoint_restored',extra={'symbol':symbol,'timeframe':tf,'processed':engine.runtime.count,'bar_timestamp':engine.runtime.last_start})
                             except ValueError as exc:
                                 log.warning('checkpoint_requires_replay',extra={'symbol':symbol,'timeframe':tf,'error':str(exc)})
@@ -326,6 +356,7 @@ class Worker:
                         self.engines[key]=engine
                 resume_start=None if rebuild_start is not None or recover else restored_context_anchor(
                     [self.engines[symbol,tf] for tf in self.timeframes],now_ms(),self.history_span_ms)
+                if getattr(self,'wt_parameters',None) is not None and any(not getattr(self.engines[symbol,tf],'wt_checkpoint',None) for tf in self.timeframes):resume_start=None
                 if resume_start is not None:
                     log.info('checkpoint_incremental_backfill',extra={'symbol':symbol,'history_start':resume_start})
                 for tf in sorted(own|set(self.timeframes),key=tf_seconds):
@@ -470,7 +501,7 @@ class Worker:
             except Exception as exc:
                 self.errors[symbol]=str(exc);self.recovering.add(symbol);log.exception('calculation_failed',extra={'symbol':symbol,'timeframe':bar['timeframe']})
     async def subscriptions(self):
-        own,_=context_requirements(self.parameters,self.timeframes)
+        own,_=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))
         pinned={s.strip() for s in os.getenv('PINNED_SYMBOLS','').split(',') if s.strip()}
         active={s for (s,t),e in self.engines.items() if e.snapshot and e.snapshot.get('direction')!='NONE'}
         maximum=int(os.getenv('MAX_FULL_REALTIME_SYMBOLS','20'))
@@ -525,7 +556,9 @@ class Worker:
             try:
                 await self.refresh_btc()
                 current=await self.blocking(self.repo.parameters)
-                if current['id']!=self.parameter_id:
+                from backend.wt import config as wt_config
+                wt_changed=(await self.blocking(wt_config,self.repo))['values']!=self.wt_parameters
+                if current['id']!=self.parameter_id or wt_changed:
                     log.info('parameter_version_changed_replay_required')
                     # Restart the worker to apply the new version through the same
                     # deterministic bootstrap path. Old parameter snapshots remain.
@@ -572,6 +605,8 @@ class Worker:
         try:
             await self.blocking(self.repo.initialize)
             params=await self.blocking(self.repo.parameters);self.parameters=params['values'];self.parameter_id=params['id']
+            from backend.wt import config as wt_config
+            self.wt_parameters=(await self.blocking(wt_config,self.repo))['values']
             self.history_span_ms=max(required_history(self.parameters,tf)*tf_seconds(tf)*1000 for tf in self.timeframes)
             self.context_limit=max(5000,int(self.history_span_ms/30000)+1000)
             beat=asyncio.create_task(self.heartbeat())
@@ -580,7 +615,7 @@ class Worker:
                     log.error('heartbeat_failed_stopping_shard');os._exit(77)
             beat.add_done_callback(heartbeat_done)
             await self.refresh_btc(True)
-            _,btc_tfs=context_requirements(self.parameters,self.timeframes)
+            _,btc_tfs=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))
             self.btc_ws.start(btc_tfs)
             maintenance=asyncio.create_task(self.maintain())
             while True:

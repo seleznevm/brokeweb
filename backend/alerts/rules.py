@@ -77,6 +77,7 @@ def matches(node:dict, current:dict, previous:dict|None=None) -> bool:
 
 class AlertRuleInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
+    strategy: Literal['BROKE_SETUPS','WT_SETUPS']='BROKE_SETUPS'
     name: str=Field(min_length=1,max_length=120)
     enabled: bool=True
     conditions: dict

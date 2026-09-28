@@ -116,6 +116,8 @@ class Repository:
         return unpack_checkpoint(row.checkpoint_blob) if row.checkpoint_blob is not None else row.checkpoint
     def save_snapshot(self,snapshot,checkpoint=None):
         current=clean(snapshot); now=now_ms()
+        wt=current.pop('wt',None)
+        current.setdefault('strategy','BROKE_SETUPS');current.setdefault('signal_source','engine')
         packed=(checkpoint.blob if isinstance(checkpoint,PackedCheckpoint)
                 else pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None)
         current.setdefault('exchange','BYBIT'); current.setdefault('event_time',now); current.setdefault('received_at',now)
@@ -144,6 +146,9 @@ class Repository:
                     s.add(Signal(dedupe_key=dedupe,symbol=key[1],timeframe=key[2],event_time=current['event_time'],name=name,parameter_set_id=current['parameter_set_id'],payload={**current,'event':name}))
                     s.add(Event(exchange=key[0],symbol=key[1],timeframe=key[2],event_time=current['event_time'],kind='signal',payload={**current,'event':name}))
             enqueue_matching(s,current,previous,now)
+            if wt:
+                from backend.wt import save_engine
+                save_engine(s,wt,now)
             self._save_research(s,current)
             if old:
                 old.payload=current; old.updated_at=now

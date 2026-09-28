@@ -8,7 +8,7 @@ from urllib.parse import quote
 import httpx
 from sqlalchemy import select
 from backend.models.repository import Repository,now_ms
-from backend.models.schema import Delivery,Rule,Current
+from backend.models.schema import Delivery,Rule,Current,WTCurrent,WTEvent
 
 log=logging.getLogger(__name__)
 DEFAULT='''{direction} {event}
@@ -32,6 +32,7 @@ def render_message(payload):
     values['blockers']=', '.join(snapshot.get('blockers',[])) or 'NONE'
     base=os.getenv('PUBLIC_BASE_URL','http://localhost:8080').rstrip('/')
     values['detail_url']=base+'/setups/'+'/'.join(quote(str(snapshot.get(k,'')),safe='') for k in ('exchange','symbol','timeframe'))
+    if snapshot.get('strategy')=='WT_SETUPS':values['detail_url']=base+'/wt-setups?symbol='+quote(snapshot.get('symbol',''),safe='')
     for key in ('avg_setup','formation','execution','geometry','context','level','approach','mae','exhaustion','btc_shock','continuation','rr','distance'):
         value=values.get(key)
         if isinstance(value,(int,float)) and not isinstance(value,bool):values[key]=f'{value:.2f}'.rstrip('0').rstrip('.')
@@ -47,10 +48,15 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         for item in abandoned: item.status='uncertain'; item.error='Worker interrupted during delivery; inspect Telegram before manual retry'
         row=s.scalar(select(Delivery).where(Delivery.status.in_(['pending','retry']),Delivery.next_attempt<=now).order_by(Delivery.id).with_for_update(skip_locked=True).limit(1))
         if row is None: return False
-        if row.rule_id!='manual-test':
+        if row.rule_id=='wt-tradingview':
+            reference=s.get(WTEvent,row.payload.get('wt_reference_id'))
+            if reference is None or os.getenv('WT_TRADINGVIEW_TELEGRAM_ENABLED','true').lower()!='true' or row.created_at<now-int(os.getenv('ALERT_MAX_AGE_SEC','120'))*1000:
+                row.status='suppressed';row.error='WT reference expired or forwarding disabled';row.updated_at=now;return True
+        elif row.rule_id!='manual-test':
             rule=s.get(Rule,row.rule_id)
             snapshot=row.payload['snapshot']; market=tuple(snapshot[k] for k in ('exchange','symbol','timeframe'))
-            current=s.get(Current,market); health=current.payload.get('data_health') if current else None
+            current=s.get(WTCurrent,(*market,snapshot.get('signal_source','engine'))) if snapshot.get('strategy')=='WT_SETUPS' else s.get(Current,market)
+            health=current.payload.get('data_health') if current else None
             if isinstance(health,dict): health=health.get('status')
             if rule is None or not rule.enabled or rule.version!=row.rule_version or health not in {'HEALTHY','FULL_REALTIME','KLINE_REALTIME'} or current.updated_at<now-90000:
                 row.status='suppressed'; row.error='Rule changed/disabled or market data no longer healthy'; row.updated_at=now; return True
