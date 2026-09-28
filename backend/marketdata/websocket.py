@@ -112,7 +112,11 @@ class BybitWebSocketManager:
                     else:
                         self.topics.pop(key, None)
                         self.health.pop(key, None)
-                elif key not in self.tasks:
+                elif key not in self.tasks or self.tasks[key].done():
+                    previous = self.tasks.get(key)
+                    if previous and not previous.cancelled():
+                        error = previous.exception()
+                        if error: log.error("bybit_receiver_task_failed", extra={"error": str(error), "shard": key})
                     self.tasks[key] = asyncio.create_task(self._run(key), name=f'bybit-ws-{key}')
         # Do not wait for cancelled receivers while holding their lock.
         for key, task in obsolete_tasks:
@@ -176,7 +180,13 @@ class BybitWebSocketManager:
                 state.reconnects += 1
                 failures += 1
                 log.warning('bybit_websocket_reconnect', extra={'error': str(exc), 'topics': len(self.topics.get(shard, set())), 'reconnects': state.reconnects})
-                await self._health_event(self.topics.get(shard, set()), state)
+                try:
+                    await self._health_event(self.topics.get(shard, set()), state)
+                except Exception as health_exc:
+                    # Persistence failures must not strand a disconnected shard.
+                    # Its health stays disconnected; the next connection must
+                    # successfully notify the consumer before reading market data.
+                    log.exception('bybit_disconnect_notification_failed', extra={'error': str(health_exc)})
             finally:
                 self.sockets.pop(shard, None)
                 if heartbeat:

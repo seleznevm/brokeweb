@@ -1,0 +1,11 @@
+{
+  "/ anonymous": 401,
+  "/ authenticated": 200,
+  "/api/settings anonymous": 401,
+  "/api/settings authenticated": 200,
+  "/metrics anonymous": 401,
+  "/metrics authenticated": 200,
+  "webhook without key": 401,
+  "websocket https://broke.smautomator.cloud": "HTTP/1.1 101 Switching Protocols",
+  "websocket https://invalid.example": "HTTP/1.1 403 Forbidden"
+}

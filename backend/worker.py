@@ -391,12 +391,14 @@ class Worker:
             symbols={t.split('.')[-1] for t in event['topics']}
             if not event['connected']:
                 self.reconnects+=1
+                # Invalidate every affected symbol before the first SQL await.
+                self.recovering.update(symbols)
                 for symbol in symbols:
                     self.recovering.add(symbol);self.full_since.pop(symbol,None)
                     for key in list(self.full_charts):
                         if key[0]==symbol:del self.full_charts[key]
                     if symbol in self.aggregators:self.aggregators[symbol].disconnected()
-                    for (s,tf),engine in self.engines.items():
+                    for (s,tf),engine in list(self.engines.items()):
                         if s==symbol and engine.snapshot:
                             state=dict(engine.snapshot);state.update(data_health='RECOVERING',signals=[])
                             await self.blocking(self.repo.save_snapshot,state)

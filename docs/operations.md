@@ -95,3 +95,26 @@ API: `GET /api/settings` возвращает `timezone_offset_minutes` (default
 Источник — native Bybit `turnover24h`, а не `volume24h` в монетах и не Pine proxy. Фильтр действует до REST backfill и создания engine, затем монеты прогреваются по убыванию оборота. Pine gates и формулы не изменяются. Pin/full-realtime не обходит этот фильтр. Изменение применяется при следующем discovery: на запуске и после завершения прогрева с интервалом `UNIVERSE_REFRESH_SEC` (по умолчанию час). Для немедленного применения сохраните настройку и перезапустите engine.
 
 Исключённые состояния получают `universe_excluded=true`, STALE, WAIT SETUP и пустые signals; checkpoints и история сохраняются. При возвращении монеты в пул штатный прогрев восстанавливает расчёт. `/api/health` показывает исходный `universe`, выбранный для shard `selected`, `liquidity_excluded` и применённый порог. Оборот — предварительный критерий ликвидности, не измерение спреда или глубины стакана.
+
+
+## Hostinger source and reconnect/authentication release — 2026-09-28
+
+Production Compose: `/docker/brokeweb/docker-compose.yml`; development checkout
+on VPS: `/docker/brokeweb-src`. Engine builds from that checkout. Local Docker
+must not be started for development. Other service builds remain unchanged.
+Persist frontend config as `/docker/brokeweb/deploy/nginx.public.conf` and mount
+`/docker/brokeweb/secrets/http.htpasswd` read-only. Credentials are held separately
+in root-only `/docker/brokeweb/secrets/access.txt`, never in Git or images.
+Panel, API and metrics require HTTP Basic over HTTPS. WebSocket also checks its
+Origin. `/healthz` is public; the exact TradingView webhook path bypasses Basic
+but still requires its application webhook key. Do not relax API-wide auth for it.
+
+Rollback: restore `/docker/brokeweb/docker-compose.yml.before-reconnect-auth`
+and the tagged engine image `brokeweb-engine:before-reconnect-auth`. Restoring the
+old frontend configuration would remove authentication; preserve the auth mounts
+when rolling back engine code. Do not delete volumes. A Hostinger Git redeploy
+must preserve the server-specific config and secrets bindings.
+
+429 backend tests passed on VPS; the two reconnect regressions failed against
+the old implementation and pass after the fix. This does not certify capacity
+or intrabar parity. Statistics design is in `docs/statistics.md`.

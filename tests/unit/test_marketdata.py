@@ -270,3 +270,28 @@ def test_websocket_simultaneous_updates_leave_exact_final_topic_assignment():
         assert len(manager.tasks)==1
         await manager.close()
     run(scenario())
+
+
+def test_disconnect_callback_failure_cannot_kill_reconnect_loop(monkeypatch):
+    monkeypatch.setattr('backend.marketdata.websocket.random.uniform',lambda *args:0)
+    async def scenario():
+        connected=asyncio.Event();attempts=[];failures=[]
+        class Socket:
+            async def send(self,payload):pass
+            async def recv(self):
+                if len(attempts)==1:raise ConnectionError('feed dropped')
+                await asyncio.Event().wait()
+        class Connection:
+            async def __aenter__(self):attempts.append(True);return Socket()
+            async def __aexit__(self,*args):return False
+        async def callback(event):
+            if not event['connected'] and not failures:
+                failures.append(True);raise RuntimeError('temporary health persistence failure')
+            if event['connected'] and len(attempts)>1:connected.set()
+        manager=BybitWebSocketManager(callback,connect=lambda *a,**k:Connection())
+        await manager.update_subscriptions(['XUSDT'],['1'])
+        try:
+            await asyncio.wait_for(connected.wait(),4)
+            assert manager.health[0].connected and manager.health[0].reconnects==1
+        finally:await manager.close()
+    run(scenario())

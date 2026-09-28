@@ -359,3 +359,18 @@ def test_discovery_filters_before_bootstrap_and_clears_excluded_state(monkeypatc
 def test_native_turnover_rejects_unknown_nonfinite_negative_values():
     from backend.worker import turnover_values
     assert turnover_values([{'symbol':str(i),'turnover24h':v} for i,v in enumerate([None,'','bad','NaN','inf','-1','0','12.5'])])=={'6':0.,'7':12.5}
+
+
+def test_disconnect_survives_engine_growth_during_database_write():
+    async def scenario():
+        worker=worker_shell()
+        worker.engines={('XUSDT','1'):SimpleNamespace(snapshot={'symbol':'XUSDT'})}
+        async def changing_write(*args):
+            assert {'XUSDT','YUSDT'} <= worker.recovering
+            worker.engines['YUSDT','1']=SimpleNamespace(snapshot={'symbol':'YUSDT'})
+            await asyncio.sleep(0)
+        worker.blocking=changing_write
+        worker.repo.save_snapshot=lambda *args:None
+        await worker.on_market({'type':'health','connected':False,'topics':['kline.1.XUSDT','kline.1.YUSDT']})
+        assert {'XUSDT','YUSDT'} <= worker.recovering
+    asyncio.run(scenario())
