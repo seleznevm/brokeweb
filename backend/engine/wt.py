@@ -145,7 +145,7 @@ class WTEngine:
         self.parameter_hash=hashlib.sha256(json.dumps(self.parameters,sort_keys=True).encode()).hexdigest()
         self.runtime=WTExecution(program(),self.parameters,f'BYBIT:{symbol}.P',timeframe,tick_size,600)
         self.contexts={};self.provider=ConfirmedTrendContexts(self);self.runtime.request_provider=self.provider;self.snapshot=None;self.first_bar=None;self.stopped_plans={}
-    def update(self,bar,contexts,real=False,broke=None):
+    def update(self,bar,contexts,real=False,broke=None,plan_history=()):
         if self.runtime.last_start is not None and bar['start']<=self.runtime.last_start:raise ValueError('WT candle already committed')
         if self.first_bar is None:self.first_bar=bar['start']
         self.contexts=contexts
@@ -178,7 +178,9 @@ class WTEngine:
         result['plan_bar_start']=bar['start']-int(age)*tf_seconds(self.timeframe)*1000 if not is_na(age) else None
         generation=result['setup_generation_id']
         history=chart.after_until(result['plan_bar_start'],bar['start']-1) if isinstance(chart,ContextBars) else (b for b in chart if b['start']<bar['start'])
-        result=apply_stop_guard(encode(result),chain(history,[bar]),self.stopped_plans.get(generation))
+        # BROKE's checkpoint retains chart candles older than incremental REST
+        # backfill. Reuse them to detect earlier stop touches after an upgrade.
+        result=apply_stop_guard(encode(result),chain(history,(b for b in plan_history if b['start']<bar['start']),[bar]),self.stopped_plans.get(generation))
         if result.get('stop_hit'):
             self.stopped_plans[generation]={k:result.get(k) for k in ('setup_generation_id','parameter_hash','stop_hit','stop_hit_bar_start')}
             while len(self.stopped_plans)>64:self.stopped_plans.pop(next(iter(self.stopped_plans)))

@@ -229,7 +229,7 @@ class Worker:
                     if not engine.wt.runtime.count:
                         for past in engine.chart_bars:
                             if past['start']<bar['start']:engine.wt.update(past,context_view,False)
-                value=engine.wt.update(bar,context_view,realtime,snapshot)
+                value=engine.wt.update(bar,context_view,realtime,snapshot,plan_history=engine.chart_bars)
                 if snapshot['data_health']!='HEALTHY':value['data_health']=snapshot['data_health']
                 return value
             snapshot['wt']=await self.blocking(update_wt)

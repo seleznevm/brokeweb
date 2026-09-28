@@ -54,3 +54,10 @@ def test_engine_intrabar_stop_stays_closed_after_restart_and_rebound(monkeypatch
     two=WTEngine('TESTUSDT','30',.01);two.restore_state(one.export_state())
     bar.update(low=99,close=101)
     assert two.update(bar,{},True)['action']=='SL HIT'
+    # A checkpoint from before lifecycle tracking has no stop memory. The
+    # retained BROKE candles still prove a hit older than REST resume history.
+    bar['confirmed']=True;one.update(bar,{},True)
+    state=one.export_state();state.pop('stopped_plans')
+    old=WTEngine('TESTUSDT','30',.01);old.restore_state(state)
+    bar.update(start=3600000,end=5400000)
+    assert old.update(bar,{},True,plan_history=[dict(start=1800000,low=89)])['action']=='SL HIT'
