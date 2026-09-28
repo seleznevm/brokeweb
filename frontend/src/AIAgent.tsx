@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, send } from './api';
 import { Badge, ErrorMessage, Section } from './common';
-import type { Data } from './types';
 
 interface AIAgentSettings {
   enabled: boolean;
