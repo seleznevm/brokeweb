@@ -4,9 +4,11 @@ from contextlib import asynccontextmanager
 import json
 import os
 import uuid
+import logging
+from typing import Literal
 from fastapi import FastAPI,HTTPException,Query,Request,WebSocket,WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel,Field
+from pydantic import BaseModel,Field,ConfigDict
 from sqlalchemy import select,text
 from backend.models.repository import Repository,now_ms,SCORES
 from backend.models.schema import Current,Snapshot,Signal,Instrument,Event,MarketBar,Rule,RuleVersion,Delivery,ResearchSample,ParityResult,ServiceHealth
@@ -19,15 +21,41 @@ class SettingsInput(BaseModel):
     snapshot_interval_sec:float=Field(default=15,ge=1,le=86400)
     timezone_offset_minutes:int=Field(default=420,ge=-720,le=840,multiple_of=15,strict=True)
 class RuleTestInput(BaseModel): conditions:dict
+class RuleFileInput(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    format:Literal['brokeweb-alert-rules']
+    version:Literal[1]
+    rules:list[AlertRuleInput]=Field(min_length=1,max_length=500)
+
+class WebhookAccessFilter(logging.Filter):
+    def filter(self,record):
+        if isinstance(record.args,tuple) and len(record.args)>=3 and str(record.args[2]).startswith('/api/webhooks/tradingview'):
+            args=list(record.args);args[2]='/api/webhooks/tradingview';record.args=tuple(args)
+        return True
+
+logging.getLogger('uvicorn.access').addFilter(WebhookAccessFilter())
 
 def create_app(repository:Repository|None=None):
     repo=repository or Repository()
     @asynccontextmanager
     async def lifespan(app):
         await asyncio.to_thread(repo.initialize)
-        yield
+        from backend.tradingview import cleanup
+        stop=asyncio.Event()
+        async def retention():
+            while not stop.is_set():
+                try:await asyncio.to_thread(cleanup,repo)
+                except Exception:logging.getLogger(__name__).exception('TradingView retention failed')
+                try:await asyncio.wait_for(stop.wait(),timeout=3600)
+                except TimeoutError:pass
+        task=asyncio.create_task(retention())
+        try:yield
+        finally:
+            stop.set();await task
     app=FastAPI(title='Scalping SMA standalone',version='1.15.2',lifespan=lifespan)
     app.state.repo=repo
+    from backend.tradingview import router
+    app.include_router(router(repo))
 
     @app.get('/api/health')
     def health():
@@ -141,6 +169,21 @@ def create_app(repository:Repository|None=None):
             s.add(Rule(id=key,version=1,enabled=body.enabled,payload=payload))
             s.add(RuleVersion(rule_id=key,version=1,created_at=now_ms(),payload=payload))
         return {'id':key,'version':1,**payload}
+    @app.get('/api/alerts/rules/export')
+    def export_rules():
+        with repo.session() as s:rows=s.scalars(select(Rule).order_by(Rule.id)).all()
+        return {'format':'brokeweb-alert-rules','version':1,'rules':[AlertRuleInput.model_validate(r.payload).model_dump() for r in rows]}
+    @app.post('/api/alerts/rules/import',status_code=201)
+    def import_rules(body:RuleFileInput):
+        # Validate the complete file before opening a transaction: all or nothing.
+        items=[]
+        with repo.session.begin() as s:
+            for rule in body.rules:
+                key=str(uuid.uuid4());payload=rule.model_dump()
+                s.add(Rule(id=key,version=1,enabled=rule.enabled,payload=payload))
+                s.add(RuleVersion(rule_id=key,version=1,created_at=now_ms(),payload=payload))
+                items.append({'id':key,'version':1,**payload})
+        return {'items':items,'total':len(items)}
     @app.post('/api/alerts/rules/test')
     def test_rule(body:RuleTestInput):
         try: validate_condition(body.conditions)

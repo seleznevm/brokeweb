@@ -107,6 +107,20 @@ class Signal(Base):
     parameter_set_id: Mapped[str] = mapped_column(ForeignKey('parameter_sets.id'))
     payload: Mapped[dict] = mapped_column(J)
 
+class TradingViewAlert(Base):
+    __tablename__='tradingview_alerts'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    received_at: Mapped[int] = mapped_column(BigInteger, index=True)
+    raw_body: Mapped[str] = mapped_column(Text)
+    body_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    exchange: Mapped[str | None] = mapped_column(String(30))
+    symbol: Mapped[str | None] = mapped_column(String(60))
+    timeframe: Mapped[str | None] = mapped_column(String(16))
+    bar_start: Mapped[int | None] = mapped_column(BigInteger)
+    name: Mapped[str | None] = mapped_column(String(120))
+    payload: Mapped[dict] = mapped_column(J)
+    __table_args__=(Index('ix_tv_market_bar','exchange','symbol','timeframe','bar_start'),)
+
 class Rule(Base):
     __tablename__='alert_rules'
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

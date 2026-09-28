@@ -55,6 +55,9 @@ REST: `/api/setups`, `/api/setups/{symbol}/{timeframe}`, подмаршруты 
 
 ## Telegram
 
+TradingView: [приём webhook 30m, хранение 30 дней и сопоставление parity](docs/tradingview_webhook.md).
+На вкладке Alerts доступны экспорт сохранённых правил в JSON и атомарный импорт из файла.
+
 Указать `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` только в `.env`, затем `docker compose up -d notifier`. Создать правило на `/alerts`. Тестовая отправка — отдельная кнопка, отправляет реальное сообщение. Во время разработки реальные сообщения не отправлялись. Без credentials notifier остаётся запущен с `telegram: disabled`.
 
 Rule engine подавляет stale/recovering данные. При неоднозначном сетевом результате доставка получает `uncertain`, чтобы рестарт не отправил сообщение повторно. Это осознанный выбор: Telegram не предоставляет idempotency key для sendMessage.
