@@ -118,7 +118,10 @@ def router(repo):
     def get_parameters():return config(repo)
     @routes.put('/api/wt/parameters')
     def put_parameters(body:WTParametersInput):
-        try:values=parameters(body.values)
+        try:
+            from backend.engine.wt import context_requirements
+            values=parameters(body.values)
+            context_requirements(values,[tf.strip() for tf in os.getenv('ACTIVE_TIMEFRAMES','30').split(',') if tf.strip()])
         except ValueError as exc:raise HTTPException(422,str(exc))
         with repo.session.begin() as s:
             row=s.get(ServiceHealth,'wt-settings')

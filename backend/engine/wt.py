@@ -31,6 +31,7 @@ def input_schema():
         kind=qualified(st.expr.args[0]).split('.')[-1]
         specs.append({'name':st.meta['name'],'type':kind,'default':'wt_broke_bridge' if kind=='source' else encode(ex.eval(args[0])),
             'title':ex.eval(args[1]) if len(args)>1 else kw.get('title'),**{k:encode(v) for k,v in kw.items() if k in ('group','tooltip','minval','maxval','options','step')}})
+        if kind=='source':specs[-1].update(options=['wt_broke_bridge'],tooltip='Общий расчёт BROKE: направление, AVG, Execution, Level, MAE, Exhaustion, BTC gate и WATCH/PINE события.')
     return specs
 
 def parameters(values=None):
@@ -54,6 +55,7 @@ def context_requirements(values,timeframes):
     for tf in timeframes:
         profile=p['profileMode'] if p['profileMode']!='Auto' else {'5':'5m','15':'15m','30':'30m','60':'1H'}.get(tf,'Manual')
         h,m,b={'5m':('240','30','15'),'15m':('240','60','60'),'30m':('240','120','60'),'1H':('D','240','240')}.get(profile,(p['manualHtfTf'],p['manualMidTf'],p['manualBtcTf']))
+        if any(tf_seconds(x)<tf_seconds(tf) for x in (h,m,b)):raise ValueError('WT context timeframes must be at least the chart timeframe')
         own.update((h,m));btc.add(b)
     return own,btc
 
@@ -61,7 +63,7 @@ class WTExecution(Execution):
     def begin(self,bar,realtime=False,outer=None):
         super().begin(bar,realtime,outer)
         self.special.update({'timeframe.isminutes':self.timeframe.isdigit(),'timeframe.multiplier':int(self.timeframe) if self.timeframe.isdigit() else 1})
-        self.scopes[0].update(last_bar_time=bar['start'],last_bar_index=self.count)
+        self.scopes[0].update(last_bar_time=(outer or {}).get('last_bar_time',bar['start']),last_bar_index=(outer or {}).get('last_bar_index',self.count))
     def builtin(self,name,a,kw,e):
         if name=='fill':return NA
         return super().builtin(name,a,kw,e)
@@ -145,13 +147,17 @@ class WTEngine:
     def update(self,bar,contexts,real=False,broke=None):
         if self.runtime.last_start is not None and bar['start']<=self.runtime.last_start:raise ValueError('WT candle already committed')
         if self.first_bar is None:self.first_bar=bar['start']
-        self.contexts=contexts;self.runtime.begin(bar,real,{'wt_broke_bridge':bridge(broke)})
+        self.contexts=contexts
+        chart=contexts.get(f'BYBIT:{self.symbol}.P|{self.timeframe}',())
+        last_time=max(bar['start'],chart[-1]['start'] if chart else bar['start'])
+        self.runtime.begin(bar,real,{'wt_broke_bridge':bridge(broke),'last_bar_time':last_time,'last_bar_index':self.runtime.count+(last_time-bar['start'])//(tf_seconds(self.timeframe)*1000)})
         self.runtime.execute(program().statements);m=self.runtime.scopes[0]
         side='LONG' if truth(m.get('fireLongAlert')) else 'SHORT' if truth(m.get('fireShortAlert')) else None
         setups=[f'T{i}' for i in range(1,5) if side and truth(m.get(f'alertT{i}{side.title()}'))]
+        active=[f'T{i}' for i in range(1,5) if truth(m.get(f'lastSetupT{i}'))]
+        if truth(m.get('readyToEnterEvent')) and not setups:setups=list(active)
         signals=['+'.join(c) for n in range(1,len(setups)+1) for c in combinations(setups,n)]
         if truth(m.get('readyToEnterEvent')):signals.append('READY TO ENTER')
-        active=[f'T{i}' for i in range(1,5) if truth(m.get(f'lastSetupT{i}'))]
         fields={'action':'entryAction','entry_quality':'entryQuality','score_long':'longScore','score_short':'shortScore','score':'lastSignalScore',
             'entry':'lastEntry','sl':'lastSL','managed_sl':'managedSL','tp1':'lastTP1','tp2':'lastTP2','tp3':'lastTP3','tp4':'lastTP4','liquidity_target':'lastLiqTP',
             'position_usdt':'lastPositionUsdt','risk_usdt':'riskUsdt','rr_liquidity':'_rrToLiq','move_r':'_moveR','signal_age':'_signalAge',
@@ -165,7 +171,7 @@ class WTEngine:
             replay=not real,missing_contexts=sorted(self.runtime.missing),parameter_hash=self.parameter_hash,pine_source_hash=SOURCE_HASH,engine_version=VERSION,
             setup_generation_id=f"wt:{self.first_bar}:{m.get('lastSignalBar')}:{m.get('lastDir')}",
             broke_enabled=self.parameters['useBrokeCorrelation'],broke_valid=m.get('brokeDataValid'),broke_agree=m.get('_brokeDirAgree'),
-            broke_quality_pass=m.get('_brokeSetupQualityPass'),parity_status='UNVERIFIED',metrics={k:v for k,v in m.items() if k not in self.parameters and k!='wt_broke_bridge'})
+            broke_quality_pass=m.get('_brokeSetupQualityPass'),parity_status='UNVERIFIED',metrics={k:v for k,v in m.items() if k not in self.parameters and k not in {'wt_broke_bridge','open','high','low','close','volume','hl2','hlc3','ohlc4'}})
         if self.parameters['useBrokeCorrelation'] and (is_na(bridge(broke)) or (broke or {}).get('data_health') not in ('HEALTHY','FULL_REALTIME','KLINE_REALTIME')):result['data_health']='DEGRADED'
         self.snapshot=encode(result)
         if bar.get('confirmed',True):self.runtime.commit()

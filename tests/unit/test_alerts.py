@@ -69,7 +69,8 @@ def test_known_field_type_or_preset_mistakes_rejected(node):
 def test_field_catalog_uses_actual_source_values_and_keeps_fsm_numeric():
     from backend.alerts.fields import field_catalog,field_spec
     from backend.engine.runtime import SIGNALS
-    assert field_spec('event')['options']==list(SIGNALS.values())
+    from backend.engine.wt import COMBINATIONS
+    assert field_spec('event')['options']==[*SIGNALS.values(),*COMBINATIONS,'READY TO ENTER']
     assert field_spec('fsm')['type']=='integer'
     assert field_spec('fsm')['options']==list(range(9))
     assert 'ACTIVE / INVALIDATED' in field_spec('setup_state')['options']

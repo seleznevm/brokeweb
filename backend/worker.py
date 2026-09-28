@@ -323,6 +323,9 @@ class Worker:
                         probe=WTEngine(symbol,tf,instrument.tick_size,self.wt_parameters)
                         try:probe.restore_state(checkpoint.get('wt',{}))
                         except ValueError:
+                            # A rejected WT state cannot authorize incremental
+                            # context backfill, even when BROKE itself resumes.
+                            checkpoint['wt']=None
                             if self.wt_parameters.get('useBrokeCorrelation') and isinstance(checkpoint.get('first_bar_start'),int):
                                 self.replay_origins[key]=checkpoint['first_bar_start']
                     if checkpoint and checkpoint.get('parameter_hash')==parameter_hash(self.parameters) and (checkpoint.get('version')!=ENGINE_VERSION or checkpoint.get('pine_source_hash')!=PINE_HASH):

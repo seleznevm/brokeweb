@@ -44,7 +44,10 @@ DOCKER_CONFIG=/tmp/brokeweb-docker docker compose up -d --build
 
 ## Страницы
 
+WT_SETUPS: [расчёт по WT 1.6.4, общие свечи, Alerts и webhook → Telegram](docs/wt_setups.md).
+
 - `/setups` — только `ACTION != WAIT SETUP`, поиск, сортировка и фильтры метрик; можно включить все состояния.
+- `/wt-setups` — WT T1–T4, таблица атрибутов, общие свечи и отдельные входящие TradingView сигналы.
 - `/setups/BYBIT/{symbol}/{timeframe}` — свечи, зоны, frozen SL/T1, 42 строки Decision Panel, история атрибутов и событий.
 - `/alerts` — вложенные AND/OR/NOT, условия, частота, preview совпадений, версии и журнал доставки.
 - `/settings` — все 323 Pine inputs и интервал snapshots.
