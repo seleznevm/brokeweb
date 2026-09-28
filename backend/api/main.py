@@ -233,8 +233,8 @@ def create_app(repository:Repository|None=None):
 
     @app.get('/api/ai-agent/settings')
     def ai_agent_settings():
-        from backend.ai_agent.settings import get as get_ai_settings
-        return get_ai_settings(repo)
+        from backend.ai_agent.settings import get_masked
+        return get_masked(repo)
 
     class AIAgentSettingsInput(BaseModel):
         enabled:bool|None=None
@@ -246,8 +246,9 @@ def create_app(repository:Repository|None=None):
         secondary_api_token:str|None=None
         secondary_model:str|None=None
         nim_base_url:str|None=None
-        min_avg_setup:float|None=None
-        max_setups_in_report:int|None=None
+        min_avg_setup:float|None=Field(default=None,ge=0,le=100)
+        max_setups_in_report:int|None=Field(default=None,ge=1,le=50)
+        allowed_chat_ids:str|None=None
 
     @app.put('/api/ai-agent/settings')
     def save_ai_agent_settings(body:AIAgentSettingsInput):

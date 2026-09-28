@@ -28,7 +28,7 @@ def build_prompt(setups: list[dict], min_avg: float = 60.0, limit: int = 10) -> 
         and s['avg_setup'] >= min_avg
     ]
     # Sort by avg_setup desc, then RR desc
-    candidates.sort(key=lambda s: (s.get('avg_setup', 0), s.get('rr', 0)), reverse=True)
+    candidates.sort(key=lambda s: (s.get('avg_setup') or 0, s.get('rr') or 0), reverse=True)
     top = candidates[:limit]
 
     if not top:
@@ -40,13 +40,13 @@ def build_prompt(setups: list[dict], min_avg: float = 60.0, limit: int = 10) -> 
             )},
         ]
 
+    def fmt(v, decimals=4):
+        if isinstance(v, float):
+            return f'{v:.{decimals}f}'
+        return str(v) if v is not None else 'n/a'
+
     lines = []
     for s in top:
-        def fmt(v, decimals=4):
-            if isinstance(v, float):
-                return f'{v:.{decimals}f}'
-            return str(v) if v is not None else 'n/a'
-
         lines.append(
             f"symbol={s.get('symbol')} tf={s.get('timeframe')} dir={s.get('direction')} "
             f"action={s.get('action')} price={fmt(s.get('price'))} "

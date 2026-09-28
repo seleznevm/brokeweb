@@ -15,6 +15,7 @@ interface AIAgentSettings {
   nim_base_url: string;
   min_avg_setup: number;
   max_setups_in_report: number;
+  allowed_chat_ids: string;
 }
 
 interface AIAgentStatus {
@@ -29,16 +30,17 @@ interface AIAgentStatus {
 
 const DEFAULT_SETTINGS: AIAgentSettings = {
   enabled: true,
-  tg_bot_token: '8513180460:AAHVXvt9UVR33V8XxA_7Qr0Y9y05498_2Mk',
+  tg_bot_token: '',
   primary_ai: 'NVIDIA NIM',
-  primary_api_token: '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',
+  primary_api_token: '',
   primary_model: 'meta/llama-3.1-70b-instruct',
   secondary_ai: 'NVIDIA NIM',
-  secondary_api_token: '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',
+  secondary_api_token: '',
   secondary_model: 'meta/llama-3.1-70b-instruct',
   nim_base_url: 'https://integrate.api.nvidia.com/v1',
   min_avg_setup: 60,
   max_setups_in_report: 10,
+  allowed_chat_ids: '',
 };
 
 const NIM_MODELS = [
@@ -159,6 +161,17 @@ export function AIAgent() {
               />
               <small style={{ color: 'var(--muted)', fontSize: 10 }}>
                 Отдельный бот для AI агента (не путать с основным notification-ботом)
+              </small>
+            </label>
+            <label>
+              Разрешённые Chat IDs
+              <input
+                value={cfg.allowed_chat_ids}
+                onChange={e => field('allowed_chat_ids', e.target.value)}
+                placeholder="-1001234567890, 123456789"
+              />
+              <small style={{ color: 'var(--muted)', fontSize: 10 }}>
+                Через запятую. Пустое поле = принимать команды от всех (не рекомендуется).
               </small>
             </label>
           </div>

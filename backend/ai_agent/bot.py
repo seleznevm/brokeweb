@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 
 TG_API = 'https://api.telegram.org'
 POLL_TIMEOUT = 30  # long-poll seconds
+# Limit concurrent LLM requests to avoid exhausting API quotas
+_SEMAPHORE = asyncio.Semaphore(2)
 
 
 async def tg_get(client: httpx.AsyncClient, token: str, method: str, **params):
@@ -29,6 +31,18 @@ async def tg_post(client: httpx.AsyncClient, token: str, method: str, **body):
     r = await client.post(url, json=body, timeout=30)
     r.raise_for_status()
     return r.json()
+
+
+def _parse_allowed_chat_ids(raw: str) -> set[int]:
+    """Parse comma-separated chat IDs. Empty string → allow all (open mode)."""
+    if not raw or not raw.strip():
+        return set()
+    result = set()
+    for part in raw.split(','):
+        part = part.strip()
+        if part.lstrip('-').isdigit():
+            result.add(int(part))
+    return result
 
 
 def _get_active_setups(repo: Repository) -> list[dict]:
@@ -46,6 +60,7 @@ async def handle_update(
     update: dict,
     repo: Repository,
     cfg: dict,
+    allowed_ids: set[int],
 ):
     msg = update.get('message') or update.get('edited_message') or {}
     text = (msg.get('text') or '').strip()
@@ -53,28 +68,34 @@ async def handle_update(
     if not chat_id or not text:
         return
 
+    # Auth: if allowed_chat_ids is configured, reject unknown chats
+    if allowed_ids and chat_id not in allowed_ids:
+        log.warning('Rejected message from unauthorized chat_id=%s', chat_id)
+        return
+
     cmd = text.split()[0].lower().split('@')[0]
 
     if cmd == '/ai_now':
-        await tg_post(client, token, 'sendMessage',
-                      chat_id=chat_id,
-                      text='⏳ Анализирую активные сетапы…')
-        try:
-            setups = _get_active_setups(repo)
-            min_avg = float(cfg.get('min_avg_setup', 60))
-            max_s = int(cfg.get('max_setups_in_report', 10))
-            messages = build_prompt(setups, min_avg=min_avg, limit=max_s)
-            answer = await call_with_fallback(client, cfg, messages)
-            # Telegram max message length = 4096; split if needed
-            for i in range(0, len(answer), 4000):
-                await tg_post(client, token, 'sendMessage',
-                              chat_id=chat_id,
-                              text=answer[i:i + 4000])
-        except Exception as exc:
-            log.exception('AI agent error')
+        async with _SEMAPHORE:
             await tg_post(client, token, 'sendMessage',
                           chat_id=chat_id,
-                          text=f'❌ Ошибка AI агента: {exc}')
+                          text='⏳ Анализирую активные сетапы…')
+            try:
+                setups = await asyncio.to_thread(_get_active_setups, repo)
+                min_avg = float(cfg.get('min_avg_setup', 60))
+                max_s = int(cfg.get('max_setups_in_report', 10))
+                messages = build_prompt(setups, min_avg=min_avg, limit=max_s)
+                answer = await call_with_fallback(client, cfg, messages)
+                # Telegram max message length = 4096; split if needed
+                for i in range(0, len(answer), 4000):
+                    await tg_post(client, token, 'sendMessage',
+                                  chat_id=chat_id,
+                                  text=answer[i:i + 4000])
+            except Exception:
+                log.exception('AI agent error')
+                await tg_post(client, token, 'sendMessage',
+                              chat_id=chat_id,
+                              text='❌ Не удалось получить ответ от AI. Попробуйте позже.')
 
     elif cmd == '/start' or cmd == '/help':
         await tg_post(client, token, 'sendMessage',
@@ -93,17 +114,19 @@ async def poll_loop(repo: Repository):
 
     async with httpx.AsyncClient() as client:
         while True:
-            cfg = cfg_store.get(repo)
+            cfg = await asyncio.to_thread(cfg_store.get, repo)
             if not cfg.get('enabled', True):
-                repo.heartbeat('ai-agent', {'status': 'DISABLED', 'telegram': 'off'})
+                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {'status': 'DISABLED', 'telegram': 'off'})
                 await asyncio.sleep(5)
                 continue
 
             token = cfg.get('tg_bot_token', '').strip()
             if not token:
-                repo.heartbeat('ai-agent', {'status': 'NO_TOKEN', 'telegram': 'unconfigured'})
+                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {'status': 'NO_TOKEN', 'telegram': 'unconfigured'})
                 await asyncio.sleep(10)
                 continue
+
+            allowed_ids = _parse_allowed_chat_ids(cfg.get('allowed_chat_ids', ''))
 
             try:
                 data = await tg_get(
@@ -113,7 +136,7 @@ async def poll_loop(repo: Repository):
                     allowed_updates='["message"]',
                 )
                 updates = data.get('result', [])
-                repo.heartbeat('ai-agent', {
+                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {
                     'status': 'HEALTHY',
                     'telegram': 'polling',
                     'pending_updates': len(updates),
@@ -121,20 +144,20 @@ async def poll_loop(repo: Repository):
                 for upd in updates:
                     offset = upd['update_id'] + 1
                     asyncio.create_task(
-                        handle_update(client, token, upd, repo, cfg)
+                        handle_update(client, token, upd, repo, cfg, allowed_ids)
                     )
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
                 log.warning('Telegram poll error: %s', exc)
-                repo.heartbeat('ai-agent', {'status': 'DEGRADED', 'error': str(exc)})
+                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {'status': 'DEGRADED', 'error': str(exc)})
                 await asyncio.sleep(5)
 
 
 async def main():
     logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
     repo = Repository()
-    repo.initialize()
+    await asyncio.to_thread(repo.initialize)
     log.info('AI Agent started')
     await poll_loop(repo)
 
