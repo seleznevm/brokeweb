@@ -171,20 +171,71 @@ def test_shutdown_drains_recovery_and_receivers_before_releasing_lease():
             events.append('feed closed')
             # This is the health callback emitted by an intentional WS close.
             await worker.on_market({'type':'health','topics':['kline.1.XUSDT'],'connected':False})
-        async def release(*args):events.append('lease released')
+        renewals=[]
+        async def release(script,*args):
+            if 'pexpire' in script:
+                renewals.append(True)
+                return 1
+            events.append('lease released')
         worker.ws=SimpleNamespace(close=close_feed)
         worker.bybit=SimpleNamespace(close=AsyncMock());worker.btc=SimpleNamespace(close=AsyncMock());worker.btc_ws=SimpleNamespace(close=AsyncMock())
         worker.redis=SimpleNamespace(eval=release,aclose=AsyncMock())
         worker.repo.heartbeat=lambda *args:events.append('stopped heartbeat')
         worker.shard_count=1;worker.shard_index=0;worker.lease_key='lease';worker.lease_token='owner'
-        stop=asyncio.create_task(worker.shutdown())
+        lease=asyncio.create_task(worker.renew_lease(interval=.005))
+        stop=asyncio.create_task(worker.shutdown(lease=lease))
         await asyncio.sleep(.02)
         assert 'lease released' not in events
+        assert len(renewals)>=2, 'Ownership must renew while shutdown drains a blocked write'
         finish.set();await stop
+        assert lease.cancelled()
         assert events==['transaction finished','feed closed','stopped heartbeat','lease released']
         assert worker.reconnects==0
         assert not worker.recovering
         assert not worker.background
+    asyncio.run(scenario())
+
+
+def test_lease_renewal_does_not_wait_for_thread_pool_or_database():
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    async def scenario():
+        asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=1))
+        worker=worker_shell();started=threading.Event();finish=threading.Event()
+        renewed=asyncio.Event();calls=[]
+        def blocked_sql():
+            started.set()
+            assert finish.wait(2)
+        async def renew(*args):
+            calls.append(args)
+            if len(calls)>=3:renewed.set()
+            return 1
+        worker.redis=SimpleNamespace(eval=renew)
+        worker.lease_key='shard';worker.lease_token='owner'
+        write=asyncio.create_task(worker.blocking(blocked_sql))
+        lease=asyncio.create_task(worker.renew_lease(interval=.005))
+        try:
+            await asyncio.wait_for(renewed.wait(),1)
+            assert started.is_set() and not write.done()
+            assert all(args[1:]==(1,'shard','owner') for args in calls)
+            assert all("== ARGV[1]" in args[0] for args in calls)
+        finally:
+            finish.set();await write
+            lease.cancel();await asyncio.gather(lease,return_exceptions=True)
+    asyncio.run(scenario())
+
+
+def test_lease_loss_still_stops_worker(monkeypatch):
+    def exit_worker(code):
+        assert code==76
+        raise RuntimeError('worker stopped')
+    monkeypatch.setattr('backend.worker.os._exit',exit_worker)
+    async def scenario():
+        worker=worker_shell();worker.lease_key='shard';worker.lease_token='owner'
+        worker.redis=SimpleNamespace(eval=AsyncMock(return_value=0))
+        with pytest.raises(RuntimeError,match='worker stopped'):
+            await worker.renew_lease()
+        worker.redis.eval.assert_awaited_once()
     asyncio.run(scenario())
 
 

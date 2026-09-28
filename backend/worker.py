@@ -163,6 +163,15 @@ class Worker:
         return {'status':'HEALTHY' if ready else 'RECOVERING','healthy_engines':healthy,
                 'stale_instruments':len(stale),'market_data_lag_ms':max(lags,default=None)}
 
+    async def renew_lease(self, interval=10):
+        # Ownership must not wait for SQL telemetry, bootstrap or thread-pool
+        # availability. Keep this task alive until all writes have drained.
+        while True:
+            renewed=await asyncio.wait_for(self.redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('pexpire',KEYS[1],60000) else return 0 end",1,self.lease_key,self.lease_token),timeout=10)
+            if not renewed:
+                log.error('engine_shard_lease_lost');os._exit(76)
+            await asyncio.sleep(interval)
+
     async def heartbeat(self):
         while True:
             payload={'status':self.status,'universe':self.universe_count,'selected':self.selected_count,'initialized':len(self.ready),'timeframes':self.timeframes,'engines':len(self.engines),'processed_market_messages':self.messages,'calculations':self.calculations,'calculation_ms_p95':sorted(self.latencies)[int(.95*(len(self.latencies)-1))] if self.latencies else None,'websocket_reconnects':self.reconnects,'errors':self.errors,'reconciliation_errors':self.reconciliation_errors,'parity_status':'UNVERIFIED','quality_mode':'KLINE_REALTIME; full trade OHLCV after complete chart boundary','max_symbols':int(os.getenv('MAX_SYMBOLS','0')),'shard_index':self.shard_index,'shard_count':self.shard_count,'context_updated_at':self.context_last,'last_market_event':max(self.last_events.values(),default=None)}
@@ -173,9 +182,6 @@ class Worker:
             payload['checkpoint_pack_latency_ms']=sum(self.checkpoint_pack_latencies)/len(self.checkpoint_pack_latencies) if self.checkpoint_pack_latencies else None
             self.status=payload['status']
             self.previous_heartbeat=time.monotonic();self.previous_calculations=self.calculations
-            renewed=await self.redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('pexpire',KEYS[1],60000) else return 0 end",1,self.lease_key,self.lease_token)
-            if not renewed:
-                log.error('engine_shard_lease_lost');os._exit(76)
             await self.blocking(self.repo.heartbeat,'engine' if self.shard_count==1 else f'engine:{self.shard_index}',payload)
             await asyncio.sleep(10)
     async def persist(self,engine,bar,realtime):
@@ -501,7 +507,7 @@ class Worker:
             except Exception as exc:
                 self.status='DEGRADED';log.exception('context_refresh_failed');self.errors['context']=str(exc)
             await asyncio.sleep(float(os.getenv('CONTEXT_REFRESH_SEC','15')))
-    async def shutdown(self, beat=None, maintenance=None):
+    async def shutdown(self, beat=None, maintenance=None, lease=None):
         self.stopping=True;self.status='RECOVERING'
         pending=[task for task in (maintenance,*self.background) if task is not None]
         for task in pending:task.cancel()
@@ -515,6 +521,9 @@ class Worker:
             await asyncio.gather(beat,return_exceptions=True)
         name='engine' if self.shard_count==1 else f'engine:{self.shard_index}'
         await self.blocking(self.repo.heartbeat,name,{'status':'RECOVERING','reason':'worker stopped','parity_status':'UNVERIFIED'})
+        if lease:
+            lease.cancel()
+            await asyncio.gather(lease,return_exceptions=True)
         await self.redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",1,self.lease_key,self.lease_token)
         await self.redis.aclose()
         log.info('engine_shutdown_complete')
@@ -526,6 +535,11 @@ class Worker:
         self.lease_key=f'brokeweb:engine-shard:{self.shard_count}:{self.shard_index}'
         if not await self.redis.set(self.lease_key,self.lease_token,nx=True,px=60000):
             raise RuntimeError('Another worker owns this engine shard')
+        def lease_done(task):
+            if not task.cancelled() and task.exception() is not None:
+                log.error('lease_renewal_failed_stopping_shard');os._exit(77)
+        lease=asyncio.create_task(self.renew_lease())
+        lease.add_done_callback(lease_done)
         beat=None;maintenance=None
         try:
             await self.blocking(self.repo.initialize)
@@ -550,7 +564,7 @@ class Worker:
             # A second SIGTERM must not cancel the drain and release ownership
             # while a previous thread is still mutating state.
             loop.add_signal_handler(signal.SIGTERM,lambda:None)
-            await self.shutdown(beat,maintenance)
+            await self.shutdown(beat,maintenance,lease)
             loop.remove_signal_handler(signal.SIGTERM)
 
 if __name__=='__main__':
