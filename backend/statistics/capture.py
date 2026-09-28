@@ -31,10 +31,11 @@ def candidates(row,wt=False):
             original_plan_entry=p.get('entry'),signal_setups=p.get('signal_setups',[]))
         key=hashlib.sha256(json.dumps([POLICY,strategy,*identity,family],sort_keys=True).encode()).hexdigest()
         outcome=evaluate(plan,[],event_time)
+        if outcome['status']=='OPEN':outcome=dict(outcome,status='PENDING',reason='Waiting for first price observation')
         exchange=(row.exchange if wt else p.get('exchange','BYBIT')).upper()
         if exchange not in ('BYBIT','BINANCE'):outcome=dict(status='UNSUPPORTED',reason='No exchange adapter')
         items.append(Evaluation(id=key,policy=POLICY,strategy=strategy,source=source,mode='replay' if p.get('replay') else 'live',
-            family=family,exchange=exchange,symbol=row.symbol,timeframe=row.timeframe,direction=p.get('direction','NONE'),
+            family=family,exchange=exchange,symbol=row.symbol,timeframe=row.timeframe,direction=p.get('direction') or 'NONE',
             event_time=event_time,updated_at=0,plan=plan,status=outcome['status'],outcome=outcome))
     return items
 def capture(repo):

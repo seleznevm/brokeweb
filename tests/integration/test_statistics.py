@@ -40,6 +40,7 @@ def wt(source='engine',**extra):
 def test_sources_and_families_separate():
     engine=candidates(wt(),True);tv=candidates(wt('tradingview'),True)
     assert {x.family for x in engine}=={'T1','T3'}
+    assert all(x.status=='PENDING' for x in engine)
     assert {x.id for x in engine}.isdisjoint(x.id for x in tv)
     assert all(x.plan['time_basis']=='received_at_only' for x in tv)
 def test_duplicate_and_replay():
