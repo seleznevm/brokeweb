@@ -20,7 +20,9 @@ class SettingsInput(BaseModel):
     universe_min_turnover24h_usdt:float=Field(default=10000000,ge=0,le=1e12,allow_inf_nan=False,strict=True)
     snapshot_interval_sec:float=Field(default=15,ge=1,le=86400)
     timezone_offset_minutes:int=Field(default=420,ge=-720,le=840,multiple_of=15,strict=True)
-class RuleTestInput(BaseModel): conditions:dict
+class RuleTestInput(BaseModel):
+    conditions:dict
+    strategy:Literal['BROKE_SETUPS','WT_SETUPS']='BROKE_SETUPS'
 class RuleFileInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
     format:Literal['brokeweb-alert-rules']
@@ -41,10 +43,13 @@ def create_app(repository:Repository|None=None):
     async def lifespan(app):
         await asyncio.to_thread(repo.initialize)
         from backend.tradingview import cleanup
+        from backend.wt import cleanup as cleanup_wt
         stop=asyncio.Event()
         async def retention():
             while not stop.is_set():
-                try:await asyncio.to_thread(cleanup,repo)
+                try:
+                    await asyncio.to_thread(cleanup,repo)
+                    await asyncio.to_thread(cleanup_wt,repo)
                 except Exception:logging.getLogger(__name__).exception('TradingView retention failed')
                 try:await asyncio.wait_for(stop.wait(),timeout=3600)
                 except TimeoutError:pass
@@ -56,13 +61,15 @@ def create_app(repository:Repository|None=None):
     app.state.repo=repo
     from backend.tradingview import router
     app.include_router(router(repo))
+    from backend.wt import router as wt_router
+    app.include_router(wt_router(repo))
 
     @app.get('/api/health')
     def health():
         try:
             with repo.session() as s:
                 s.execute(text('SELECT 1'))
-                rows=s.scalars(select(ServiceHealth).where(ServiceHealth.name!='settings')).all()
+                rows=s.scalars(select(ServiceHealth).where(ServiceHealth.name.not_in(['settings','wt-settings']))).all()
             services={row.name:{**row.payload,'updated_at':row.updated_at,'stale':now_ms()-row.updated_at>90000} for row in rows}
             status='HEALTHY' if services and all(not row['stale'] and row.get('status')=='HEALTHY' for row in services.values()) else 'RECOVERING'
             return {'status':status,'services':{'database':{'status':'HEALTHY'},**services},'parity_status':'UNVERIFIED','time':now_ms()}
@@ -188,7 +195,8 @@ def create_app(repository:Repository|None=None):
     def test_rule(body:RuleTestInput):
         try: validate_condition(body.conditions)
         except ValueError as exc: raise HTTPException(422,str(exc))
-        with repo.session() as s: items=[r.payload for r in s.scalars(select(Current))]
+        from backend.models.schema import WTCurrent
+        with repo.session() as s: items=[r.payload for r in s.scalars(select(WTCurrent if body.strategy=='WT_SETUPS' else Current))]
         matched=[r for r in items if matches(body.conditions,r) or any(matches(body.conditions,{**r,'event':event}) for event in r.get('signals',[]))]
         return {'items':matched,'total':len(matched),'note':'Crossing/change rules require prior state; this preview evaluates current snapshots only.'}
     @app.put('/api/alerts/rules/{rule_id}')
@@ -220,6 +228,38 @@ def create_app(repository:Repository|None=None):
         with repo.session.begin() as s:
             s.add(Delivery(dedupe_key=digest(['test',str(uuid.uuid4())]),rule_id='manual-test',rule_version=1,created_at=now,updated_at=now,next_attempt=now,status='pending',payload={'text':'Scalping SMA: connection test requested in the web interface.'}))
         return {'status':'queued'}
+
+    @app.get('/api/ai-agent/settings')
+    def ai_agent_settings():
+        from backend.ai_agent.settings import get as get_ai_settings
+        return get_ai_settings(repo)
+
+    class AIAgentSettingsInput(BaseModel):
+        enabled:bool|None=None
+        tg_bot_token:str|None=None
+        primary_ai:str|None=None
+        primary_api_token:str|None=None
+        primary_model:str|None=None
+        secondary_ai:str|None=None
+        secondary_api_token:str|None=None
+        secondary_model:str|None=None
+        nim_base_url:str|None=None
+        min_avg_setup:float|None=None
+        max_setups_in_report:int|None=None
+
+    @app.put('/api/ai-agent/settings')
+    def save_ai_agent_settings(body:AIAgentSettingsInput):
+        from backend.ai_agent.settings import save as save_ai_settings
+        patch={k:v for k,v in body.model_dump().items() if v is not None}
+        return save_ai_settings(repo,patch)
+
+    @app.get('/api/ai-agent/status')
+    def ai_agent_status():
+        from backend.models.schema import ServiceHealth
+        with repo.session() as s:
+            row=s.get(ServiceHealth,'ai-agent')
+        if row is None: return {'status':'NOT_STARTED','note':'ai-agent service not running'}
+        return {'status':row.payload.get('status','UNKNOWN'),'updated_at':row.updated_at,'stale':now_ms()-row.updated_at>90000,**row.payload}
 
     @app.get('/api/research')
     def research(symbol:str|None=None,family:str|None=None,limit:int=Query(1000,ge=1,le=10000)):

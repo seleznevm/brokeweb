@@ -16,9 +16,14 @@ x-backend: &backend
     BYBIT_ENV: ${BYBIT_ENV:-mainnet}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
     TRADINGVIEW_WEBHOOK_KEY: ${TRADINGVIEW_WEBHOOK_KEY:-}
+    WT_TRADINGVIEW_WEBHOOK_KEY: ${WT_TRADINGVIEW_WEBHOOK_KEY:-}
+    WT_TRADINGVIEW_TELEGRAM_ENABLED: ${WT_TRADINGVIEW_TELEGRAM_ENABLED:-true}
     PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://broke.smautomator.cloud}
     TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    AI_AGENT_TG_BOT_TOKEN: ${AI_AGENT_TG_BOT_TOKEN:-}
+    AI_AGENT_PRIMARY_TOKEN: ${AI_AGENT_PRIMARY_TOKEN:-}
+    AI_AGENT_SECONDARY_TOKEN: ${AI_AGENT_SECONDARY_TOKEN:-}
   restart: unless-stopped
   depends_on:
     postgres:
@@ -132,6 +137,20 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-m", "backend.healthcheck", "retention"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  ai-agent:
+    <<: *backend
+    command: python -m backend.ai_agent.bot
+    environment:
+      <<: *backend_environment
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "backend.healthcheck", "ai-agent"]
       interval: 30s
       timeout: 5s
       retries: 5
