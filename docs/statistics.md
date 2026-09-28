@@ -1,51 +1,92 @@
-# STATISTICS — agreed specification, 2026-09-28
+# STATISTICS
+Реализованы отдельные наблюдения BROKE WE / PINE READY и WT_SETUPS T1–T4.
+Работа и deployment выполняются на Hostinger; локальный Docker не используется.
 
-Status: planned, not implemented by the reconnect/authentication release.
-Execution and deployment take place on Hostinger; local Docker is not used.
+## Правило v1
+Политика `move2-before-sl-24h-1m-v1`: WIN — цена достигла entry × 1.02
+для LONG или entry × 0.98 для SHORT раньше исходного SL. LOSS — SL раньше
+цели. Горизонт 24 реальных часа, одинаковый для обеих стратегий и источников.
+Сохраняются цена сигнала, первоначальный SL, T1, версия параметров/движка,
+семья, источник, направление, биржа, время и идентификатор события.
+Если price отсутствует, используется явно переданный entry. Некорректный
+или отсутствующий entry/SL даёт INVALID, а не выдуманный план.
 
-## Signal outcomes
+WIN остаётся WIN при дальнейшем возврате в безубыток. Это классификация
+сигнала, а не реализованная доходность +2%; комиссии, проскальзывание,
+реальная постановка BE и последующий выход здесь не моделируются.
 
-Independent analytics, without changes to Pine Research Mode or source formulas.
-WE and PINE READY use distinct detector events (not panel state or Telegram deliveries).
-Freeze event ID, generation, family, symbol, TF, direction, entry, initial SL/T1,
-ATR, quality metrics, data quality, engine/parameter versions and timestamps.
-An evaluation is unique by detector event ID and evaluation-policy version.
+Наблюдатель использует закрытые минутные свечи исходной биржи (Bybit linear /
+Binance USDT perpetual). Не подменяет Binance данными Bybit. Если SL и цель
+попали в одну минуту, результат AMBIGUOUS. Касание в первой неполной минуте
+или последней минуте, выходящей за горизонт, тоже AMBIGUOUS: порядок
+относительно времени сигнала/границы неизвестен. Предшествующие сигналу
+экстремумы никогда не дают WIN. Минутная свеча без касания безопасна для
+проверки границы, но не включается в MFE/MAE. MFE/MAE используют полные
+минуты, включая минуту результата; это не точные экстремумы до первого тика
+касания. Время до результата оценивается по концу минуты.
 
-WIN means a favorable 2% price move before initial SL; LONG target entry*1.02,
-SHORT target entry*0.98. LOSS means initial SL first. At 2%, signal success is
-permanent and the separate virtual management model moves SL to entry.
-Returning to entry is WIN signal / BE exit, not a realized +2% profit.
-Fees/slippage and actual executions must not be inferred from this label.
-T1-before-SL is an additional metric, not a substitute for the 2% outcome.
+OPEN — наблюдение продолжается; EXPIRED — полные 24 часа без результата;
+DATA_GAP — недостающие свечи/ошибка получения (повторная проверка);
+UNSUPPORTED — нет адаптера биржи. Эти статусы не маскируются под LOSS.
+Окончательные WIN/LOSS/EXPIRED/AMBIGUOUS/INVALID не перезаписываются.
 
-Other outcomes: OPEN, EXPIRED, AMBIGUOUS, DATA_GAP and INVALID.
-Default observation horizon proposed: 24 real hours; optional 4/12/48 hours.
-Only post-event prices count. If SL and target occur in the same candle, resolve
-ordering using lower-TF/trade evidence; otherwise mark AMBIGUOUS.
-Incomplete observation is not EXPIRED. Never infer an optimistic intrabar path.
+## WT: источники и единица наблюдения
+- `engine` — расчёты WT системы. `tradingview` — принятые WT webhook-сигналы.
+- Сводка всегда разбита по источнику и T1/T2/T3/T4. Фильтр позволяет выбрать
+  только один источник. LIVE и исторический replay разделены.
+- Используются события новых сетапов, не текущие строки screener, не доставка
+  Telegram и не каждая свеча. READY TO ENTER без нового исходного сетапа
+  не добавляет наблюдение. Для системы ключ включает начало плана, сторону,
+  параметры, режим и семью. Подтверждение того же плана не считается снова.
+- T1+T3 даёт два наблюдения — по одному каждой семье. Общая сумма не является
+  количеством независимых сделок или результатом портфеля.
+- Для TradingView время начала — время получения, а не неизвестное время
+  внутри TradingView. Цена берётся из сообщения. Это оценка доставленного
+  сигнала с указанной ценой, а не реконструкция сделки в TradingView.
+- Передавайте стабильный `event_id` в JSON webhook-конверте для точной
+  дедупликации повторной доставки. Уже помеченные inbox `duplicate_of`
+  исключаются. Без event_id одинаковые доставки вне окна дедупликации inbox
+  не могут надёжно отличаться от нового сигнала.
+- Сравнение источников не подтверждает Pine parity: различаются время,
+  версия параметров и доступная история.
 
-## Aggregation and interface
+## Интерфейс и API
+Вкладка Statistics: стратегия, источник, семья, LIVE/replay, направление,
+монета, периоды 1/7/30/90 дней и произвольный диапазон. Даты вводятся в
+часовом поясе Settings (по умолчанию UTC+7), UTC хранится в БД.
+Диапазон выбирает время сигнала [start,end); его конец не обрезает дальнейшее
+наблюдение этого сигнала. Обновить передвигает конец относительного периода.
 
-Cohort uses signal creation time in the configured display timezone (UTC storage).
-The cohort end date does not truncate subsequent outcome observation.
-Resolved winrate = WIN/(WIN+LOSS); mature horizon success =
-WIN/(WIN+LOSS+EXPIRED), using complete observations only. Always display sample
-size, unresolved cases and coverage; empty denominators produce no-data, not 0%.
-Separate live/replay/reference data and parameter/evaluation versions.
+Winrate = W/(W+L); дополнительно W/(W+L+EXPIRED). Пустой знаменатель = н/д.
+Полные исходы = (W+L+EXPIRED)/все наблюдения. Показываются остальные статусы.
+Сводки SQL охватывают весь фильтр, не только текущую страницу (50 строк).
+CSV выгружает всю выборку. Числа в CSV — без процентного символа, время UTC ms.
 
-Filters: date presets/custom range, WE/PINE READY, direction, symbol, TF, path,
-parameter version and data quality. Show comparison cards, breakdowns, time to
-2%/SL, MFE/MAE, paginated event details, chart links and CSV export.
-Aggregate the entire SQL cohort independently of pagination or API item limits.
-WE and READY for one generation remain separate evaluations, not two independent
-portfolio trades. Track open evaluations even after liquidity-universe exclusion.
+`GET /api/statistics`:
+`strategy=BROKE|WT_SETUPS`, `source=engine|tradingview`,
+`mode=live|replay`, `family`, `symbol`, `direction`, `timeframe`,
+`start/end` UTC ms, `quality` (data_health), `version` (parameter hash),
+`limit/offset`, `export=csv`. Доступ защищён существующей авторизацией панели.
 
-## Implementation sequence
+## Эксплуатация
+Сервис `statistics` — отдельный процесс `python -m backend.statistics.worker`.
+Миграция 0008 добавляет таблицы signal_evaluations/statistics_cursors.
+Источник — сохранённые signals/wt_events; cursor и наблюдение записываются
+в одной транзакции. После рестарта продолжаются без обнуления результатов.
+Копия плана сохраняется независимо от срока хранения исходного inbox.
+Минутные данные общие в market_bars. Наблюдение не зависит от текущего
+ликвидного пула: исключённая из screener монета остаётся под наблюдением.
+Один процесс, до 24 наблюдений за цикл, ограниченные REST-запросы; большой
+исторический backlog заполняется постепенно. Исторические сигналы, удалённые
+до запуска, восстановить из этих таблиц невозможно. Начальное заполнение
+не означает полноту старой истории.
 
-1. Restore timely market coverage and keep public administration authenticated.
-2. Add immutable event capture and independent durable observation/outcome tables.
-3. Add replay-safe/idempotent tracker, first-hit ordering, gap handling and restart tests.
-4. Add server-side aggregation, pagination, date boundaries and policy versioning.
-5. Add STATISTICS UI and exports; backfill only evidence-complete historical cases.
-6. Validate LONG/SHORT boundaries, same-candle ambiguity, duplicate events, pool
-   changes, restart and parameter changes. Never alter baseline Pine checkpoints.
+## Что остаётся
+- Дополнительные горизонты 4/12/48 часов — отдельные версии политики.
+- Тиковое разрешение AMBIGUOUS (сейчас честно сохраняется неопределённость).
+- Отдельный T1-before-SL и последующий виртуальный BE/выход, комиссии.
+- Расширенные графики распределений, ссылки на историческую точку графика,
+  UI-фильтры версии/качества/пути и интервалы доверия.
+- Длительное production-наблюдение покрытия/REST-нагрузки и накопление
+  достаточной выборки. Ни текущая статистика, ни внедрение UI не закрывают
+  пропущенную пользователем проверку intrabar parity.

@@ -1,0 +1,10 @@
+{
+  "/statistics:anonymous": 401,
+  "/statistics:auth": 200,
+  "/api/statistics?strategy=WT_SETUPS:anonymous": 401,
+  "/api/statistics?strategy=WT_SETUPS:auth": 200,
+  "/api/statistics?strategy=WT_SETUPS&source=tradingview:anonymous": 401,
+  "/api/statistics?strategy=WT_SETUPS&source=tradingview:auth": 200,
+  "/api/ai-agent/settings:anonymous": 401,
+  "/api/ai-agent/settings:auth": 200
+}

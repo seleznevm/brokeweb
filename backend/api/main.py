@@ -61,6 +61,8 @@ def create_app(repository:Repository|None=None):
     app.state.repo=repo
     from backend.tradingview import router
     app.include_router(router(repo))
+    from backend.statistics.api import router as statistics_router
+    app.include_router(statistics_router(repo))
     from backend.wt import router as wt_router
     app.include_router(wt_router(repo))
 
