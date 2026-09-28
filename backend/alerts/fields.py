@@ -78,7 +78,7 @@ def field_catalog():
     add('exchange', 'enum', ['BYBIT','BINANCE'])
     add('timeframe', 'enum', ['1','3','5','15','30','60','120','240','360','720','D','W','M'], 'Строка: 30 = 30 минут, 60 = 1 час, D = день. Расчёт TF должен быть включён в ACTIVE_TIMEFRAMES сервера.')
     add('direction', 'enum', ['LONG', 'SHORT', 'NONE'])
-    add('action', 'enum', sorted(set(finite_strings(declarations['actionText'].expr)+['WAIT SIGNAL','ENTER NOW','WAIT RETEST','TOO LATE','SKIP','SIGNAL'])))
+    add('action', 'enum', sorted(set(finite_strings(declarations['actionText'].expr)+['WAIT SIGNAL','ENTER NOW','WAIT RETEST','TOO LATE','SKIP','SIGNAL','SL HIT','WAIT DATA'])))
     add('setup_state', 'enum', finite_strings(declarations['setupState'].expr))
     add('family', 'enum', finite_strings(declarations['setupFamily'].expr))
     add('fsm', 'integer', list(range(9)), 'Код: 0 NONE, 1 FORMING, 2 WATCH, 3 APPROACH, 4 ARMED, 5 TRIGGERED, 6 RETEST, 7 READY, 8 ACTIVE. Для текста используйте setup_state.')
@@ -96,7 +96,7 @@ def field_catalog():
     add('setups','list',['T1','T2','T3','T4'],'Типы последнего плана WT.')
     for name in ('entry_quality','score','score_long','score_short','entry','managed_sl','tp1','tp2','tp3','tp4','liquidity_target','position_usdt','risk_usdt','rr_liquidity','move_r','volume_ratio','adx','signal_age'):
         add(name,'number',description='Атрибут WT_SETUPS.')
-    for name in ('broke_enabled','broke_valid','broke_agree','broke_quality_pass','compression','be_active'):add(name,'boolean')
+    for name in ('broke_enabled','broke_valid','broke_agree','broke_quality_pass','compression','be_active','stop_hit'):add(name,'boolean')
     blockers = set()
     def scan(nodes):
         for st in nodes:

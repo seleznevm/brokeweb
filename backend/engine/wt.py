@@ -4,12 +4,13 @@ import hashlib
 import json
 import math
 from functools import lru_cache
-from itertools import combinations
+from itertools import combinations,chain
 from pathlib import Path
 from .syntax import Program
 from .interpreter import Execution,qualified,tf_seconds
 from .values import NA,is_na,truth,encode
 from .context_bars import ContextBars
+from .wt_lifecycle import apply_stop_guard
 
 SOURCE=Path(__file__).resolve().parents[2]/'reference/WT_Setups_1.6.4.pine'
 SOURCE_HASH=hashlib.sha256(SOURCE.read_bytes()).hexdigest()
@@ -143,7 +144,7 @@ class WTEngine:
         self.symbol=symbol;self.timeframe=timeframe;self.tick_size=tick_size;self.parameters=parameters(values)
         self.parameter_hash=hashlib.sha256(json.dumps(self.parameters,sort_keys=True).encode()).hexdigest()
         self.runtime=WTExecution(program(),self.parameters,f'BYBIT:{symbol}.P',timeframe,tick_size,600)
-        self.contexts={};self.provider=ConfirmedTrendContexts(self);self.runtime.request_provider=self.provider;self.snapshot=None;self.first_bar=None
+        self.contexts={};self.provider=ConfirmedTrendContexts(self);self.runtime.request_provider=self.provider;self.snapshot=None;self.first_bar=None;self.stopped_plans={}
     def update(self,bar,contexts,real=False,broke=None):
         if self.runtime.last_start is not None and bar['start']<=self.runtime.last_start:raise ValueError('WT candle already committed')
         if self.first_bar is None:self.first_bar=bar['start']
@@ -173,10 +174,19 @@ class WTEngine:
             broke_enabled=self.parameters['useBrokeCorrelation'],broke_valid=m.get('brokeDataValid'),broke_agree=m.get('_brokeDirAgree'),
             broke_quality_pass=m.get('_brokeSetupQualityPass'),parity_status='UNVERIFIED',metrics={k:v for k,v in m.items() if k not in self.parameters and k not in {'wt_broke_bridge','open','high','low','close','volume','hl2','hlc3','ohlc4'}})
         if self.parameters['useBrokeCorrelation'] and (is_na(bridge(broke)) or (broke or {}).get('data_health') not in ('HEALTHY','FULL_REALTIME','KLINE_REALTIME')):result['data_health']='DEGRADED'
-        self.snapshot=encode(result)
+        age=result.get('signal_age')
+        result['plan_bar_start']=bar['start']-int(age)*tf_seconds(self.timeframe)*1000 if not is_na(age) else None
+        generation=result['setup_generation_id']
+        history=chart.after_until(result['plan_bar_start'],bar['start']-1) if isinstance(chart,ContextBars) else (b for b in chart if b['start']<bar['start'])
+        result=apply_stop_guard(encode(result),chain(history,[bar]),self.stopped_plans.get(generation))
+        if result.get('stop_hit'):
+            self.stopped_plans[generation]={k:result.get(k) for k in ('setup_generation_id','parameter_hash','stop_hit','stop_hit_bar_start')}
+            while len(self.stopped_plans)>64:self.stopped_plans.pop(next(iter(self.stopped_plans)))
+        self.snapshot=result
         if bar.get('confirmed',True):self.runtime.commit()
         return self.snapshot
-    def export_state(self):return {'version':VERSION,'source_hash':SOURCE_HASH,'parameters':self.parameter_hash,'first_bar':self.first_bar,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state()}
+    def export_state(self):return {'version':VERSION,'source_hash':SOURCE_HASH,'parameters':self.parameter_hash,'first_bar':self.first_bar,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'stopped_plans':dict(self.stopped_plans)}
     def restore_state(self,state):
         if (state.get('version'),state.get('source_hash'),state.get('parameters'))!=(VERSION,SOURCE_HASH,self.parameter_hash):raise ValueError('WT checkpoint version mismatch')
         self.first_bar=state['first_bar'];self.runtime.restore_state(state['runtime']);self.provider.restore_state(state['contexts'])
+        self.stopped_plans=dict(state.get('stopped_plans',{}))

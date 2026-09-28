@@ -17,6 +17,16 @@ from backend.engine.wt import parameters,input_schema
 
 RETENTION_MS=30*86400000
 
+def present(current,updated_at,now):
+    result={**current,'updated_at':updated_at}
+    if result.get('signal_source')!='engine':return result
+    stale=now-updated_at>90000 or now-result.get('event_time',0)>90000
+    if stale:result['data_health']='STALE'
+    if result.get('data_health') not in ('HEALTHY','FULL_REALTIME','KLINE_REALTIME') and result.get('action') in ('ENTER NOW','WAIT RETEST'):
+        result.setdefault('pine_action',result['action'])
+        result.update(action='WAIT DATA',signals=[])
+    return result
+
 def config(repo):
     with repo.session() as s:row=s.get(ServiceHealth,'wt-settings')
     values=parameters(row.payload['values'] if row else {})
@@ -131,8 +141,8 @@ def router(repo):
     @routes.get('/api/wt/setups')
     def setups(signal_source:str='engine',active_only:bool=False):
         with repo.session() as s:rows=s.scalars(select(WTCurrent).where(WTCurrent.signal_source==signal_source)).all()
-        items=[{**r.payload,'updated_at':r.updated_at,'data_health':'STALE' if now_ms()-r.updated_at>90000 and signal_source=='engine' else r.payload['data_health']} for r in rows]
-        if active_only:items=[r for r in items if r.get('action') not in ('WAIT SIGNAL','SKIP','TOO LATE')]
+        items=[present(r.payload,r.updated_at,now_ms()) for r in rows]
+        if active_only:items=[r for r in items if r.get('action') in ('ENTER NOW','WAIT RETEST')]
         return {'items':items,'total':len(items)}
     @routes.get('/api/wt/events')
     def events(symbol:str|None=None,signal_source:str|None=None,limit:int=Query(100,ge=1,le=1000),offset:int=Query(0,ge=0)):

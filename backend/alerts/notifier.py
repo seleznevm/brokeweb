@@ -56,6 +56,8 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
             rule=s.get(Rule,row.rule_id)
             snapshot=row.payload['snapshot']; market=tuple(snapshot[k] for k in ('exchange','symbol','timeframe'))
             current=s.get(WTCurrent,(*market,snapshot.get('signal_source','engine'))) if snapshot.get('strategy')=='WT_SETUPS' else s.get(Current,market)
+            if current and snapshot.get('strategy')=='WT_SETUPS' and not snapshot.get('stop_hit') and current.payload.get('stop_hit') and current.payload.get('setup_generation_id')==snapshot.get('setup_generation_id'):
+                row.status='suppressed';row.error='WT plan reached SL before delivery';row.updated_at=now;return True
             health=current.payload.get('data_health') if current else None
             if isinstance(health,dict): health=health.get('status')
             if rule is None or not rule.enabled or rule.version!=row.rule_version or health not in {'HEALTHY','FULL_REALTIME','KLINE_REALTIME'} or current.updated_at<now-90000:
