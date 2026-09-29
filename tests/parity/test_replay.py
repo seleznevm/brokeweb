@@ -12,7 +12,7 @@ def test_replay_outputs_source_codes_without_claiming_parity(tmp_path):
     # Use correctly aligned chart boundaries for a deterministic offline fixture.
     for i,bar in enumerate(data['bars']):bar.update(start=1699999200000+i*900000,end=1699999200000+(i+1)*900000)
     path=tmp_path/'observations.jsonl';assert write_replay(data,path)==3
-    rows=[json.loads(line) for line in path.read_text().splitlines()]
+    rows=[json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
     assert all(row['pine_source_hash']==PINE_HASH and row['parity_status']=='UNVERIFIED' for row in rows)
     assert rows[-1]['PARITY_direction']==0
     assert rows[-1]['PARITY_action'] is not None

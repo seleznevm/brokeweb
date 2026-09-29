@@ -85,8 +85,8 @@ def test_unsupported_timeframe_rejected(step):
 def test_probe_preserves_detector_and_does_not_feed_lookahead_into_it(tmp_path):
     original = SOURCE.read_bytes()
     manifest = generate(tmp_path)
-    source = (tmp_path/'Scalping_SMA_1.15.2_parity_contexts.pine').read_text()
-    metrics = (tmp_path/'Scalping_SMA_1.15.2_parity_metrics.pine').read_text()
+    source = (tmp_path/'Scalping_SMA_1.15.2_parity_contexts.pine').read_text(encoding='utf-8')
+    metrics = (tmp_path/'Scalping_SMA_1.15.2_parity_metrics.pine').read_text(encoding='utf-8')
     # Everything before the appended diagnostic requests is the same detector.
     base = metrics.split('var int parityHistoryStart = time')[0]
     base = base.replace('PARITY metrics', 'PARITY contexts').replace('SMA-P-MET', 'SMA-P-CTX')

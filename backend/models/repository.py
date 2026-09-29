@@ -53,33 +53,6 @@ class Repository:
             if s.scalar(select(ParameterSet.id).where(ParameterSet.active.is_(True))) is None:
                 values=validate_parameters({}); key=digest(values)
                 s.add(ParameterSet(id=key,created_at=now_ms(),values=values,active=True))
-            default_rules=[
-                {
-                    'id':'eb330ab2-1ef8-4b34-8060-860e245d2bbd',
-                    'name':'30m WE LONG',
-                    'strategy':'BROKE_SETUPS',
-                    'mode':'confirmed',
-                    'frequency':'once_per_bar',
-                    'cooldown_seconds':60,
-                    'conditions':{'op':'AND','conditions':[{'op':'IN','field':'timeframe','value':['30']},{'op':'==','field':'event','value':'LONG WATCH ENTRY'}]},
-                    'template':'{symbol} · {timeframe} · {direction}\nACTION: {action}\nAVG SETUP: {avg_setup}\nFormation: {formation} · Execution: {execution}\nGeometry: {geometry} · Context: {context}\nLevel: {level} · Approach: {approach}\nMAE: {mae} · Exhaustion: {exhaustion} · BTC Shock: {btc_shock}\nCandidate: {candidate_path} · Trigger: {trigger_path}\nSL: {sl} · T1: {t1} · R:R: {rr}\nBlockers: {blockers}\n{detail_url}',
-                    'enabled':True
-                },
-                {
-                    'id':'ee880fdd-8694-4fb8-b7bf-da3af1716c6d',
-                    'name':'30m WE SHORT',
-                    'strategy':'BROKE_SETUPS',
-                    'mode':'confirmed',
-                    'frequency':'once_per_bar',
-                    'cooldown_seconds':60,
-                    'conditions':{'op':'AND','conditions':[{'op':'IN','field':'timeframe','value':['30']},{'op':'==','field':'event','value':'SHORT WATCH ENTRY'}]},
-                    'template':'{symbol} · {timeframe} · {direction}\nACTION: {action}\nAVG SETUP: {avg_setup}\nFormation: {formation} · Execution: {execution}\nGeometry: {geometry} · Context: {context}\nLevel: {level} · Approach: {approach}\nMAE: {mae} · Exhaustion: {exhaustion} · BTC Shock: {btc_shock}\nCandidate: {candidate_path} · Trigger: {trigger_path}\nSL: {sl} · T1: {t1} · R:R: {rr}\nBlockers: {blockers}\n{detail_url}',
-                    'enabled':True
-                }
-            ]
-            for r in default_rules:
-                if s.get(Rule,r['id']) is None:
-                    s.add(Rule(id=r['id'],version=1,enabled=True,payload=r))
     def parameters(self):
         with self.session() as s:
             row=s.scalar(select(ParameterSet).where(ParameterSet.active.is_(True)).order_by(ParameterSet.created_at.desc()))
@@ -143,7 +116,6 @@ class Repository:
         return unpack_checkpoint(row.checkpoint_blob) if row.checkpoint_blob is not None else row.checkpoint
     def save_snapshot(self,snapshot,checkpoint=None):
         current=clean(snapshot); now=now_ms()
-        wt=current.pop('wt',None)
         current.setdefault('strategy','BROKE_SETUPS');current.setdefault('signal_source','engine')
         packed=(checkpoint.blob if isinstance(checkpoint,PackedCheckpoint)
                 else pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None)
@@ -173,9 +145,6 @@ class Repository:
                     s.add(Signal(dedupe_key=dedupe,symbol=key[1],timeframe=key[2],event_time=current['event_time'],name=name,parameter_set_id=current['parameter_set_id'],payload={**current,'event':name}))
                     s.add(Event(exchange=key[0],symbol=key[1],timeframe=key[2],event_time=current['event_time'],kind='signal',payload={**current,'event':name}))
             enqueue_matching(s,current,previous,now)
-            if wt:
-                from backend.wt import save_engine
-                save_engine(s,wt,now)
             self._save_research(s,current)
             if old:
                 old.payload=current; old.updated_at=now
@@ -210,15 +179,7 @@ class Repository:
         if session is None:
             with self.session() as s: return self.settings(s)
         row=session.get(ServiceHealth,'settings')
-        defaults={
-            'snapshot_interval_sec':self.snapshot_interval_sec,
-            'timezone_offset_minutes':420,
-            'universe_min_turnover24h_usdt':10000000,
-            'telegram_bot_token':os.getenv('TELEGRAM_BOT_TOKEN','8384688195:AAH5sLNK4su7cV6vW7pehE-7mJYeRE4JBG0'),
-            'telegram_chat_id':os.getenv('TELEGRAM_CHAT_ID','-1003788053657'),
-            'telegram_topic_id':os.getenv('TELEGRAM_TOPIC_ID','25152'),
-        }
-        return {**defaults,**(row.payload if row else {})}
+        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,**(row.payload if row else {})}
     def set_settings(self,value):
         with self.session.begin() as s:
             row=s.get(ServiceHealth,'settings',with_for_update=True)

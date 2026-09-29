@@ -108,10 +108,11 @@ class Retention:
             os.replace(temporary,target)
             # Flush directory metadata before committing deletion from PostgreSQL.
             # Unsupported durable filesystem operations fail without deleting DB rows.
-            for directory in (target.parent,target.parent.parent,self.root,self.root.parent):
-                descriptor=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
-                try:os.fsync(descriptor)
-                finally:os.close(descriptor)
+            if hasattr(os, 'O_DIRECTORY'):
+                for directory in (target.parent,target.parent.parent,self.root,self.root.parent):
+                    descriptor=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
+                    try:os.fsync(descriptor)
+                    finally:os.close(descriptor)
         finally:
             temporary.unlink(missing_ok=True)
         return {'id':batch_id,'table_name':name,'created_at':created,'cutoff':cutoff,

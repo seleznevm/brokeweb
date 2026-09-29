@@ -18,7 +18,6 @@ def enqueue_matching(session,current,previous,now):
         if rule.get('strategy','BROKE_SETUPS')!=current.get('strategy','BROKE_SETUPS'):continue
         if rule['mode']=='confirmed' and not current.get('confirmed'): continue
         market=[current.get(x) for x in ('exchange','symbol','timeframe')]
-        if current.get('strategy')=='WT_SETUPS':market+=['WT_SETUPS',current.get('signal_source')]
         state_key=digest([row.id,row.version,*market])
         state=session.get(RuleState,state_key)
         if state is None:

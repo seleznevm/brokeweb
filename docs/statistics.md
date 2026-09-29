@@ -1,5 +1,5 @@
 # STATISTICS
-Реализованы отдельные наблюдения BROKE WE / PINE READY и WT_SETUPS T1–T4.
+Реализованы наблюдения BROKE WE / PINE READY.
 Работа и deployment выполняются на Hostinger; локальный Docker не используется.
 
 ## Правило v1
@@ -64,7 +64,7 @@ Winrate = W/(W+L); дополнительно W/(W+L+EXPIRED). Пустой зн
 CSV выгружает всю выборку. Числа в CSV — без процентного символа, время UTC ms.
 
 `GET /api/statistics`:
-`strategy=BROKE|WT_SETUPS`, `source=engine|tradingview`,
+`strategy=BROKE`, `source=engine`,
 `mode=live|replay`, `family`, `symbol`, `direction`, `timeframe`,
 `start/end` UTC ms, `quality` (data_health), `version` (parameter hash),
 `limit/offset`, `export=csv`. Доступ защищён существующей авторизацией панели.

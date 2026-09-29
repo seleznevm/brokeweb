@@ -8,7 +8,7 @@ import logging
 from typing import Literal
 from fastapi import FastAPI,HTTPException,Query,Request,WebSocket,WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel,Field,ConfigDict
+from pydantic import BaseModel,Field,ConfigDict,model_validator
 from sqlalchemy import select,text
 from backend.models.repository import Repository,now_ms,SCORES
 from backend.models.schema import Current,Snapshot,Signal,Instrument,Event,MarketBar,Rule,RuleVersion,Delivery,ResearchSample,ParityResult,ServiceHealth
@@ -17,15 +17,25 @@ from backend.alerts.rules import AlertRuleInput,matches,validate_condition
 
 class ParametersInput(BaseModel): values:dict
 class SettingsInput(BaseModel):
+    model_config=ConfigDict(extra='forbid', strict=True)
     universe_min_turnover24h_usdt:float|None=Field(default=None,ge=0,le=1e12,allow_inf_nan=False)
     snapshot_interval_sec:float|None=Field(default=None,ge=1,le=86400)
     timezone_offset_minutes:int|None=Field(default=None,ge=-720,le=840,multiple_of=15)
     telegram_bot_token:str|None=None
     telegram_chat_id:str|None=None
     telegram_topic_id:str|None=None
+
+    @model_validator(mode='before')
+    @classmethod
+    def check_not_null(cls, data):
+        if isinstance(data, dict):
+            for k in ('universe_min_turnover24h_usdt', 'snapshot_interval_sec', 'timezone_offset_minutes'):
+                if k in data and data[k] is None:
+                    raise ValueError(f'{k} cannot be null')
+        return data
 class RuleTestInput(BaseModel):
     conditions:dict
-    strategy:Literal['BROKE_SETUPS','WT_SETUPS']='BROKE_SETUPS'
+    strategy:Literal['BROKE_SETUPS']='BROKE_SETUPS'
 class RuleFileInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
     format:Literal['brokeweb-alert-rules']
@@ -46,13 +56,11 @@ def create_app(repository:Repository|None=None):
     async def lifespan(app):
         await asyncio.to_thread(repo.initialize)
         from backend.tradingview import cleanup
-        from backend.wt import cleanup as cleanup_wt
         stop=asyncio.Event()
         async def retention():
             while not stop.is_set():
                 try:
                     await asyncio.to_thread(cleanup,repo)
-                    await asyncio.to_thread(cleanup_wt,repo)
                 except Exception:logging.getLogger(__name__).exception('TradingView retention failed')
                 try:await asyncio.wait_for(stop.wait(),timeout=3600)
                 except TimeoutError:pass
@@ -66,15 +74,13 @@ def create_app(repository:Repository|None=None):
     app.include_router(router(repo))
     from backend.statistics.api import router as statistics_router
     app.include_router(statistics_router(repo))
-    from backend.wt import router as wt_router
-    app.include_router(wt_router(repo))
 
     @app.get('/api/health')
     def health():
         try:
             with repo.session() as s:
                 s.execute(text('SELECT 1'))
-                rows=s.scalars(select(ServiceHealth).where(ServiceHealth.name.not_in(['settings','wt-settings']))).all()
+                rows=s.scalars(select(ServiceHealth).where(ServiceHealth.name!='settings')).all()
             services={row.name:{**row.payload,'updated_at':row.updated_at,'stale':now_ms()-row.updated_at>90000} for row in rows}
             status='HEALTHY' if services and all(not row['stale'] and row.get('status')=='HEALTHY' for row in services.values()) else 'RECOVERING'
             return {'status':status,'services':{'database':{'status':'HEALTHY'},**services},'parity_status':'UNVERIFIED','time':now_ms()}
@@ -200,8 +206,7 @@ def create_app(repository:Repository|None=None):
     def test_rule(body:RuleTestInput):
         try: validate_condition(body.conditions)
         except ValueError as exc: raise HTTPException(422,str(exc))
-        from backend.models.schema import WTCurrent
-        with repo.session() as s: items=[r.payload for r in s.scalars(select(WTCurrent if body.strategy=='WT_SETUPS' else Current))]
+        with repo.session() as s: items=[r.payload for r in s.scalars(select(Current))]
         matched=[r for r in items if matches(body.conditions,r) or any(matches(body.conditions,{**r,'event':event}) for event in r.get('signals',[]))]
         return {'items':matched,'total':len(matched),'note':'Crossing/change rules require prior state; this preview evaluates current snapshots only.'}
     @app.put('/api/alerts/rules/{rule_id}')
@@ -325,11 +330,8 @@ def create_app(repository:Repository|None=None):
     async def websocket(ws:WebSocket):
         await ws.accept()
         def initial():
-            from backend.models.schema import WTCurrent
-            from backend.wt import present
             with repo.session() as s:
-                return ([{'type':'snapshot','data':r.payload} for r in s.scalars(select(Current))]+
-                        [{'type':'wt_snapshot','data':present(r.payload,r.updated_at,now_ms())} for r in s.scalars(select(WTCurrent).where(WTCurrent.signal_source=='engine'))])
+                return [{'type':'snapshot','data':r.payload} for r in s.scalars(select(Current))]
         client=None; pubsub=None
         try:
             from redis.asyncio import Redis

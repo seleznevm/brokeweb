@@ -19,7 +19,7 @@ def rates(counts):
 def router(repo):
     routes=APIRouter()
     @routes.get('/api/statistics')
-    def statistics(strategy:Literal['BROKE','WT_SETUPS']='BROKE',source:Literal['engine','tradingview']|None=None,
+    def statistics(strategy:Literal['BROKE']='BROKE',source:Literal['engine']|None=None,
                    mode:Literal['live','replay']='live',family:str|None=None,symbol:str|None=None,
                    direction:Literal['LONG','SHORT']|None=None,timeframe:str|None=None,
                    start:int|None=Query(None,ge=0),end:int|None=Query(None,ge=0),

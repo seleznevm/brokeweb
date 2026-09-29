@@ -8,7 +8,7 @@ from urllib.parse import quote
 import httpx
 from sqlalchemy import select
 from backend.models.repository import Repository,now_ms
-from backend.models.schema import Delivery,Rule,Current,WTCurrent,WTEvent
+from backend.models.schema import Delivery,Rule,Current
 
 log=logging.getLogger(__name__)
 DEFAULT='''{direction} {event}
@@ -25,15 +25,6 @@ Candidate: {candidate_path} | Trigger: {trigger_path}
 SL: {sl} | T1: {t1} | R:R: {rr}
 Blockers: {blockers}
 {detail_url}'''
-WT_DEFAULT='''WT {direction} | {symbol} | TF {timeframe}
-Setups: {setups} | Subtypes: {setup_subtypes}
-Score: {score} | SetupQ: {setup_quality} | EQ: {entry_quality}
-ACTION: {action} | Regime: {market_regime}
-Percentiles V/ADX/ATR: {volume_percentile}/{adx_percentile}/{atr_percentile}
-Entry: {entry} | SL: {sl} | Managed SL: {managed_sl}
-TP1: {tp1} | TP2: {tp2} | TP3: {tp3} | TP4: {tp4}
-LIQ: {liquidity_target} | Risk: {risk_usdt} USDT | Position: {position_usdt} USDT
-{detail_url}'''
 def render_message(payload):
     if 'text' in payload: return str(payload['text'])[:4096]
     snapshot=payload['snapshot']; values=dict(snapshot)
@@ -41,15 +32,14 @@ def render_message(payload):
     values['blockers']=', '.join(snapshot.get('blockers',[])) or 'NONE'
     base=os.getenv('PUBLIC_BASE_URL','http://localhost:8080').rstrip('/')
     values['detail_url']=base+'/setups/'+'/'.join(quote(str(snapshot.get(k,'')),safe='') for k in ('exchange','symbol','timeframe'))
-    if snapshot.get('strategy')=='WT_SETUPS':values['detail_url']=base+'/wt-setups?symbol='+quote(snapshot.get('symbol',''),safe='')
     for key in ('avg_setup','formation','execution','geometry','context','level','approach','mae','exhaustion','btc_shock','continuation','rr','distance'):
         value=values.get(key)
         if isinstance(value,(int,float)) and not isinstance(value,bool):values[key]=f'{value:.2f}'.rstrip('0').rstrip('.')
-    template=payload.get('template') or (WT_DEFAULT if snapshot.get('strategy')=='WT_SETUPS' else DEFAULT)
+    template=payload.get('template') or DEFAULT
     # Only literal field names; no attribute access, expressions, or formatting execution.
     return re.sub(r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}',lambda m:str(values[m[1]]) if values.get(m[1]) is not None else 'n/a',template)[:4096]
 
-async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id:str,default_topic:str|int|None=None,now:int|None=None):
+async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id:str,now:int|None=None):
     now=now or now_ms()
     with repo.session.begin() as s:
         # Crash after claim can mean Telegram accepted the request. Preserve uncertainty.
@@ -57,16 +47,10 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         for item in abandoned: item.status='uncertain'; item.error='Worker interrupted during delivery; inspect Telegram before manual retry'
         row=s.scalar(select(Delivery).where(Delivery.status.in_(['pending','retry']),Delivery.next_attempt<=now).order_by(Delivery.id).with_for_update(skip_locked=True).limit(1))
         if row is None: return False
-        if row.rule_id=='wt-tradingview':
-            reference=s.get(WTEvent,row.payload.get('wt_reference_id'))
-            if reference is None or os.getenv('WT_TRADINGVIEW_TELEGRAM_ENABLED','true').lower()!='true' or row.created_at<now-int(os.getenv('ALERT_MAX_AGE_SEC','120'))*1000:
-                row.status='suppressed';row.error='WT reference expired or forwarding disabled';row.updated_at=now;return True
-        elif row.rule_id!='manual-test':
+        if row.rule_id!='manual-test':
             rule=s.get(Rule,row.rule_id)
             snapshot=row.payload['snapshot']; market=tuple(snapshot[k] for k in ('exchange','symbol','timeframe'))
-            current=s.get(WTCurrent,(*market,snapshot.get('signal_source','engine'))) if snapshot.get('strategy')=='WT_SETUPS' else s.get(Current,market)
-            if current and snapshot.get('strategy')=='WT_SETUPS' and not snapshot.get('stop_hit') and current.payload.get('stop_hit') and current.payload.get('setup_generation_id')==snapshot.get('setup_generation_id'):
-                row.status='suppressed';row.error='WT plan reached SL before delivery';row.updated_at=now;return True
+            current=s.get(Current,market)
             health=current.payload.get('data_health') if current else None
             if isinstance(health,dict): health=health.get('status')
             if rule is None or not rule.enabled or rule.version!=row.rule_version or health not in {'HEALTHY','FULL_REALTIME','KLINE_REALTIME'} or current.updated_at<now-90000:
@@ -77,16 +61,7 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         row_id=row.id; payload=row.payload; attempt=row.attempts
     status='failed'; error=None; retry_at=0
     try:
-        body={'chat_id':chat_id,'text':render_message(payload),'disable_web_page_preview':True}
-        topic=payload.get('message_thread_id')
-        if topic is None and default_topic:
-            topic=default_topic
-        if topic is not None:
-            try:
-                body['message_thread_id']=int(topic)
-            except (ValueError,TypeError):
-                pass
-        response=await client.post(f'https://api.telegram.org/bot{token}/sendMessage',json=body,timeout=15)
+        response=await client.post(f'https://api.telegram.org/bot{token}/sendMessage',json={'chat_id':chat_id,'text':render_message(payload),'disable_web_page_preview':True},timeout=15)
         data=response.json()
         if response.status_code==200 and data.get('ok'): status='sent'
         elif response.status_code==429:
@@ -106,16 +81,13 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
 
 async def main():
     repo=Repository(); repo.initialize()
+    token=os.getenv('TELEGRAM_BOT_TOKEN',''); chat=os.getenv('TELEGRAM_CHAT_ID','')
     async with httpx.AsyncClient() as client:
         while True:
-            st=repo.settings()
-            token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN','')).strip()
-            chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID','')).strip()
-            topic=(st.get('telegram_topic_id') or os.getenv('TELEGRAM_TOPIC_ID','')).strip()
             enabled=bool(token and chat)
-            repo.heartbeat('notifier',{'status':'HEALTHY','telegram':'configured' if enabled else 'disabled','chat_id':chat,'topic_id':topic})
+            repo.heartbeat('notifier',{'status':'HEALTHY','telegram':'configured' if enabled else 'disabled'})
             if enabled:
-                if await deliver_one(repo,client,token,chat,default_topic=topic): continue
+                if await deliver_one(repo,client,token,chat): continue
             await asyncio.sleep(2)
 
 if __name__=='__main__': asyncio.run(main())

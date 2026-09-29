@@ -375,28 +375,3 @@ def test_disconnect_survives_engine_growth_during_database_write():
         assert {'XUSDT','YUSDT'} <= worker.recovering
     asyncio.run(scenario())
 
-
-def test_wt_reuses_worker_candles_and_commits_with_broke(tmp_path):
-    from backend.models.repository import Repository,now_ms
-    from backend.models.schema import WTCurrent,MarketBar
-    from backend.models.checkpoints import unpack_checkpoint
-    from sqlalchemy import select,func
-    from backend.engine.wt import parameters
-    async def scenario():
-        worker=worker_shell();worker.repo=Repository(f'sqlite:///{tmp_path}/shared.db');worker.repo.initialize()
-        worker.context_last=0;worker.parameter_id=worker.repo.parameters()['id'];worker.native_turnover24h={}
-        worker.wt_parameters=parameters();worker.btc_stream_ready=lambda:True
-        worker.calculations=0;worker.latencies=[];worker.checkpoint_latencies=[];worker.checkpoint_pack_latencies=[];worker.db_latencies=[]
-        worker.redis=SimpleNamespace(publish=AsyncMock())
-        bar={'start':now_ms()//1800000*1800000,'end':(now_ms()//1800000+1)*1800000,'received_at':now_ms(),'open':100,'high':102,'low':99,'close':101,'volume':1000,'confirmed':False}
-        snapshot={'exchange':'BYBIT','symbol':'XUSDT','timeframe':'30','bar_start':bar['start'],'event_time':bar['received_at'],'calculation_ms':1,'data_health':'HEALTHY','action':'WAIT SETUP','signals':[],'bar':bar}
-        engine=SimpleNamespace(symbol='XUSDT',timeframe='30',tick_size=.01,chart_bars=[],update=lambda *a:snapshot,export_state=lambda:{'snapshot':dict(snapshot)})
-        await worker.persist(engine,bar,True)
-        state=worker.repo.load_checkpoint('BYBIT','XUSDT','30')
-        assert 'wt' in state and 'wt' not in state['snapshot']
-        with worker.repo.session() as session:
-            wt=session.get(WTCurrent,('BYBIT','XUSDT','30','engine'))
-            assert wt is not None and wt.payload['price']==101 and 'bar' not in wt.payload
-            assert 'open' not in wt.payload['metrics']
-            assert session.scalar(select(func.count()).select_from(MarketBar))==0
-    asyncio.run(scenario())
