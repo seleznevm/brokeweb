@@ -56,6 +56,11 @@ class PineEngine:
         snapshot['metric_colors']={field:next((row.get('color') for row in self.runtime.capture if row['label']==label),None) for field,label in metric_labels.items()}
         snapshot['metrics']['source_locals']={k:v for k,v in self.runtime.current.items() if not k.startswith('/g/') and '/ta/' not in k and '/expr/' not in k}
         snapshot['locked_zone']={'center':m.get('lockedLevel'),'top':m.get('lockedZoneTop'),'bottom':m.get('lockedZoneBottom'),'id':m.get('lockedZoneId')}
+        snapshot['support_top']=m.get('rawSupportTop1') if not is_na(m.get('rawSupportTop1')) else (m.get('supportTop1') if not is_na(m.get('supportTop1')) else None)
+        snapshot['support_bottom']=m.get('rawSupportBottom1') if not is_na(m.get('rawSupportBottom1')) else (m.get('supportBottom1') if not is_na(m.get('supportBottom1')) else None)
+        snapshot['resistance_top']=m.get('rawResistanceTop1') if not is_na(m.get('rawResistanceTop1')) else (m.get('resistanceTop1') if not is_na(m.get('resistanceTop1')) else None)
+        snapshot['resistance_bottom']=m.get('rawResistanceBottom1') if not is_na(m.get('rawResistanceBottom1')) else (m.get('resistanceBottom1') if not is_na(m.get('resistanceBottom1')) else None)
+        snapshot['atr']=m.get('atr') if not is_na(m.get('atr')) else None
         snapshot['active_plan_health']='EXIT' if truth(m.get('activePlanExit')) else 'REDUCE' if truth(m.get('activePlanReduce')) else 'DEGRADED' if truth(m.get('activePlanNoAdd')) else 'HEALTHY' if truth(m.get('activePlanHealthy')) else None
         snapshot['hard_gates']=str(sum(truth(m.get(k)) for k in ('gateInPlay','gateLevel','gateStructure','gateApproach','gateDistance')))+'/5'
         snapshot['target_freshness']='n/a' if not direction else 'CONSUMED / UNRESOLVED' if truth(m.get('targetConsumedUnresolved')) else 'BROKEN/RETEST' if truth(m.get('lockedLiquidityConsumed')) else 'FRESH'

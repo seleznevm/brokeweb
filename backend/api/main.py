@@ -11,7 +11,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel,Field,ConfigDict,model_validator
 from sqlalchemy import select,text
 from backend.models.repository import Repository,now_ms,SCORES
-from backend.models.schema import Current,Snapshot,Signal,Instrument,Event,MarketBar,Rule,RuleVersion,Delivery,ResearchSample,ParityResult,ServiceHealth
+from backend.models.schema import Current,Snapshot,Signal,Instrument,Event,MarketBar,Rule,RuleVersion,Delivery,ResearchSample,ParityResult,ServiceHealth,BrokePBPosition
 from backend.models.schema import ArchiveBatch
 from backend.alerts.rules import AlertRuleInput,matches,validate_condition
 
@@ -24,15 +24,35 @@ class SettingsInput(BaseModel):
     telegram_bot_token:str|None=None
     telegram_chat_id:str|None=None
     telegram_topic_id:str|None=None
+    broke_pb_position_usdt:float|None=Field(default=None,ge=1,le=1000000,allow_inf_nan=False)
+    broke_pb_telegram_bot_token:str|None=None
+    broke_pb_telegram_chat_id:str|None=None
+    broke_pb_telegram_topic_id:str|None=None
+    broke_pb_pm_telegram_enabled:bool|None=None
+    broke_pb_pm_telegram_bot_token:str|None=None
+    broke_pb_pm_telegram_chat_id:str|None=None
+    broke_pb_pm_telegram_topic_id:str|None=None
 
     @model_validator(mode='before')
     @classmethod
     def check_not_null(cls, data):
         if isinstance(data, dict):
-            for k in ('universe_min_turnover24h_usdt', 'snapshot_interval_sec', 'timezone_offset_minutes'):
+            for k in ('universe_min_turnover24h_usdt', 'snapshot_interval_sec', 'timezone_offset_minutes', 'broke_pb_position_usdt'):
                 if k in data and data[k] is None:
                     raise ValueError(f'{k} cannot be null')
         return data
+
+class SettingsFileInput(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    format:Literal['brokeweb-settings']
+    version:Literal[1]
+    exported_at:int|None=None
+    settings:dict=Field(default_factory=dict)
+    parameters:dict|None=None
+
+class TestTelegramInput(BaseModel):
+    target:Literal['broke_we', 'broke_pb', 'broke_pb_pm']='broke_we'
+
 class RuleTestInput(BaseModel):
     conditions:dict
     strategy:Literal['BROKE_SETUPS']='BROKE_SETUPS'
@@ -170,6 +190,27 @@ def create_app(repository:Repository|None=None):
     def settings(): return repo.settings()
     @app.put('/api/settings')
     def set_settings(body:SettingsInput): return repo.set_settings(body.model_dump(exclude_unset=True))
+    @app.get('/api/settings/export')
+    def export_settings():
+        return {
+            'format': 'brokeweb-settings',
+            'version': 1,
+            'exported_at': now_ms(),
+            'settings': repo.settings(),
+            'parameters': repo.parameters()['values']
+        }
+    @app.post('/api/settings/import')
+    def import_settings(body:SettingsFileInput):
+        if body.settings:
+            repo.set_settings(body.settings)
+        if body.parameters:
+            try: repo.set_parameters(body.parameters)
+            except (ValueError,TypeError) as exc: raise HTTPException(422,f'Invalid parameters: {exc}')
+        return {
+            'status': 'imported',
+            'settings': repo.settings(),
+            'parameters': repo.parameters()['values']
+        }
 
     @app.get('/api/alerts/fields')
     def alert_fields():
@@ -231,18 +272,94 @@ def create_app(repository:Repository|None=None):
         with repo.session() as s: rows=s.scalars(select(Delivery).order_by(Delivery.created_at.desc()).limit(limit)).all()
         return {'items':[{'id':r.id,'rule_id':r.rule_id,'status':r.status,'created_at':r.created_at,'attempts':r.attempts,'error':r.error,'payload':r.payload} for r in rows]}
     @app.post('/api/alerts/test-telegram')
-    def test_telegram():
+    def test_telegram(body: TestTelegramInput | None = None):
         st=repo.settings()
-        token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
-        chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
-        topic=(st.get('telegram_topic_id') or os.getenv('TELEGRAM_TOPIC_ID') or '').strip()
-        if not token or not chat: raise HTTPException(409,'Configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID first')
+        target = body.target if body else 'broke_we'
+        if target == 'broke_pb':
+            token=(st.get('broke_pb_telegram_bot_token') or st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
+            chat=(st.get('broke_pb_telegram_chat_id') or st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
+            topic=(st.get('broke_pb_telegram_topic_id') or '').strip()
+            label='BROKE-PB Setups'
+        elif target == 'broke_pb_pm':
+            token=(st.get('broke_pb_pm_telegram_bot_token') or st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
+            chat=(st.get('broke_pb_pm_telegram_chat_id') or st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
+            topic=(st.get('broke_pb_pm_telegram_topic_id') or '').strip()
+            label='BROKE-PB Position Manager'
+        else:
+            token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
+            chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
+            topic=(st.get('telegram_topic_id') or os.getenv('TELEGRAM_TOPIC_ID') or '').strip()
+            label='BROKE WE Setups'
+
+        if not token or not chat: raise HTTPException(409, f'Configure Telegram Bot Token and Chat ID for {label} first')
         from backend.alerts.outbox import digest
         now=now_ms()
         thread_id=int(topic) if topic.lstrip('-').isdigit() else None
         with repo.session.begin() as s:
-            s.add(Delivery(dedupe_key=digest(['test',str(uuid.uuid4())]),rule_id='manual-test',rule_version=1,created_at=now,updated_at=now,next_attempt=now,status='pending',payload={'text':'Scalping SMA: connection test requested in the web interface.','message_thread_id':thread_id}))
-        return {'status':'queued'}
+            s.add(Delivery(
+                dedupe_key=digest(['test',str(uuid.uuid4())]),
+                rule_id='manual-test',
+                rule_version=1,
+                created_at=now,
+                updated_at=now,
+                next_attempt=now,
+                status='pending',
+                payload={
+                    'text': f'Scalping SMA: connection test for {label} requested in the web interface.',
+                    'telegram_bot_token': token,
+                    'telegram_chat_id': chat,
+                    'telegram_topic_id': topic,
+                    'message_thread_id': thread_id
+                }
+            ))
+        return {'status':'queued', 'target': target, 'chat': chat, 'topic': topic or 'general'}
+
+    @app.get('/api/broke-pb/positions')
+    def pb_positions(status: str | None = None, symbol: str | None = None, limit: int = Query(200, ge=1, le=1000)):
+        with repo.session() as s:
+            query = select(BrokePBPosition)
+            if status: query = query.where(BrokePBPosition.status == status)
+            if symbol: query = query.where(BrokePBPosition.symbol == symbol)
+            rows = s.scalars(query.order_by(BrokePBPosition.entry_time.desc(), BrokePBPosition.id.desc()).limit(limit)).all()
+            return {'items': [{
+                'id': r.id, 'symbol': r.symbol, 'exchange': r.exchange, 'timeframe': r.timeframe,
+                'direction': r.direction, 'status': r.status, 'nominal_usdt': r.nominal_usdt,
+                'entry_price': r.entry_price, 'entry_time': r.entry_time, 'bar_start': r.bar_start,
+                'sl': r.sl, 'tp1': r.tp1, 'runner': r.runner, 'tp1_hit': r.tp1_hit,
+                'runner_hit': r.runner_hit, 'runner_be': r.runner_be, 'underwater': r.underwater,
+                'reduced': r.reduced, 'exhaustion_taken': r.exhaustion_taken,
+                'close_price': r.close_price, 'close_time': r.close_time, 'close_reason': r.close_reason,
+                'pnl_usdt': r.pnl_usdt, 'pnl_pct': r.pnl_pct, 'payload': r.payload, 'updated_at': r.updated_at
+            } for r in rows]}
+
+    @app.get('/api/broke-pb/positions/active')
+    def pb_active_positions():
+        with repo.session() as s:
+            rows = s.scalars(select(BrokePBPosition).where(BrokePBPosition.status == 'OPEN').order_by(BrokePBPosition.entry_time.desc())).all()
+            current_map = {c.symbol: c.payload for c in s.scalars(select(Current))}
+            items = []
+            for r in rows:
+                c = current_map.get(r.symbol, {})
+                curr_price = c.get('price') or r.entry_price
+                is_long = r.direction == 'LONG'
+                unrealized_pct = ((curr_price - r.entry_price) / r.entry_price * 100.0) if is_long else ((r.entry_price - curr_price) / r.entry_price * 100.0)
+                remaining_frac = 0.5 if r.tp1_hit else (0.5 if r.reduced else 1.0)
+                realized = r.payload.get('realized_tp1_usdt', 0.0)
+                unrealized_usdt = (r.nominal_usdt * remaining_frac) * (unrealized_pct / 100.0)
+                total_pnl = realized + unrealized_usdt
+                total_pnl_pct = (total_pnl / r.nominal_usdt) * 100.0
+
+                items.append({
+                    'id': r.id, 'symbol': r.symbol, 'direction': r.direction, 'status': r.status,
+                    'nominal_usdt': r.nominal_usdt, 'entry_price': r.entry_price, 'current_price': curr_price,
+                    'entry_time': r.entry_time, 'sl': r.runner_be if r.tp1_hit else r.sl, 'original_sl': r.sl,
+                    'tp1': r.tp1, 'runner': r.runner, 'tp1_hit': r.tp1_hit, 'runner_be': r.runner_be,
+                    'underwater': r.underwater, 'reduced': r.reduced,
+                    'pnl_usdt': round(total_pnl, 2), 'pnl_pct': round(total_pnl_pct, 2),
+                    'action': 'TAKE 50% + BE' if r.tp1_hit else ('UNDERWATER' if r.underwater else 'HOLD / IN TRADE'),
+                    'updated_at': r.updated_at
+                })
+            return {'items': items, 'total': len(items)}
 
     @app.get('/api/ai-agent/settings')
     def ai_agent_settings():

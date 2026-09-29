@@ -9,6 +9,14 @@ export interface RuntimeSettings {
   telegram_bot_token?: string;
   telegram_chat_id?: string;
   telegram_topic_id?: string;
+  broke_pb_position_usdt?: number;
+  broke_pb_telegram_bot_token?: string;
+  broke_pb_telegram_chat_id?: string;
+  broke_pb_telegram_topic_id?: string;
+  broke_pb_pm_telegram_enabled?: boolean;
+  broke_pb_pm_telegram_bot_token?: string;
+  broke_pb_pm_telegram_chat_id?: string;
+  broke_pb_pm_telegram_topic_id?: string;
 }
 const TimezoneContext=createContext(DEFAULT_TIMEZONE_OFFSET);
 export function TimezoneProvider({children}:{children:ReactNode}){

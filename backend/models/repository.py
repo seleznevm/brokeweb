@@ -145,6 +145,9 @@ class Repository:
                     s.add(Signal(dedupe_key=dedupe,symbol=key[1],timeframe=key[2],event_time=current['event_time'],name=name,parameter_set_id=current['parameter_set_id'],payload={**current,'event':name}))
                     s.add(Event(exchange=key[0],symbol=key[1],timeframe=key[2],event_time=current['event_time'],kind='signal',payload={**current,'event':name}))
             enqueue_matching(s,current,previous,now)
+            if not current.get('replay'):
+                from backend.engine.broke_pb import process_broke_pb_snapshot
+                process_broke_pb_snapshot(s, current, self.settings(s), now)
             self._save_research(s,current)
             if old:
                 old.payload=current; old.updated_at=now

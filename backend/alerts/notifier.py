@@ -47,7 +47,7 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         for item in abandoned: item.status='uncertain'; item.error='Worker interrupted during delivery; inspect Telegram before manual retry'
         row=s.scalar(select(Delivery).where(Delivery.status.in_(['pending','retry']),Delivery.next_attempt<=now).order_by(Delivery.id).with_for_update(skip_locked=True).limit(1))
         if row is None: return False
-        if row.rule_id!='manual-test':
+        if row.rule_id not in ('manual-test', 'broke-pb'):
             rule=s.get(Rule,row.rule_id)
             snapshot=row.payload['snapshot']; market=tuple(snapshot[k] for k in ('exchange','symbol','timeframe'))
             current=s.get(Current,market)
@@ -59,9 +59,19 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
                 row.status='suppressed'; row.error='Alert expired before delivery'; row.updated_at=now; return True
         row.status='sending'; row.updated_at=now; row.attempts+=1
         row_id=row.id; payload=row.payload; attempt=row.attempts
+    target_token=(payload.get('telegram_bot_token') or token).strip()
+    target_chat=(payload.get('telegram_chat_id') or chat_id).strip()
+    thread_id=payload.get('telegram_topic_id') or payload.get('message_thread_id')
+    if not target_token or not target_chat:
+        with repo.session.begin() as s:
+            row=s.get(Delivery,row_id); row.status='failed'; row.error='Missing Telegram token or chat_id'; row.updated_at=now_ms()
+        return True
+    body={'chat_id':target_chat,'text':render_message(payload),'disable_web_page_preview':True}
+    if thread_id is not None and str(thread_id).lstrip('-').isdigit():
+        body['message_thread_id']=int(str(thread_id).strip())
     status='failed'; error=None; retry_at=0
     try:
-        response=await client.post(f'https://api.telegram.org/bot{token}/sendMessage',json={'chat_id':chat_id,'text':render_message(payload),'disable_web_page_preview':True},timeout=15)
+        response=await client.post(f'https://api.telegram.org/bot{target_token}/sendMessage',json=body,timeout=15)
         data=response.json()
         if response.status_code==200 and data.get('ok'): status='sent'
         elif response.status_code==429:
@@ -81,13 +91,14 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
 
 async def main():
     repo=Repository(); repo.initialize()
-    token=os.getenv('TELEGRAM_BOT_TOKEN',''); chat=os.getenv('TELEGRAM_CHAT_ID','')
     async with httpx.AsyncClient() as client:
         while True:
+            st=repo.settings()
+            token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
+            chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
             enabled=bool(token and chat)
             repo.heartbeat('notifier',{'status':'HEALTHY','telegram':'configured' if enabled else 'disabled'})
-            if enabled:
-                if await deliver_one(repo,client,token,chat): continue
+            if await deliver_one(repo,client,token,chat): continue
             await asyncio.sleep(2)
 
 if __name__=='__main__': asyncio.run(main())

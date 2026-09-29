@@ -201,3 +201,38 @@ class ArchiveBatch(Base):
     sha256: Mapped[str] = mapped_column(String(64))
     file_bytes: Mapped[int] = mapped_column(BigInteger)
     restored_at: Mapped[int | None] = mapped_column(BigInteger)
+
+
+class BrokePBPosition(Base):
+    __tablename__ = 'broke_pb_positions'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    symbol: Mapped[str] = mapped_column(String(60), index=True)
+    exchange: Mapped[str] = mapped_column(String(30), default='BYBIT')
+    timeframe: Mapped[str] = mapped_column(String(16), default='30')
+    direction: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(30), default='OPEN', index=True)
+    nominal_usdt: Mapped[float] = mapped_column(Float, default=500.0)
+    entry_price: Mapped[float] = mapped_column(Float)
+    entry_time: Mapped[int] = mapped_column(BigInteger, index=True)
+    bar_start: Mapped[int] = mapped_column(BigInteger)
+    sl: Mapped[float] = mapped_column(Float)
+    tp1: Mapped[float] = mapped_column(Float)
+    runner: Mapped[float | None] = mapped_column(Float)
+    tp1_hit: Mapped[bool] = mapped_column(Boolean, default=False)
+    runner_hit: Mapped[bool] = mapped_column(Boolean, default=False)
+    runner_be: Mapped[float | None] = mapped_column(Float)
+    underwater: Mapped[bool] = mapped_column(Boolean, default=False)
+    reduced: Mapped[bool] = mapped_column(Boolean, default=False)
+    exhaustion_taken: Mapped[bool] = mapped_column(Boolean, default=False)
+    close_price: Mapped[float | None] = mapped_column(Float)
+    close_time: Mapped[int | None] = mapped_column(BigInteger)
+    close_reason: Mapped[str | None] = mapped_column(String(60))
+    pnl_usdt: Mapped[float | None] = mapped_column(Float)
+    pnl_pct: Mapped[float | None] = mapped_column(Float)
+    payload: Mapped[dict] = mapped_column(J)
+    updated_at: Mapped[int] = mapped_column(BigInteger)
+    __table_args__ = (
+        Index('ix_pb_pos_symbol_status', 'symbol', 'status'),
+        Index('ix_pb_pos_status_entry', 'status', 'entry_time'),
+    )
+
