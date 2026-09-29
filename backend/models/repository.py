@@ -188,6 +188,7 @@ class Repository:
             'broke_pb_position_usdt': 500.0,
             'broke_pb_pm_active': True,
         }
+        row = session.get(ServiceHealth, 'settings')
         return {**defaults, **(row.payload if row else {})}
     def set_settings(self,value):
         with self.session.begin() as s:
