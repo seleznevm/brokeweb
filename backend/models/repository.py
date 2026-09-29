@@ -181,8 +181,14 @@ class Repository:
     def settings(self,session=None):
         if session is None:
             with self.session() as s: return self.settings(s)
-        row=session.get(ServiceHealth,'settings')
-        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,**(row.payload if row else {})}
+        defaults = {
+            'snapshot_interval_sec': self.snapshot_interval_sec,
+            'timezone_offset_minutes': 420,
+            'universe_min_turnover24h_usdt': 10000000,
+            'broke_pb_position_usdt': 500.0,
+            'broke_pb_pm_active': True,
+        }
+        return {**defaults, **(row.payload if row else {})}
     def set_settings(self,value):
         with self.session.begin() as s:
             row=s.get(ServiceHealth,'settings',with_for_update=True)
