@@ -1,6 +1,17 @@
 import {clamp} from './chartMath';
 import type {Bar,Data} from './types';
 
+export interface TradeSegment {id:string;name:string;price:number;start:number;end:number;hit:boolean;color:string}
+export function tradeSegments(plans:Data[],first:number,last:number):TradeSegment[]{
+ const colors:Record<string,string>={entry:'#ddd',initial_sl:'#f06f78',be:'#eac470',liquidity_target:'#ad87ea'};
+ return plans.flatMap(plan=>Object.entries((plan.levels??{}) as Record<string,Data>).flatMap(([name,level])=>{
+  if(typeof level.price!=='number'||typeof level.start!=='number'||!Number.isFinite(level.price))return [];
+  const end=typeof level.end==='number'?level.end:last;
+  if(end<first||level.start>last)return [];
+  return [{id:`${String(plan.id)}:${name}`,name,price:level.price,start:Math.max(first,level.start),end:Math.min(last,end),hit:level.hit===true,color:colors[name]??'#63a6ff'}];
+ }));
+}
+
 // Keep labels inside the plot and separate even identical/nearby price levels.
 // There are at most six zone labels and two trade-plan labels per side.
 export function spreadLabels<T extends {anchor:number}>(labels:T[],top:number,bottom:number,gap=20):(T&{position:number})[]{

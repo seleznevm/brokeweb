@@ -25,6 +25,15 @@ Candidate: {candidate_path} | Trigger: {trigger_path}
 SL: {sl} | T1: {t1} | R:R: {rr}
 Blockers: {blockers}
 {detail_url}'''
+WT_DEFAULT='''WT {direction} | {symbol} | TF {timeframe}
+Setups: {setups} | Subtypes: {setup_subtypes}
+Score: {score} | SetupQ: {setup_quality} | EQ: {entry_quality}
+ACTION: {action} | Regime: {market_regime}
+Percentiles V/ADX/ATR: {volume_percentile}/{adx_percentile}/{atr_percentile}
+Entry: {entry} | SL: {sl} | Managed SL: {managed_sl}
+TP1: {tp1} | TP2: {tp2} | TP3: {tp3} | TP4: {tp4}
+LIQ: {liquidity_target} | Risk: {risk_usdt} USDT | Position: {position_usdt} USDT
+{detail_url}'''
 def render_message(payload):
     if 'text' in payload: return str(payload['text'])[:4096]
     snapshot=payload['snapshot']; values=dict(snapshot)
@@ -36,11 +45,11 @@ def render_message(payload):
     for key in ('avg_setup','formation','execution','geometry','context','level','approach','mae','exhaustion','btc_shock','continuation','rr','distance'):
         value=values.get(key)
         if isinstance(value,(int,float)) and not isinstance(value,bool):values[key]=f'{value:.2f}'.rstrip('0').rstrip('.')
-    template=payload.get('template') or DEFAULT
+    template=payload.get('template') or (WT_DEFAULT if snapshot.get('strategy')=='WT_SETUPS' else DEFAULT)
     # Only literal field names; no attribute access, expressions, or formatting execution.
     return re.sub(r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}',lambda m:str(values[m[1]]) if values.get(m[1]) is not None else 'n/a',template)[:4096]
 
-async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id:str,now:int|None=None):
+async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id:str,default_topic:str|int|None=None,now:int|None=None):
     now=now or now_ms()
     with repo.session.begin() as s:
         # Crash after claim can mean Telegram accepted the request. Preserve uncertainty.
@@ -68,7 +77,16 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         row_id=row.id; payload=row.payload; attempt=row.attempts
     status='failed'; error=None; retry_at=0
     try:
-        response=await client.post(f'https://api.telegram.org/bot{token}/sendMessage',json={'chat_id':chat_id,'text':render_message(payload),'disable_web_page_preview':True},timeout=15)
+        body={'chat_id':chat_id,'text':render_message(payload),'disable_web_page_preview':True}
+        topic=payload.get('message_thread_id')
+        if topic is None and default_topic:
+            topic=default_topic
+        if topic is not None:
+            try:
+                body['message_thread_id']=int(topic)
+            except (ValueError,TypeError):
+                pass
+        response=await client.post(f'https://api.telegram.org/bot{token}/sendMessage',json=body,timeout=15)
         data=response.json()
         if response.status_code==200 and data.get('ok'): status='sent'
         elif response.status_code==429:
@@ -88,13 +106,16 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
 
 async def main():
     repo=Repository(); repo.initialize()
-    token=os.getenv('TELEGRAM_BOT_TOKEN',''); chat=os.getenv('TELEGRAM_CHAT_ID','')
     async with httpx.AsyncClient() as client:
         while True:
+            st=repo.settings()
+            token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN','')).strip()
+            chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID','')).strip()
+            topic=(st.get('telegram_topic_id') or os.getenv('TELEGRAM_TOPIC_ID','')).strip()
             enabled=bool(token and chat)
-            repo.heartbeat('notifier',{'status':'HEALTHY','telegram':'configured' if enabled else 'disabled'})
+            repo.heartbeat('notifier',{'status':'HEALTHY','telegram':'configured' if enabled else 'disabled','chat_id':chat,'topic_id':topic})
             if enabled:
-                if await deliver_one(repo,client,token,chat): continue
+                if await deliver_one(repo,client,token,chat,default_topic=topic): continue
             await asyncio.sleep(2)
 
 if __name__=='__main__': asyncio.run(main())

@@ -68,7 +68,7 @@ def test_bridge_decodes_broke_values_without_another_market_calculation():
     assert bad['data_health']=='DEGRADED' and bad['broke_valid'] is False
 
 def test_wt_source_produces_real_setup_events():
-    p={'profileMode':'Manual','manualMidTf':'120','minScoreManual':0,'requireLiquidityHardManual':False,'useBtcFilter':False}
+    p={'adaptiveCore':False,'setupQualityGate':False,'profileMode':'Manual','manualMidTf':'120','minScoreManual':0,'requireLiquidityHardManual':False,'useBtcFilter':False}
     e=WTEngine('TESTUSDT','30',.01,p);found=[]
     for i in range(400,600):
         c=200+i*.15+math.sin(i/4)*3

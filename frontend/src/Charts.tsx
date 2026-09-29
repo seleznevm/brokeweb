@@ -1,11 +1,11 @@
 import {useState} from 'react';
 import {useDisplayTime} from './Timezone';
-import {clusterEvents,eventName,spreadLabels} from './chartAnnotations';
+import {clusterEvents,eventName,spreadLabels,tradeSegments} from './chartAnnotations';
 import {useChartView,W,H,P,R} from './useChartView';
 import { format, formatField, valueOf } from './model';
 import type { Bar, Data, Snapshot } from './types';
 import { Empty } from './common';
-export function CandleChart({bars,snapshot,events}:{bars:Bar[];snapshot?:Snapshot;events:Data[]}){
+export function CandleChart({bars,snapshot,events,plans=[]}:{bars:Bar[];snapshot?:Snapshot;events:Data[];plans?:Data[]}){
  const {timestamp,label:zoneLabel}=useDisplayTime();
  const [eventsOpen,setEventsOpen]=useState(false);
  const valid=bars.filter(x=>[x.open,x.high,x.low,x.close].every(Number.isFinite));
@@ -13,9 +13,14 @@ export function CandleChart({bars,snapshot,events}:{bars:Bar[];snapshot?:Snapsho
  if(!candles.length)return <Empty>Свечи ещё не доступны. OHLCV не заменяются синтетическими данными.</Empty>;
  const m=snapshot?.metrics??{};
  const zones=[['R1','resistanceBottom1','resistanceTop1','#e97178'],['R2','resistanceBottom2','resistanceTop2','#ba656d'],['S1','supportBottom1','supportTop1','#39bfab'],['S2','supportBottom2','supportTop2','#3c8f88'],['LOCKED','lockedZoneBottom','lockedZoneTop','#d6ab62'],['CONSUMED','recentLifecycleZoneBottom','recentLifecycleZoneTop','#9e7fdc']];
- const levels=[['SL',snapshot?.sl,'#f06f78'],['T1',snapshot?.t1,'#63a6ff']];
+ const levels=snapshot?.strategy==='WT_SETUPS'?[]:[['SL',snapshot?.sl,'#f06f78'],['T1',snapshot?.t1,'#63a6ff']];
  const {y,width}=view,x=(i:number)=>view.x(view.start+i);
  const first=candles[0].start,last=candles.at(-1)!.end;
+ const currentPlan=snapshot?.trade_plan as Data|undefined;
+ const allPlans=new Map(plans.map(plan=>[String(plan.id),plan]));
+ if(currentPlan)allPlans.set(String(currentPlan.id),currentPlan);
+ const segments=tradeSegments([...allPlans.values()],first,candles.at(-1)!.start);
+ const timeX=(time:number)=>{let i=candles.findIndex(b=>b.start<=time&&time<b.end);if(i<0)i=time<=first?0:candles.length-1;return x(i);};
  const zoneLabels=spreadLabels(zones.flatMap(([label,bottom,top,color])=>typeof m[bottom]==='number'&&typeof m[top]==='number'?[{label,color,anchor:y(m[top] as number)}]:[]),P+18,H-P-8);
  const priceLabels=spreadLabels(levels.flatMap(([label,value,color])=>typeof value==='number'?[{label:String(label),value,color:String(color),anchor:y(value)}]:[]),P+18,H-P-8);
  const clusters=clusterEvents(events,candles,x,P,W-R);
@@ -28,6 +33,7 @@ export function CandleChart({bars,snapshot,events}:{bars:Bar[];snapshot?:Snapsho
  <g clipPath={`url(#${view.id})`}>{zones.map(([label,bottom,top,color])=>typeof m[bottom]==='number'&&typeof m[top]==='number'?<g key={label}><rect x={P} y={y(m[top] as number)} width={W-P-R} height={Math.max(1,y(m[bottom] as number)-y(m[top] as number))} fill={color} opacity="0.13"/><line x1={P} x2={W-R} y1={y(m[top] as number)} y2={y(m[top] as number)} stroke={color} opacity=".5"/></g>:null)}
  {candles.map((bar,i)=>{const color=bar.close>=bar.open?'#39c8ac':'#ee7386';return <g key={bar.start}><title>{timestamp(bar.start)}{'\n'}O {format(bar.open,8)} H {format(bar.high,8)} L {format(bar.low,8)} C {format(bar.close,8)}{'\n'}Volume {format(bar.volume)} · {bar.confirmed===false?'realtime':'confirmed'}</title><line x1={x(i)} x2={x(i)} y1={y(bar.high)} y2={y(bar.low)} stroke={color}/><rect x={x(i)-Math.max(1,width*.65)/2} width={Math.max(1,width*.65)} y={y(Math.max(bar.open,bar.close))} height={Math.max(1,Math.abs(y(bar.open)-y(bar.close)))} fill={color} opacity={bar.confirmed===false?.6:1}/></g>;})}
  {levels.map(([label,value,color])=>typeof value==='number'?<g key={String(label)}><line x1={P} x2={W-R} y1={y(value)} y2={y(value)} stroke={String(color)} strokeDasharray="7 4"/></g>:null)}
+ {segments.map(segment=><g key={segment.id} data-wt-level={segment.name} data-start={segment.start} data-end={segment.end}><title>{segment.name.toUpperCase()} {format(segment.price,8)} · {timestamp(segment.start)} → {timestamp(segment.end)}{segment.hit?' · HIT':''}</title><line x1={timeX(segment.start)} x2={timeX(segment.end)} y1={y(segment.price)} y2={y(segment.price)} stroke={segment.color} strokeDasharray="6 3"/><circle cx={timeX(segment.end)} cy={y(segment.price)} r={segment.hit?3:1.5} fill={segment.color}/><text x={timeX(segment.end)-4} y={y(segment.price)-4} textAnchor="end" style={{fill:segment.color,fontSize:10}}>{segment.name.toUpperCase()}</text></g>)}
  {view.ruler}</g>
  {zoneLabels.map(({label,color,anchor,position})=><g key={label} className="price-annotation"><line x1={P+4} x2={P+18} y1={anchor} y2={position} stroke={color}/><rect x={P+18} y={position-9} width={78} height={18} rx={3}/><text x={P+24} y={position+3} style={{fill:color}}>{label}</text></g>)}
  {priceLabels.map(({label,value,color,anchor,position})=><g key={label} className="price-annotation"><line x1={W-R-4} x2={W-R-20} y1={anchor} y2={position} stroke={color}/><rect x={W-R-180} y={position-9} width={160} height={18} rx={3}/><text x={W-R-26} y={position+3} textAnchor="end" style={{fill:color}}>{label} {format(value,8)}</text></g>)}

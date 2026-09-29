@@ -254,6 +254,8 @@ class Worker:
         await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
         self.db_latencies.append((time.perf_counter()-write_started)*1000);self.db_latencies=self.db_latencies[-1000:]
         if realtime:await self.redis.publish('setups',json.dumps({'type':'snapshot','data':{k:v for k,v in snapshot.items() if k!='wt'}},ensure_ascii=False))
+        if realtime and snapshot.get('wt'):
+            await self.redis.publish('setups',json.dumps({'type':'wt_snapshot','data':{k:v for k,v in snapshot['wt'].items() if k not in ('plan_updates','research_updates')}},ensure_ascii=False))
         return snapshot
     def btc_stream_ready(self):
         _,tfs=context_requirements(self.parameters,self.timeframes,getattr(self,'wt_parameters',None))

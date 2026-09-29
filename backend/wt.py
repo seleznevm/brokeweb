@@ -11,7 +11,7 @@ from fastapi import APIRouter,HTTPException,Query,Request
 from pydantic import BaseModel
 from sqlalchemy import select,delete,text,func
 from backend.models.repository import now_ms
-from backend.models.schema import WTCurrent,WTEvent,Delivery,ServiceHealth
+from backend.models.schema import WTCurrent,WTEvent,WTTrade,Delivery,ServiceHealth
 from backend.alerts.outbox import digest,enqueue_matching
 from backend.engine.wt import parameters,input_schema
 
@@ -41,6 +41,13 @@ def save_current(session,current,now):
     return previous
 
 def save_engine(session,current,now):
+    current=dict(current)
+    for kind,field in (('plan','plan_updates'),('research','research_updates')):
+        for trade in current.pop(field,[]):
+            identity=digest([kind,trade['exchange'],trade['symbol'],trade['timeframe'],trade['parameter_hash'],trade['id']])
+            row=session.get(WTTrade,identity)
+            if row:row.payload=trade;row.updated_at=now
+            else:session.add(WTTrade(id=identity,kind=kind,updated_at=now,payload=trade,**{k:trade[k] for k in ('exchange','symbol','timeframe','parameter_hash','entry_timestamp')}))
     previous=save_current(session,current,now)
     # WT stores its own attributes, never another copy of candles.
     significant=not previous or current.get('signals') or current['confirmed'] or current.get('action')!=previous.get('action')
@@ -57,7 +64,7 @@ def parse_message(raw,exchange):
         message=decoded if isinstance(decoded,str) else envelope.get('message',raw)
     except ValueError:message=raw
     if not isinstance(message,str):raise ValueError('message must be text')
-    match=re.match(r'^WT (READY TO ENTER )?(LONG|SHORT)\s*\|\s*([A-Za-z0-9_.:!-]+)\s*\|\s*TF=(\w+)\s*\|\s*((?:T[1-4][ +]*)+)\|',message.strip())
+    match=re.match(r'^WT (READY TO ENTER )?(LONG|SHORT)\s*\|\s*([A-Za-z0-9_.:!-]+)\s*\|\s*TF=(\w+)\s*\|\s*((?:T[1-4](?:-(?:BREAKOUT|RETEST|SEQ))?[ +]*)+)\|',message.strip())
     if not match:raise ValueError('Expected WT LONG/SHORT or WT READY TO ENTER message with T1–T4 IDs; use Any alert() function call')
     ready,side,symbol,tf,ids=match.groups()
     if tf!='30':raise ValueError('WT webhook requires a 30-minute chart')
@@ -78,7 +85,10 @@ def parse_message(raw,exchange):
         'event_time':now,'received_at':now,'bar_start':bar,'time_basis':'explicit_bar_start' if bar is not None else 'received_at_only',
         'confirmed':False,'data_health':'HEALTHY','parity_status':'UNVERIFIED','raw_body':raw,'fields':fields,'source_event_id':event_id,
         'setup_generation_id':event_id or str(uuid.uuid4())}
-    for source,target in [('Score','score'),('EQ','entry_quality'),('Entry','entry'),('Price','price'),('PlanEntry','entry'),('SL','sl'),('TP1','tp1'),('LIQ','liquidity_target'),('RRliq','rr_liquidity'),('Pos','position_usdt'),('Risk','risk_usdt')]:
+    result['setup_subtypes']=[next((suffix for name,suffix in re.findall(r'(T[1-4])(?:-(BREAKOUT|RETEST|SEQ))?',ids) if name==s),'') or {'T1':'EMA_PULLBACK','T2':'BREAKOUT','T3':'ZONE_REACTION','T4':'MOMENTUM'}[s] for s in setups]
+    result['setup_quality']={s:float(q) for s,q in re.findall(r'(T[1-4]):(\d+(?:\.\d+)?)',fields.get('SetupQ','')) if s in setups and 0<=float(q)<=100}
+    result['market_regime']=fields.get('Regime','').replace(' ↑','_UP').replace(' ↓','_DOWN') or None
+    for source,target in [('Score','score'),('EQ','entry_quality'),('Entry','entry'),('Price','price'),('PlanEntry','entry'),('SL','sl'),('TP1','tp1'),('TP2','tp2'),('TP3','tp3'),('TP4','tp4'),('V','volume_percentile'),('ADXP','adx_percentile'),('ATRP','atr_percentile'),('LIQ','liquidity_target'),('RRliq','rr_liquidity'),('Pos','position_usdt'),('Risk','risk_usdt')]:
         try:
             value=float(fields[source].split()[0])
             if math.isfinite(value):result[target]=value
@@ -106,7 +116,7 @@ def receive(repo,raw,exchange):
             save_current(s,current,now)
             if os.getenv('WT_TRADINGVIEW_TELEGRAM_ENABLED','true').lower()=='true':
                 message=f"WT · TradingView · {current['setup_combination']} · {current['direction']}\n{current['exchange']}:{current['symbol']} · TF {current['timeframe']}\nACTION: {current['action']}\n"
-                message+='\n'.join(f'{label}: {current.get(key,"n/a")}' for label,key in [('Score','score'),('EQ','entry_quality'),('Price','price'),('Entry','entry'),('SL','sl'),('TP1','tp1'),('LIQ','liquidity_target'),('Pos USDT','position_usdt'),('Risk USDT','risk_usdt')])
+                message+='\n'.join(f'{label}: {current.get(key,"n/a")}' for label,key in [('Subtype','setup_subtypes'),('SetupQ','setup_quality'),('Regime','market_regime'),('V percentile','volume_percentile'),('ADX percentile','adx_percentile'),('ATR percentile','atr_percentile'),('Score','score'),('EQ','entry_quality'),('Price','price'),('Entry','entry'),('SL','sl'),('TP1','tp1'),('TP2','tp2'),('TP3','tp3'),('TP4','tp4'),('LIQ','liquidity_target'),('Pos USDT','position_usdt'),('Risk USDT','risk_usdt')])
                 s.add(Delivery(dedupe_key=digest(['wt-tv-delivery',row.id]),rule_id='wt-tradingview',rule_version=1,created_at=now,updated_at=now,next_attempt=now,status='pending',payload={'text':message,'wt_reference_id':row.id,'snapshot':current}))
         return {'status':'duplicate' if old else 'stored','id':row.id,'telegram':'not_requeued' if old else 'queued' if os.getenv('WT_TRADINGVIEW_TELEGRAM_ENABLED','true').lower()=='true' else 'disabled'}
 
@@ -116,6 +126,7 @@ def cleanup(repo,now=None):
         ids=select(WTEvent.id).where(WTEvent.received_at<cutoff).order_by(WTEvent.received_at).limit(10000)
         count=s.execute(delete(WTEvent).where(WTEvent.id.in_(ids))).rowcount
         s.execute(delete(WTCurrent).where(WTCurrent.signal_source=='tradingview',WTCurrent.updated_at<cutoff))
+        s.execute(delete(WTTrade).where(WTTrade.updated_at<cutoff,WTTrade.payload['open'].as_boolean()==False))
         # Remove the webhook message copies in the outbox under the same retention policy.
         s.execute(delete(Delivery).where(Delivery.rule_id=='wt-tradingview',Delivery.created_at<cutoff))
         return count
@@ -145,14 +156,35 @@ def router(repo):
         if active_only:items=[r for r in items if r.get('action') in ('ENTER NOW','WAIT RETEST')]
         return {'items':items,'total':len(items)}
     @routes.get('/api/wt/events')
-    def events(symbol:str|None=None,signal_source:str|None=None,limit:int=Query(100,ge=1,le=1000),offset:int=Query(0,ge=0)):
+    def events(symbol:str|None=None,signal_source:str|None=None,exchange:str|None=None,timeframe:str|None=None,limit:int=Query(100,ge=1,le=1000),offset:int=Query(0,ge=0)):
         query=select(WTEvent).where(WTEvent.received_at>=now_ms()-RETENTION_MS)
         if symbol:query=query.where(WTEvent.symbol==symbol)
         if signal_source:query=query.where(WTEvent.signal_source==signal_source)
+        if exchange:query=query.where(WTEvent.exchange==exchange)
+        if timeframe:query=query.where(WTEvent.timeframe==timeframe)
         with repo.session() as s:
             total=s.scalar(select(func.count()).select_from(query.subquery()))
             rows=s.scalars(query.order_by(WTEvent.id.desc()).offset(offset).limit(limit)).all()
         return {'items':[{'id':r.id,**r.payload} for r in rows],'total':total}
+    @routes.get('/api/wt/research')
+    def research(symbol:str|None=None,timeframe:str|None=None):
+        query=select(WTCurrent).where(WTCurrent.signal_source=='engine')
+        if symbol:query=query.where(WTCurrent.symbol==symbol)
+        if timeframe:query=query.where(WTCurrent.timeframe==timeframe)
+        with repo.session() as s:rows=s.scalars(query).all()
+        items=[{k:r.payload.get(k) for k in ('exchange','symbol','timeframe','parameter_hash','research')} for r in rows]
+        return {'items':items,'total':len(items)}
+    @routes.get('/api/wt/trades')
+    def trades(kind:str='research',symbol:str|None=None,exchange:str|None=None,timeframe:str|None=None,parameter_hash:str|None=None,
+               limit:int=Query(100,ge=1,le=1000),offset:int=Query(0,ge=0)):
+        if kind not in ('plan','research'):raise HTTPException(422,'kind must be plan or research')
+        query=select(WTTrade).where(WTTrade.kind==kind)
+        for name,value in (('symbol',symbol),('exchange',exchange),('timeframe',timeframe),('parameter_hash',parameter_hash)):
+            if value:query=query.where(getattr(WTTrade,name)==value)
+        with repo.session() as s:
+            total=s.scalar(select(func.count()).select_from(query.subquery()))
+            rows=s.scalars(query.order_by(WTTrade.entry_timestamp.desc(),WTTrade.id).offset(offset).limit(limit)).all()
+        return {'items':[dict(r.payload,storage_id=r.id) for r in rows],'total':total}
     @routes.post('/api/webhooks/tradingview/wt',status_code=201)
     async def webhook(request:Request,exchange:str='BYBIT'):
         expected=os.getenv('WT_TRADINGVIEW_WEBHOOK_KEY','')

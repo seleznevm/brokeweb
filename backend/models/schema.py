@@ -142,6 +142,19 @@ class WTEvent(Base):
     payload: Mapped[dict] = mapped_column(J)
     __table_args__=(Index('ix_wt_event_market','exchange','symbol','timeframe','received_at'),)
 
+class WTTrade(Base):
+    __tablename__='wt_trades'
+    id: Mapped[str] = mapped_column(String(64),primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    exchange: Mapped[str] = mapped_column(String(30))
+    symbol: Mapped[str] = mapped_column(String(60))
+    timeframe: Mapped[str] = mapped_column(String(16))
+    parameter_hash: Mapped[str] = mapped_column(String(64))
+    entry_timestamp: Mapped[int] = mapped_column(BigInteger)
+    updated_at: Mapped[int] = mapped_column(BigInteger,index=True)
+    payload: Mapped[dict] = mapped_column(J)
+    __table_args__=(Index('ix_wt_trade_market','kind','symbol','timeframe','entry_timestamp'),)
+
 class Rule(Base):
     __tablename__='alert_rules'
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

@@ -31,7 +31,7 @@ def clean(value):
 
 def input_schema():
     path=ROOT/'reference/inputs.json'
-    return json.loads(path.read_text()) if path.exists() else []
+    return json.loads(path.read_text(encoding='utf-8')) if path.exists() else []
 
 def validate_parameters(values):
     from backend.engine.parameters import validate_parameters as validate_source_parameters
@@ -53,6 +53,33 @@ class Repository:
             if s.scalar(select(ParameterSet.id).where(ParameterSet.active.is_(True))) is None:
                 values=validate_parameters({}); key=digest(values)
                 s.add(ParameterSet(id=key,created_at=now_ms(),values=values,active=True))
+            default_rules=[
+                {
+                    'id':'eb330ab2-1ef8-4b34-8060-860e245d2bbd',
+                    'name':'30m WE LONG',
+                    'strategy':'BROKE_SETUPS',
+                    'mode':'confirmed',
+                    'frequency':'once_per_bar',
+                    'cooldown_seconds':60,
+                    'conditions':{'op':'AND','conditions':[{'op':'IN','field':'timeframe','value':['30']},{'op':'==','field':'event','value':'LONG WATCH ENTRY'}]},
+                    'template':'{symbol} · {timeframe} · {direction}\nACTION: {action}\nAVG SETUP: {avg_setup}\nFormation: {formation} · Execution: {execution}\nGeometry: {geometry} · Context: {context}\nLevel: {level} · Approach: {approach}\nMAE: {mae} · Exhaustion: {exhaustion} · BTC Shock: {btc_shock}\nCandidate: {candidate_path} · Trigger: {trigger_path}\nSL: {sl} · T1: {t1} · R:R: {rr}\nBlockers: {blockers}\n{detail_url}',
+                    'enabled':True
+                },
+                {
+                    'id':'ee880fdd-8694-4fb8-b7bf-da3af1716c6d',
+                    'name':'30m WE SHORT',
+                    'strategy':'BROKE_SETUPS',
+                    'mode':'confirmed',
+                    'frequency':'once_per_bar',
+                    'cooldown_seconds':60,
+                    'conditions':{'op':'AND','conditions':[{'op':'IN','field':'timeframe','value':['30']},{'op':'==','field':'event','value':'SHORT WATCH ENTRY'}]},
+                    'template':'{symbol} · {timeframe} · {direction}\nACTION: {action}\nAVG SETUP: {avg_setup}\nFormation: {formation} · Execution: {execution}\nGeometry: {geometry} · Context: {context}\nLevel: {level} · Approach: {approach}\nMAE: {mae} · Exhaustion: {exhaustion} · BTC Shock: {btc_shock}\nCandidate: {candidate_path} · Trigger: {trigger_path}\nSL: {sl} · T1: {t1} · R:R: {rr}\nBlockers: {blockers}\n{detail_url}',
+                    'enabled':True
+                }
+            ]
+            for r in default_rules:
+                if s.get(Rule,r['id']) is None:
+                    s.add(Rule(id=r['id'],version=1,enabled=True,payload=r))
     def parameters(self):
         with self.session() as s:
             row=s.scalar(select(ParameterSet).where(ParameterSet.active.is_(True)).order_by(ParameterSet.created_at.desc()))
@@ -183,7 +210,15 @@ class Repository:
         if session is None:
             with self.session() as s: return self.settings(s)
         row=session.get(ServiceHealth,'settings')
-        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,**(row.payload if row else {})}
+        defaults={
+            'snapshot_interval_sec':self.snapshot_interval_sec,
+            'timezone_offset_minutes':420,
+            'universe_min_turnover24h_usdt':10000000,
+            'telegram_bot_token':os.getenv('TELEGRAM_BOT_TOKEN','8384688195:AAH5sLNK4su7cV6vW7pehE-7mJYeRE4JBG0'),
+            'telegram_chat_id':os.getenv('TELEGRAM_CHAT_ID','-1003788053657'),
+            'telegram_topic_id':os.getenv('TELEGRAM_TOPIC_ID','25152'),
+        }
+        return {**defaults,**(row.payload if row else {})}
     def set_settings(self,value):
         with self.session.begin() as s:
             row=s.get(ServiceHealth,'settings',with_for_update=True)

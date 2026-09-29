@@ -16,6 +16,8 @@ export function useLiveSetups(){
       socket.onmessage=event=>{try{const msg=JSON.parse(event.data);if(msg.type==='snapshot'&&msg.data){const snapshot=msg.data as Snapshot;
         cache.setQueryData<Envelope<Snapshot>>(['setups'],old=>{const items=[...(old?.items??[])];const i=items.findIndex(x=>x.exchange===snapshot.exchange&&x.symbol===snapshot.symbol&&x.timeframe===snapshot.timeframe);if(i<0)items.push(snapshot);else items[i]=snapshot;return {items,total:items.length};});
         cache.setQueryData(['setup',snapshot.exchange,snapshot.symbol,snapshot.timeframe],snapshot);
+      }else if(msg.type==='wt_snapshot'&&msg.data){const snapshot=msg.data as Snapshot;
+        cache.setQueryData<Envelope<Snapshot>>(['wt-setups','engine'],old=>{const items=[...(old?.items??[])];const i=items.findIndex(x=>x.exchange===snapshot.exchange&&x.symbol===snapshot.symbol&&x.timeframe===snapshot.timeframe);if(i<0)items.push(snapshot);else items[i]=snapshot;return {items,total:items.length};});
       }}catch{/* An invalid WS frame must not destroy the current screen. */}};
       socket.onerror=()=>socket.close();socket.onclose=()=>{if(!stopped){setStatus('RECONNECTING');retry=setTimeout(connect,Math.min(30000,1000*2**attempts++));}};
     }connect();return()=>{stopped=true;clearTimeout(retry);socket?.close();};

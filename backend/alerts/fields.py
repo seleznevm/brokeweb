@@ -94,6 +94,14 @@ def field_catalog():
     add('signals', 'list', [*SIGNALS.values(),*COMBINATIONS,'READY TO ENTER'], 'События текущего snapshot. WT T1+T3 означает одновременные T1 и T3 одного направления; возможны дополнительные T2/T4.')
     add('setup_combination','enum',COMBINATIONS,'Точная комбинация последнего плана WT. Для события используйте signals.')
     add('setups','list',['T1','T2','T3','T4'],'Типы последнего плана WT.')
+    add('setup_subtypes','list',['ADAPTIVE_PULLBACK','EMA_PULLBACK','BREAKOUT','RETEST','SWEEP>CHOCH>ZONE','ZONE_REACTION','MOMENTUM'])
+    add('market_regime','enum',['LEGACY','TREND_UP','TREND_DOWN','RANGE','COMPRESSION','EXPANSION_UP','EXPANSION_DOWN','EXPANSION','CHAOTIC','TRANSITION'])
+    add('plan_state','enum',['OPEN','BE_ACTIVE','SL_HIT','BE_HIT','COMPLETED','EXCLUDED','SUPERSEDED','INVALID_STOP'])
+    for name in ('volume_percentile','adx_percentile','atr_percentile','bb_width_percentile','atr_pct_of_price','atr','aggregate_setup_q'):
+        add(name,'number',description='WT Adaptive Core')
+    for setup in ('T1','T2','T3','T4'):
+        add('setup_quality.'+setup,'number',description='Frozen signal SetupQ, 0–100')
+        for side in ('LONG','SHORT'):add(f'setup_quality_directional.{setup}.{side}','number')
     for name in ('entry_quality','score','score_long','score_short','entry','managed_sl','tp1','tp2','tp3','tp4','liquidity_target','position_usdt','risk_usdt','rr_liquidity','move_r','volume_ratio','adx','signal_age'):
         add(name,'number',description='Атрибут WT_SETUPS.')
     for name in ('broke_enabled','broke_valid','broke_agree','broke_quality_pass','compression','be_active','stop_hit'):add(name,'boolean')

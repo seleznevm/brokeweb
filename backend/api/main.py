@@ -17,9 +17,12 @@ from backend.alerts.rules import AlertRuleInput,matches,validate_condition
 
 class ParametersInput(BaseModel): values:dict
 class SettingsInput(BaseModel):
-    universe_min_turnover24h_usdt:float=Field(default=10000000,ge=0,le=1e12,allow_inf_nan=False,strict=True)
-    snapshot_interval_sec:float=Field(default=15,ge=1,le=86400)
-    timezone_offset_minutes:int=Field(default=420,ge=-720,le=840,multiple_of=15,strict=True)
+    universe_min_turnover24h_usdt:float|None=Field(default=None,ge=0,le=1e12,allow_inf_nan=False)
+    snapshot_interval_sec:float|None=Field(default=None,ge=1,le=86400)
+    timezone_offset_minutes:int|None=Field(default=None,ge=-720,le=840,multiple_of=15)
+    telegram_bot_token:str|None=None
+    telegram_chat_id:str|None=None
+    telegram_topic_id:str|None=None
 class RuleTestInput(BaseModel):
     conditions:dict
     strategy:Literal['BROKE_SETUPS','WT_SETUPS']='BROKE_SETUPS'
@@ -224,11 +227,16 @@ def create_app(repository:Repository|None=None):
         return {'items':[{'id':r.id,'rule_id':r.rule_id,'status':r.status,'created_at':r.created_at,'attempts':r.attempts,'error':r.error,'payload':r.payload} for r in rows]}
     @app.post('/api/alerts/test-telegram')
     def test_telegram():
-        if not os.getenv('TELEGRAM_BOT_TOKEN') or not os.getenv('TELEGRAM_CHAT_ID'): raise HTTPException(409,'Configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID first')
+        st=repo.settings()
+        token=(st.get('telegram_bot_token') or os.getenv('TELEGRAM_BOT_TOKEN') or '').strip()
+        chat=(st.get('telegram_chat_id') or os.getenv('TELEGRAM_CHAT_ID') or '').strip()
+        topic=(st.get('telegram_topic_id') or os.getenv('TELEGRAM_TOPIC_ID') or '').strip()
+        if not token or not chat: raise HTTPException(409,'Configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID first')
         from backend.alerts.outbox import digest
         now=now_ms()
+        thread_id=int(topic) if topic.lstrip('-').isdigit() else None
         with repo.session.begin() as s:
-            s.add(Delivery(dedupe_key=digest(['test',str(uuid.uuid4())]),rule_id='manual-test',rule_version=1,created_at=now,updated_at=now,next_attempt=now,status='pending',payload={'text':'Scalping SMA: connection test requested in the web interface.'}))
+            s.add(Delivery(dedupe_key=digest(['test',str(uuid.uuid4())]),rule_id='manual-test',rule_version=1,created_at=now,updated_at=now,next_attempt=now,status='pending',payload={'text':'Scalping SMA: connection test requested in the web interface.','message_thread_id':thread_id}))
         return {'status':'queued'}
 
     @app.get('/api/ai-agent/settings')
@@ -317,13 +325,17 @@ def create_app(repository:Repository|None=None):
     async def websocket(ws:WebSocket):
         await ws.accept()
         def initial():
-            with repo.session() as s: return [r.payload for r in s.scalars(select(Current))]
+            from backend.models.schema import WTCurrent
+            from backend.wt import present
+            with repo.session() as s:
+                return ([{'type':'snapshot','data':r.payload} for r in s.scalars(select(Current))]+
+                        [{'type':'wt_snapshot','data':present(r.payload,r.updated_at,now_ms())} for r in s.scalars(select(WTCurrent).where(WTCurrent.signal_source=='engine'))])
         client=None; pubsub=None
         try:
             from redis.asyncio import Redis
             client=Redis.from_url(os.getenv('REDIS_URL','redis://localhost:6379/0'),decode_responses=True,socket_connect_timeout=3,socket_timeout=5)
             pubsub=client.pubsub(); await pubsub.subscribe('setups')
-            for item in await asyncio.to_thread(initial): await ws.send_json({'type':'snapshot','data':item})
+            for item in await asyncio.to_thread(initial): await ws.send_json(item)
             while True:
                 message=await pubsub.get_message(ignore_subscribe_messages=True,timeout=15)
                 if message:

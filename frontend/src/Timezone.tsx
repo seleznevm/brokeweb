@@ -2,7 +2,14 @@ import {createContext,useContext,type ReactNode} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {api} from './api';
 import {DEFAULT_TIMEZONE_OFFSET,displayTimestamp,timezoneLabel} from './displayTime';
-export interface RuntimeSettings {universe_min_turnover24h_usdt:number;snapshot_interval_sec:number;timezone_offset_minutes:number}
+export interface RuntimeSettings {
+  universe_min_turnover24h_usdt: number;
+  snapshot_interval_sec: number;
+  timezone_offset_minutes: number;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
+  telegram_topic_id?: string;
+}
 const TimezoneContext=createContext(DEFAULT_TIMEZONE_OFFSET);
 export function TimezoneProvider({children}:{children:ReactNode}){
  const settings=useQuery({queryKey:['settings'],queryFn:()=>api<RuntimeSettings>('/api/settings'),refetchInterval:30000});

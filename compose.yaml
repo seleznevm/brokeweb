@@ -16,6 +16,7 @@ x-backend: &backend
     PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
     TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+    TELEGRAM_TOPIC_ID: ${TELEGRAM_TOPIC_ID:-25152}
     AI_AGENT_TG_BOT_TOKEN: ${AI_AGENT_TG_BOT_TOKEN:-}
     AI_AGENT_PRIMARY_TOKEN: ${AI_AGENT_PRIMARY_TOKEN:-}
     AI_AGENT_SECONDARY_TOKEN: ${AI_AGENT_SECONDARY_TOKEN:-}
@@ -85,6 +86,7 @@ services:
       <<: *environment
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_TOPIC_ID: ${TELEGRAM_TOPIC_ID:-25152}
     depends_on:
       api: {condition: service_healthy}
     healthcheck:

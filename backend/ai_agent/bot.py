@@ -45,13 +45,67 @@ def _parse_allowed_chat_ids(raw: str) -> set[int]:
     return result
 
 
-def _get_active_setups(repo: Repository) -> list[dict]:
+def _get_all_setups(repo: Repository) -> list[dict]:
+    """Return all setup payloads (active + waiting) for the AI agent to analyze."""
     with repo.session() as s:
         rows = s.scalars(select(Current)).all()
-    return [
-        r.payload for r in rows
-        if r.payload.get('action') and r.payload['action'] != 'WAIT SETUP'
-    ]
+    return [r.payload for r in rows]
+
+
+def _build_market_report(setups: list[dict]) -> str:
+    """Build a quick market overview report (no LLM needed)."""
+    active = [s for s in setups if s.get('action') and s.get('action') != 'WAIT SETUP']
+    waiting = [s for s in setups if s.get('action') == 'WAIT SETUP']
+
+    n_long = sum(1 for s in active if s.get('direction') == 'LONG')
+    n_short = sum(1 for s in active if s.get('direction') == 'SHORT')
+
+    # BTC shock average
+    btc_vals = [s.get('btc_shock') for s in active if isinstance(s.get('btc_shock'), (int, float))]
+    avg_btc = sum(btc_vals) / len(btc_vals) if btc_vals else None
+
+    # Top 5 by avg_setup
+    ranked = sorted(active, key=lambda s: s.get('avg_setup') or 0, reverse=True)[:5]
+
+    # Clean setups (no blockers, RR >= 1.5)
+    clean = [s for s in active
+             if not s.get('blockers')
+             and isinstance(s.get('rr'), (int, float)) and s['rr'] >= 1.5
+             and isinstance(s.get('avg_setup'), (int, float)) and s['avg_setup'] >= 60]
+
+    lines = ['📊 MARKET REPORT\n']
+    lines.append(f'Активных сетапов: {len(active)} (LONG: {n_long} / SHORT: {n_short})')
+    lines.append(f'В ожидании (WAIT): {len(waiting)}')
+
+    if avg_btc is not None:
+        btc_emoji = '🟢' if avg_btc > 0 else '🔴' if avg_btc < -10 else '🟡'
+        lines.append(f'BTC Shock (средний): {btc_emoji} {avg_btc:.1f}')
+
+    bias = 'нейтрально'
+    if n_long > n_short * 2:
+        bias = '📈 сильный LONG bias'
+    elif n_long > n_short * 1.3:
+        bias = '📈 умеренный LONG bias'
+    elif n_short > n_long * 2:
+        bias = '📉 сильный SHORT bias'
+    elif n_short > n_long * 1.3:
+        bias = '📉 умеренный SHORT bias'
+    lines.append(f'Направление рынка: {bias}')
+
+    lines.append(f'\nЧистых сетапов (без блокеров, RR≥1.5): {len(clean)}')
+
+    if ranked:
+        lines.append('\n🏆 ТОП 5 по avg_setup:')
+        for s in ranked:
+            blockers = s.get('blockers') or []
+            b_str = f' ⚠️ {", ".join(blockers)}' if blockers else ' ✅'
+            lines.append(
+                f'  {s.get("symbol")} {s.get("timeframe")} '
+                f'{s.get("direction")} · avg={s.get("avg_setup", 0):.0f} '
+                f'rr={s.get("rr", 0):.1f}{b_str}'
+            )
+
+    return '\n'.join(lines)
 
 
 async def handle_update(
@@ -81,7 +135,7 @@ async def handle_update(
                           chat_id=chat_id,
                           text='⏳ Анализирую активные сетапы…')
             try:
-                setups = await asyncio.to_thread(_get_active_setups, repo)
+                setups = await asyncio.to_thread(_get_all_setups, repo)
                 min_avg = float(cfg.get('min_avg_setup', 60))
                 max_s = int(cfg.get('max_setups_in_report', 10))
                 messages = build_prompt(setups, min_avg=min_avg, limit=max_s)
@@ -97,13 +151,31 @@ async def handle_update(
                               chat_id=chat_id,
                               text='❌ Не удалось получить ответ от AI. Попробуйте позже.')
 
+    elif cmd == '/ai_report':
+        await tg_post(client, token, 'sendMessage',
+                      chat_id=chat_id,
+                      text='📊 Готовлю обзор рынка…')
+        try:
+            setups = await asyncio.to_thread(_get_all_setups, repo)
+            report = _build_market_report(setups)
+            await tg_post(client, token, 'sendMessage',
+                          chat_id=chat_id,
+                          text=report)
+        except Exception:
+            log.exception('AI report error')
+            await tg_post(client, token, 'sendMessage',
+                          chat_id=chat_id,
+                          text='❌ Ошибка при формировании отчёта.')
+
     elif cmd == '/start' or cmd == '/help':
         await tg_post(client, token, 'sendMessage',
                       chat_id=chat_id,
                       text=(
                           '🤖 AI Agent · Scalping SMA\n\n'
-                          '/ai_now — анализ текущих активных сетапов '
-                          'с рекомендациями по входу, SL, TP1, TP2, TP3\n'
+                          '/ai_now — AI-анализ лучших сетапов '
+                          'с рекомендациями входа, SL, TP1–TP3\n'
+                          '/ai_report — обзор рынка без AI '
+                          '(LONG/SHORT баланс, BTC shock, топ сетапы)\n'
                           '/help — справка'
                       ))
 

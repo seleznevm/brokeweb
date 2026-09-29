@@ -1,8 +1,9 @@
-"""WT 1.6.4 executes the supplied Pine on the BROKE worker's shared feeds."""
+"""WT 1.9 executes the supplied Pine on the BROKE worker's shared feeds."""
 from __future__ import annotations
 import hashlib
 import json
 import math
+import copy
 from functools import lru_cache
 from itertools import combinations,chain
 from pathlib import Path
@@ -11,11 +12,14 @@ from .interpreter import Execution,qualified,tf_seconds
 from .values import NA,is_na,truth,encode
 from .context_bars import ContextBars
 from .wt_lifecycle import apply_stop_guard
+from .wt_trades import create_trade, advance_trade, finish
+from .wt_research import WTResearch
+from .wt_snapshot import attributes, subtypes
 
-SOURCE=Path(__file__).resolve().parents[2]/'reference/WT_Setups_1.6.4.pine'
+SOURCE=Path(__file__).resolve().parents[2]/'reference/WT_Setups_1.9.0.pine'
 SOURCE_HASH=hashlib.sha256(SOURCE.read_bytes()).hexdigest()
 COMBINATIONS=['+'.join(c) for n in range(1,5) for c in combinations(('T1','T2','T3','T4'),n)]
-VERSION='wt-1.6.4-interpreter.1'
+VERSION='wt-1.9.0-interpreter.1'
 
 @lru_cache(maxsize=1)
 def program():return Program(SOURCE.read_text(encoding='utf-8'))
@@ -33,7 +37,7 @@ def input_schema():
         specs.append({'name':st.meta['name'],'type':kind,'default':'wt_broke_bridge' if kind=='source' else encode(ex.eval(args[0])),
             'title':ex.eval(args[1]) if len(args)>1 else kw.get('title'),**{k:encode(v) for k,v in kw.items() if k in ('group','tooltip','minval','maxval','options','step')}})
         if kind=='source':specs[-1].update(options=['wt_broke_bridge'],tooltip='Общий расчёт BROKE: направление, AVG, Execution, Level, MAE, Exhaustion, BTC gate и WATCH/PINE события.')
-    return specs
+    return sorted(specs,key=lambda s:s.get('group',''))
 
 def parameters(values=None):
     specs={x['name']:x for x in input_schema()};values=values or {}
@@ -49,6 +53,8 @@ def parameters(values=None):
         if kind=='timeframe':tf_seconds(v)
         if k=='btcSymbol' and v!='BINANCE:BTCUSDT':raise ValueError('Shared BTC feed is BINANCE:BTCUSDT')
         result[k]=v
+    if not result['r1']<result['r2']<result['r3']<result['r4']:raise ValueError('Targets must satisfy TP1 < TP2 < TP3 < TP4')
+    if result['pbDepthMinAtr']>result['pbDepthMaxAtr']:raise ValueError('Minimum pullback depth exceeds maximum')
     return result
 
 def context_requirements(values,timeframes):
@@ -67,9 +73,18 @@ class WTExecution(Execution):
         self.scopes[0].update(last_bar_time=(outer or {}).get('last_bar_time',bar['start']),last_bar_index=(outer or {}).get('last_bar_index',self.count))
     def builtin(self,name,a,kw,e):
         if name=='fill':return NA
+        if name=='str.contains':return a[1] in a[0]
         return super().builtin(name,a,kw,e)
     def ta(self,name,a,e):
         key=f'{self.callpath}/ta/{e.uid}'
+        if name=='ta.percentrank':
+            # Bounded rolling window; intrabar calls replace the working sample.
+            # No scan of total chart history and no mutation before commit.
+            self.remember(key+'/sample',a[0]);n=int(a[1])
+            from itertools import islice
+            values=list(islice(reversed(self.histories.get(key+'/sample',())),n))
+            if len(values)<n or is_na(a[0]) or any(is_na(v) for v in values):return NA
+            return 100*sum(v<=a[0] for v in values)/n
         if name=='ta.stdev':
             self.remember(key+'/sample',a[0]);n=int(a[1])
             values=[v for v in [*self.histories.get(key+'/sample',()),a[0]] if not is_na(v)][-n:]
@@ -143,8 +158,9 @@ class WTEngine:
     def __init__(self,symbol,timeframe,tick_size,values=None):
         self.symbol=symbol;self.timeframe=timeframe;self.tick_size=tick_size;self.parameters=parameters(values)
         self.parameter_hash=hashlib.sha256(json.dumps(self.parameters,sort_keys=True).encode()).hexdigest()
-        self.runtime=WTExecution(program(),self.parameters,f'BYBIT:{symbol}.P',timeframe,tick_size,600)
+        self.runtime=WTExecution(program(),{**self.parameters,'researchMode':False},f'BYBIT:{symbol}.P',timeframe,tick_size,max(600,self.parameters['adaptiveLookback']+30))
         self.contexts={};self.provider=ConfirmedTrendContexts(self);self.runtime.request_provider=self.provider;self.snapshot=None;self.first_bar=None;self.stopped_plans={}
+        self.plans={};self.research=WTResearch(self.parameters)
     def update(self,bar,contexts,real=False,broke=None,plan_history=()):
         if self.runtime.last_start is not None and bar['start']<=self.runtime.last_start:raise ValueError('WT candle already committed')
         if self.first_bar is None:self.first_bar=bar['start']
@@ -177,18 +193,74 @@ class WTEngine:
         age=result.get('signal_age')
         result['plan_bar_start']=bar['start']-int(age)*tf_seconds(self.timeframe)*1000 if not is_na(age) else None
         generation=result['setup_generation_id']
-        history=chart.after_until(result['plan_bar_start'],bar['start']-1) if isinstance(chart,ContextBars) else (b for b in chart if b['start']<bar['start'])
-        # BROKE's checkpoint retains chart candles older than incremental REST
-        # backfill. Reuse them to detect earlier stop touches after an upgrade.
-        result=apply_stop_guard(encode(result),chain(history,(b for b in plan_history if b['start']<bar['start']),[bar]),self.stopped_plans.get(generation))
+        result.update(attributes(m,bar['start'],self.runtime.count,tf_seconds(self.timeframe)*1000,self.parameters))
+        result['setup_quality']={s:encode(m.get(f'last{s}Q')) for s in active}
+        result['aggregate_setup_q']=encode(m.get('lastSetupAggregateQ'))
+        result['setup_subtypes']=subtypes(active,m,result['direction'],self.parameters,True)
+        result['initial_sl']=result['sl']
+        result=encode(result)
+        # Both directions' qualified events feed SETUP SIGNAL research; the
+        # combined live plan still uses the source's higher-score tie breaker.
+        setup_events=[]
+        for direction in ('LONG','SHORT'):
+            for i in range(1,5):
+                if not truth(m.get(f'eventT{i}{direction.title()}')):continue
+                sid=f'T{i}'
+                setup_events.append({**result,'direction':direction,'setups':[sid],
+                    'setup_subtypes':subtypes([sid],m,direction,self.parameters),
+                    'setup_quality':{sid:encode(m.get(f't{i}Q{direction.title()}'))},
+                    'aggregate_setup_q':encode(m.get(f't{i}Q{direction.title()}')),
+                    'score':encode(m.get('longScore' if direction=='LONG' else 'shortScore')),
+                    'sl':encode(m.get(f'{direction.lower()}StopT{i}')),
+                    'liquidity_target':encode(m.get('liqTargetLong' if direction=='LONG' else 'liqTargetShort')),
+                    'plan_bar_start':bar['start']})
+        # Finish superseded plans at the new signal, keeping all historical ends.
+        completed_plans=[]
+        for key,plan in self.plans.items():
+            if key!=generation and plan['open']:
+                advance_trade(plan,bar,self.parameters['researchAmbiguous'],True,bar.get('ticks'))
+                if plan['open']:finish(plan,'SUPERSEDED',bar['start'])
+                completed_plans.append(copy.deepcopy(plan))
+        plan=self.plans.get(generation)
+        if plan is None and result['entry'] is not None and result['sl'] is not None and result['tp4'] is not None:
+            try:
+                plan=create_trade(result,result['entry'],result['sl'],result['plan_bar_start'] or bar['start'],
+                    [self.parameters[f'r{i}'] for i in range(1,5)],
+                    [self.parameters[f'researchTp{i}Weight'] for i in range(1,5)],'PLAN')
+                plan['signal_snapshot']={k:copy.deepcopy(result[k]) for k in (
+                    'market_regime','setup_quality','setup_subtypes','aggregate_setup_q','score','entry_quality','action',
+                    'volume_ratio','volume_percentile','adx','adx_percentile','atr','atr_percentile','setup_diagnostics')}
+                self.plans[generation]=plan
+                while len(self.plans)>64:self.plans.pop(next(iter(self.plans)))
+            except ValueError:result.update(action='SKIP',signals=[],plan_state='INVALID_STOP')
+        if plan is not None:
+            advance_trade(plan,bar,self.parameters['researchAmbiguous'],True,bar.get('ticks'))
+            result.update(trade_plan=copy.deepcopy(plan),plan_state=plan['state'],levels=copy.deepcopy(plan['levels']),
+                managed_sl=plan['managed_sl'],be_active='be' in plan['levels'],
+                stop_hit=plan['initial_sl_hit'] or plan['be_hit'],
+                stop_hit_bar_start=plan['closed_timestamp'] if plan['initial_sl_hit'] or plan['be_hit'] else None,
+                signal_snapshot=copy.deepcopy(plan['signal_snapshot']))
+            if not plan['open']:
+                result.update(pine_action=result['action'],action='SL HIT' if plan['initial_sl_hit'] else 'SKIP',signals=[],signal_setups=[])
+            elif result['be_active']:
+                result.update(pine_action=result['action'],action='TOO LATE',signals=[s for s in result['signals'] if s!='READY TO ENTER'])
+        elif result.get('plan_state')!='INVALID_STOP':
+            # Compatibility for old snapshots with no four-target plan.
+            history=chart.after_until(result['plan_bar_start'],bar['start']-1) if isinstance(chart,ContextBars) else (b for b in chart if b['start']<bar['start'])
+            result=apply_stop_guard(result,chain(history,(b for b in plan_history if b['start']<bar['start']),[bar]),self.stopped_plans.get(generation))
         if result.get('stop_hit'):
             self.stopped_plans[generation]={k:result.get(k) for k in ('setup_generation_id','parameter_hash','stop_hit','stop_hit_bar_start')}
             while len(self.stopped_plans)>64:self.stopped_plans.pop(next(iter(self.stopped_plans)))
+        result['plan_updates']=completed_plans+([copy.deepcopy(plan)] if plan else [])
+        result['research_updates']=self.research.update(result,bar,setup_events,result['action']=='ENTER NOW',self.runtime.count)
+        result['research']=self.research.summary()
         self.snapshot=result
         if bar.get('confirmed',True):self.runtime.commit()
         return self.snapshot
-    def export_state(self):return {'version':VERSION,'source_hash':SOURCE_HASH,'parameters':self.parameter_hash,'first_bar':self.first_bar,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'stopped_plans':dict(self.stopped_plans)}
+    def export_state(self):return {'version':VERSION,'source_hash':SOURCE_HASH,'parameters':self.parameter_hash,'first_bar':self.first_bar,'runtime':self.runtime.export_state(),'contexts':self.provider.export_state(),'stopped_plans':dict(self.stopped_plans),'plans':copy.deepcopy(self.plans),'research':self.research.export_state()}
     def restore_state(self,state):
         if (state.get('version'),state.get('source_hash'),state.get('parameters'))!=(VERSION,SOURCE_HASH,self.parameter_hash):raise ValueError('WT checkpoint version mismatch')
         self.first_bar=state['first_bar'];self.runtime.restore_state(state['runtime']);self.provider.restore_state(state['contexts'])
         self.stopped_plans=dict(state.get('stopped_plans',{}))
+        self.plans=copy.deepcopy(state.get('plans',{}))
+        if state.get('research'):self.research.restore_state(state['research'])
