@@ -1,4 +1,10 @@
 export const DEFAULT_TIMEZONE_OFFSET=420;
+export function displayChartTime(value:number,offset=DEFAULT_TIMEZONE_OFFSET):string {
+ const d=new Date(value+offset*60000);
+ if(!Number.isFinite(d.valueOf()))return 'н/д';
+ const pad=(n:number)=>String(n).padStart(2,'0');
+ return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth()+1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
 export const timezoneOffsets=Array.from({length:105},(_,i)=>-720+i*15);
 export function timezoneLabel(offset:number){
  const n=Math.abs(offset);

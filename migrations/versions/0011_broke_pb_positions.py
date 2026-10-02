@@ -11,6 +11,10 @@ depends_on = None
 J = sa.JSON().with_variant(JSONB, 'postgresql')
 
 def upgrade():
+    # 0001 imports current metadata, so a fresh install can already contain
+    # this table and its indexes. Existing production revisions are untouched.
+    if sa.inspect(op.get_bind()).has_table('broke_pb_positions'):
+        return
     op.create_table(
         'broke_pb_positions',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),

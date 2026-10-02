@@ -74,6 +74,11 @@ def field_catalog():
     for name in ('symbol', 'setup_generation_id', 'parameter_set_id', 'engine_version'):
         add(name, 'text')
     add('strategy','enum',['BROKE_SETUPS'])
+    add('readiness','enum',['READY','OBSERVE','MANAGE'])
+    add('late_watch_entry','boolean')
+    add('entry_eligible','boolean')
+    add('execution_allowed','boolean')
+    add('instant_setup','number')
     add('signal_source','enum',['engine','tradingview'])
     add('exchange', 'enum', ['BYBIT','BINANCE'])
     add('timeframe', 'enum', ['1','3','5','15','30','60','120','240','360','720','D','W','M'], 'Строка: 30 = 30 минут, 60 = 1 час, D = день. Расчёт TF должен быть включён в ACTIVE_TIMEFRAMES сервера.')

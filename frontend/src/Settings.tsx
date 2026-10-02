@@ -6,6 +6,19 @@ import { format } from './model';
 import { DEFAULT_TIMEZONE_OFFSET, timezoneOffsets, timezoneLabel } from './displayTime';
 import type { RuntimeSettings } from './Timezone';
 import type { Data, Parameter, Parameters } from './types';
+import {BrokeResearchSettings} from './BrokeResearchSettings';
+
+const campaignNumbers = [
+  {key:'campaign_risk_usdt',label:'Лимит риска кампании, USDT',fallback:null,min:.01,max:1000000,scale:1},
+  {key:'campaign_portfolio_risk_usdt',label:'Общий лимит риска кампаний, USDT',fallback:null,min:.01,max:10000000,scale:1},
+  {key:'campaign_fee_rate',label:'Комиссия за сторону, %',fallback:.00055,min:0,max:2,scale:100},
+  {key:'campaign_slippage_bps',label:'Проскальзывание, bps (1 = 0,01%)',fallback:0,min:0,max:500,scale:1},
+  {key:'campaign_spread_bps',label:'Полный спред, bps (половина на каждую сторону)',fallback:0,min:0,max:500,scale:1},
+  {key:'campaign_be_buffer_bps',label:'Дополнительный запас BE, bps',fallback:0,min:0,max:500,scale:1},
+  {key:'campaign_bias_max_age_sec',label:'Максимальный возраст подтверждения 30m, сек.',fallback:3600,min:1800,max:86400,scale:1},
+  {key:'campaign_price_max_age_sec',label:'Максимальный возраст цены, сек.',fallback:90,min:1,max:3600,scale:1},
+  {key:'campaign_tp1_fraction',label:'Доля исходного транша для TP1, %',fallback:.5,min:.01,max:100,scale:100},
+] as const;
 
 function ParameterInput({ field, value, onChange }: { field: Parameter; value: unknown; onChange: (value: unknown) => void }) {
   if (field.options?.length) return <select value={String(value ?? '')} onChange={e => onChange(field.options?.find(x => String(x) === e.target.value) ?? e.target.value)}>{field.options.map(x => <option key={String(x)} value={String(x)}>{format(x)}</option>)}</select>;
@@ -101,6 +114,12 @@ export function Settings() {
   const [pbPmToken, setPbPmToken] = useState<string | null>(null);
   const [pbPmChat, setPbPmChat] = useState<string | null>(null);
   const [pbPmTopic, setPbPmTopic] = useState<string | null>(null);
+  const [campaignEnabled, setCampaignEnabled] = useState<boolean | null>(null);
+  const [campaignMode, setCampaignMode] = useState<'REALTIME' | 'BAR_CLOSE' | null>(null);
+  const [exitPolicy,setExitPolicy]=useState<'CONTEXT_30M'|'STRUCTURAL'|null>(null);
+  const [campaignValues,setCampaignValues]=useState<Record<string,string>>({});
+  const [maxTranches,setMaxTranches]=useState<1|3|null>(null);
+  const campaignValue=(field:typeof campaignNumbers[number])=>campaignValues[field.key] ?? ((runtime.data?.[field.key] ?? field.fallback)==null ? '' : String(Number(runtime.data?.[field.key] ?? field.fallback)*field.scale));
 
   const [pbTestBusy, setPbTestBusy] = useState(false);
   const [pbPmTestBusy, setPbPmTestBusy] = useState(false);
@@ -183,6 +202,11 @@ export function Settings() {
 
           void send<RuntimeSettings>('/api/settings', 'PUT', {
             broke_pb_position_usdt: nominalVal,
+            campaign_enabled: campaignEnabled ?? runtime.data?.campaign_enabled ?? true,
+            campaign_signal_mode: campaignMode ?? runtime.data?.campaign_signal_mode ?? 'REALTIME',
+            campaign_exit_policy: exitPolicy ?? runtime.data?.campaign_exit_policy ?? 'CONTEXT_30M',
+            campaign_max_tranches: maxTranches ?? runtime.data?.campaign_max_tranches ?? 3,
+            ...Object.fromEntries(campaignNumbers.map(field=>[field.key,campaignValue(field)==='' ? null : Number(campaignValue(field))/field.scale])),
             broke_pb_telegram_bot_token: (pbTgToken ?? runtime.data?.broke_pb_telegram_bot_token ?? '').trim() || undefined,
             broke_pb_telegram_chat_id: (pbTgChat ?? runtime.data?.broke_pb_telegram_chat_id ?? '').trim() || undefined,
             broke_pb_telegram_topic_id: (pbTgTopic ?? runtime.data?.broke_pb_telegram_topic_id ?? '').trim() || undefined,
@@ -196,8 +220,23 @@ export function Settings() {
           }).catch(setError).finally(() => setBusy(false));
         }}>
           <div style={{ marginBottom: '18px' }}>
+            <label className="inline">
+              <input type="checkbox" checked={campaignEnabled ?? runtime.data?.campaign_enabled ?? true} onChange={e => setCampaignEnabled(e.target.checked)} />
+              Level Campaign: новые C1 / ADD
+            </label>
+            <label>Полный выход из BROKE-PB
+              <select value={exitPolicy??runtime.data?.campaign_exit_policy??'CONTEXT_30M'} onChange={e=>setExitPolicy(e.target.value as 'CONTEXT_30M'|'STRUCTURAL')}>
+                <option value="CONTEXT_30M">Разворот DIRECTION / отмена плана на подтверждённой 30m свече</option>
+                <option value="STRUCTURAL">Прежняя политика: ценовые SL / BE и метрики 5m</option>
+              </select>
+            </label>
+            <label>Режим сигналов
+              <select value={campaignMode ?? runtime.data?.campaign_signal_mode ?? 'REALTIME'} onChange={e => setCampaignMode(e.target.value as 'REALTIME' | 'BAR_CLOSE')}>
+                <option value="REALTIME">REALTIME</option><option value="BAR_CLOSE">BAR_CLOSE</option>
+              </select>
+            </label>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>
-              BROKE-PB position USDT (номинал виртуального входа)
+              Плановый размер Level Campaign, USDT
               <input
                 required
                 type="number"
@@ -210,9 +249,20 @@ export function Settings() {
               />
             </label>
             <p className="subtle">
-              Виртуальный вход осуществляется размером {pbNominal ?? runtime.data?.broke_pb_position_usdt ?? 500} USDT:
-              от верхней границы поддержки при наличии LONG direction на 30m индикатора, либо от нижней границы сопротивления при наличии SHORT direction на 30m.
+              Planned campaign size: {pbNominal ?? runtime.data?.broke_pb_position_usdt ?? 500} USDT.
+              {(maxTranches ?? runtime.data?.campaign_max_tranches ?? 3)===1?'C1 100%.':'C1 40%, C2 30%, C3 30%.'} Confirmed 30m Direction + 5m structural reclaim.
             </p>
+            <label>Транши
+              <select value={maxTranches ?? runtime.data?.campaign_max_tranches ?? 3} onChange={e=>setMaxTranches(Number(e.target.value) as 1|3)}>
+                <option value={3}>C1 / C2 / C3 · 40 / 30 / 30%</option><option value={1}>Только C1 · 100% планового размера</option>
+              </select>
+            </label>
+            <div className="parameters">{campaignNumbers.map(field=><label key={field.key}>{field.label}
+              <input type="number" step={field.key.endsWith('_sec')?'1':'any'} required={field.fallback!==null} min={field.min} max={field.max}
+                value={campaignValue(field)} placeholder={field.fallback===null?'Без лимита':undefined}
+                onChange={e=>setCampaignValues(old=>({...old,[field.key]:e.target.value}))}/>
+            </label>)}</div>
+            <p className="subtle">Лимиты уменьшают объём входа и доборов по структурной оценке риска. При выходе по 30m это ориентир размера позиции: фактический убыток может превысить его. BAR_CLOSE относится к входам. Новая политика выхода применяется и к открытым кампаниям. TP1 фиксирует не более 50% исходного транша у ближайшего противоположного уровня; следующий уровень фиксирует половину остатка. Расходы закрепляются при открытии кампании.</p>
           </div>
 
           <div style={{ background: 'var(--surface-sunken)', padding: '14px', borderRadius: '8px', marginBottom: '18px', border: '1px solid var(--border)' }}>
@@ -339,6 +389,7 @@ export function Settings() {
         </form>
       </Section>
 
+      <BrokeResearchSettings/>
       <Section title="Пул монет — ликвидность">
         <form className="toolbar" onSubmit={e => {
           e.preventDefault();
@@ -402,9 +453,9 @@ export function Settings() {
           setBusy(true);
           setError(undefined);
           void send<RuntimeSettings>('/api/settings', 'PUT', {
-            telegram_bot_token: (tgToken ?? runtime.data?.telegram_bot_token ?? '8384688195:AAH5sLNK4su7cV6vW7pehE-7mJYeRE4JBG0').trim(),
-            telegram_chat_id: (tgChat ?? runtime.data?.telegram_chat_id ?? '-1003788053657').trim(),
-            telegram_topic_id: (tgTopic ?? runtime.data?.telegram_topic_id ?? '25152').trim()
+            telegram_bot_token: (tgToken ?? runtime.data?.telegram_bot_token ?? '').trim(),
+            telegram_chat_id: (tgChat ?? runtime.data?.telegram_chat_id ?? '').trim(),
+            telegram_topic_id: (tgTopic ?? runtime.data?.telegram_topic_id ?? '').trim()
           }).then(saved => {
             cache.setQueryData(['settings'], saved);
             setTgToken(null);
@@ -415,15 +466,15 @@ export function Settings() {
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '16px', marginBottom: '14px' }}>
             <label>Токен Telegram бота
-              <input type="text" value={tgToken ?? runtime.data?.telegram_bot_token ?? '8384688195:AAH5sLNK4su7cV6vW7pehE-7mJYeRE4JBG0'} onChange={e => setTgToken(e.target.value)} placeholder="8384688195:AAH5sLNK4su7cV6vW7pehE-7mJYeRE4JBG0" />
+              <input type="password" value={tgToken ?? runtime.data?.telegram_bot_token ?? ''} onChange={e => setTgToken(e.target.value)} placeholder="Токен бота" />
               <small className="subtle">Бот для отправки алертов и сетапов WE</small>
             </label>
             <label>Номер канала / группы
-              <input type="text" value={tgChat ?? runtime.data?.telegram_chat_id ?? '-1003788053657'} onChange={e => setTgChat(e.target.value)} placeholder="-1003788053657" />
+              <input type="text" value={tgChat ?? runtime.data?.telegram_chat_id ?? ''} onChange={e => setTgChat(e.target.value)} placeholder="ID канала или группы" />
               <small className="subtle">ID канала или супергруппы (с -100)</small>
             </label>
             <label>Номер топика в канале
-              <input type="text" value={tgTopic ?? runtime.data?.telegram_topic_id ?? '25152'} onChange={e => setTgTopic(e.target.value)} placeholder="25152" />
+              <input type="text" value={tgTopic ?? runtime.data?.telegram_topic_id ?? ''} onChange={e => setTgTopic(e.target.value)} placeholder="ID топика" />
               <small className="subtle">Topic ID форума супергруппы</small>
             </label>
           </div>

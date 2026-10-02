@@ -9,6 +9,7 @@ import httpx
 from sqlalchemy import select
 from backend.models.repository import Repository,now_ms
 from backend.models.schema import Delivery,Rule,Current
+from backend.models import schema
 
 log=logging.getLogger(__name__)
 DEFAULT='''{direction} {event}
@@ -25,6 +26,15 @@ Candidate: {candidate_path} | Trigger: {trigger_path}
 SL: {sl} | T1: {t1} | R:R: {rr}
 Blockers: {blockers}
 {detail_url}'''
+WT_DEFAULT='''WT {direction} | {symbol} | TF {timeframe}
+Setups: {setups} | Subtypes: {setup_subtypes}
+Score: {score} | SetupQ: {setup_quality} | EQ: {entry_quality}
+ACTION: {action} | Regime: {market_regime}
+Percentiles V/ADX/ATR: {volume_percentile}/{adx_percentile}/{atr_percentile}
+Entry: {entry} | SL: {sl} | Managed SL: {managed_sl}
+TP1: {tp1} | TP2: {tp2} | TP3: {tp3} | TP4: {tp4}
+LIQ: {liquidity_target} | Risk: {risk_usdt} USDT | Position: {position_usdt} USDT
+{detail_url}'''
 def render_message(payload):
     if 'text' in payload: return str(payload['text'])[:4096]
     snapshot=payload['snapshot']; values=dict(snapshot)
@@ -32,10 +42,11 @@ def render_message(payload):
     values['blockers']=', '.join(snapshot.get('blockers',[])) or 'NONE'
     base=os.getenv('PUBLIC_BASE_URL','http://localhost:8080').rstrip('/')
     values['detail_url']=base+'/setups/'+'/'.join(quote(str(snapshot.get(k,'')),safe='') for k in ('exchange','symbol','timeframe'))
+    if snapshot.get('strategy')=='WT_SETUPS':values['detail_url']=base+'/wt-setups?symbol='+quote(snapshot.get('symbol',''),safe='')
     for key in ('avg_setup','formation','execution','geometry','context','level','approach','mae','exhaustion','btc_shock','continuation','rr','distance'):
         value=values.get(key)
         if isinstance(value,(int,float)) and not isinstance(value,bool):values[key]=f'{value:.2f}'.rstrip('0').rstrip('.')
-    template=payload.get('template') or DEFAULT
+    template=payload.get('template') or (WT_DEFAULT if snapshot.get('strategy')=='WT_SETUPS' else DEFAULT)
     # Only literal field names; no attribute access, expressions, or formatting execution.
     return re.sub(r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}',lambda m:str(values[m[1]]) if values.get(m[1]) is not None else 'n/a',template)[:4096]
 
@@ -47,10 +58,18 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         for item in abandoned: item.status='uncertain'; item.error='Worker interrupted during delivery; inspect Telegram before manual retry'
         row=s.scalar(select(Delivery).where(Delivery.status.in_(['pending','retry']),Delivery.next_attempt<=now).order_by(Delivery.id).with_for_update(skip_locked=True).limit(1))
         if row is None: return False
-        if row.rule_id not in ('manual-test', 'broke-pb'):
+        if row.rule_id=='wt-tradingview':
+            model=getattr(schema,'WTEvent',None)
+            reference=s.get(model,row.payload.get('wt_reference_id')) if model is not None else None
+            if reference is None or os.getenv('WT_TRADINGVIEW_TELEGRAM_ENABLED','true').lower()!='true' or row.created_at<now-int(os.getenv('ALERT_MAX_AGE_SEC','120'))*1000:
+                row.status='suppressed';row.error='WT reference expired or forwarding disabled';row.updated_at=now;return True
+        elif row.rule_id not in ('manual-test','broke-pb'):
             rule=s.get(Rule,row.rule_id)
             snapshot=row.payload['snapshot']; market=tuple(snapshot[k] for k in ('exchange','symbol','timeframe'))
-            current=s.get(Current,market)
+            model=getattr(schema,'WTCurrent',None)
+            current=(s.get(model,(*market,snapshot.get('signal_source','engine'))) if model is not None else None) if snapshot.get('strategy')=='WT_SETUPS' else s.get(Current,market)
+            if current and snapshot.get('strategy')=='WT_SETUPS' and not snapshot.get('stop_hit') and current.payload.get('stop_hit') and current.payload.get('setup_generation_id')==snapshot.get('setup_generation_id'):
+                row.status='suppressed';row.error='WT plan reached SL before delivery';row.updated_at=now;return True
             health=current.payload.get('data_health') if current else None
             if isinstance(health,dict): health=health.get('status')
             if rule is None or not rule.enabled or rule.version!=row.rule_version or health not in {'HEALTHY','FULL_REALTIME','KLINE_REALTIME'} or current.updated_at<now-90000:
@@ -69,11 +88,15 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
     body={'chat_id':target_chat,'text':render_message(payload),'disable_web_page_preview':True}
     if thread_id is not None and str(thread_id).lstrip('-').isdigit():
         body['message_thread_id']=int(str(thread_id).strip())
-    status='failed'; error=None; retry_at=0
+    status='failed'; error=None; retry_at=0; receipt=None
     try:
         response=await client.post(f'https://api.telegram.org/bot{target_token}/sendMessage',json=body,timeout=15)
         data=response.json()
-        if response.status_code==200 and data.get('ok'): status='sent'
+        if response.status_code==200 and data.get('ok'):
+            status='sent'
+            message=data.get('result') or {}
+            receipt={k:message[k] for k in ('message_id','date','message_thread_id') if k in message}
+            receipt['chat_id']=(message.get('chat') or {}).get('id',target_chat)
         elif response.status_code==429:
             status='retry'; retry_at=now+max(1,int(data.get('parameters',{}).get('retry_after',30)))*1000; error='Telegram rate limit'
         else:
@@ -87,6 +110,7 @@ async def deliver_one(repo:Repository,client:httpx.AsyncClient,token:str,chat_id
         status='uncertain'; error='Delivery response unavailable; inspect Telegram before retry'
     with repo.session.begin() as s:
         row=s.get(Delivery,row_id); row.status=status; row.error=error; row.updated_at=now_ms(); row.next_attempt=retry_at
+        if receipt is not None:row.payload={**row.payload,'telegram_receipt':receipt}
     return True
 
 async def main():

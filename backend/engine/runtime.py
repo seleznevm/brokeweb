@@ -61,6 +61,28 @@ class PineEngine:
         snapshot['resistance_top']=m.get('rawResistanceTop1') if not is_na(m.get('rawResistanceTop1')) else (m.get('resistanceTop1') if not is_na(m.get('resistanceTop1')) else None)
         snapshot['resistance_bottom']=m.get('rawResistanceBottom1') if not is_na(m.get('rawResistanceBottom1')) else (m.get('resistanceBottom1') if not is_na(m.get('resistanceBottom1')) else None)
         snapshot['atr']=m.get('atr') if not is_na(m.get('atr')) else None
+        snapshot['tick_size']=self.tick_size
+        # Explicit Level Campaign inputs: raw structural levels, side-specific
+        # micro confirmation and fixed EMA20/50 (independent of chart Direction).
+        for label, pine in (('support', 'Support'), ('resistance', 'Resistance')):
+            snapshot[label+'_quality'] = m.get('raw'+pine+'Quality')
+            snapshot[label+'_id'] = m.get('raw'+pine+'FirstBar1')
+        snapshot['supports'] = [m.get('rawSupportTop1'), m.get('rawSupportTop2')]
+        snapshot['resistances'] = [m.get('rawResistanceBottom1'), m.get('rawResistanceBottom2')]
+        for label, pine in (('long', 'Long'), ('short', 'Short')):
+            snapshot['micro_quality_'+label] = m.get('microQuality'+pine)
+            snapshot['micro_occupancy_'+label] = m.get('microProtoHitPct'+pine)
+        activity, liquidity = m.get('contextActivityQuality'), m.get('contextLiquidityQuality')
+        snapshot['campaign_context'] = (activity * .30 + liquidity * .25) / .55 if not is_na(activity) and not is_na(liquidity) else None
+        snapshot['btc_shock_direction'] = 'SHORT' if truth(m.get('btcShockDirectionDown')) else 'LONG' if truth(m.get('btcShockDirectionUp')) else 'NONE'
+        snapshot['btc_shock_threshold'] = self.parameters.get('btcShockBlockScore', 70)
+        snapshot['failed_sweep_direction'] = snapshot['direction'] if truth(m.get('failedLockedSweepRecent')) else 'NONE'
+        closes = [b['close'] for b in self.chart_bars[-500:]] + [bar['close']]
+        fast = slow = closes[0]
+        for close in closes[1:]:
+            fast += (close-fast)*2/21
+            slow += (close-slow)*2/51
+        snapshot['ema_bias'] = 'LONG' if fast > slow else 'SHORT' if fast < slow else 'NONE'
         snapshot['active_plan_health']='EXIT' if truth(m.get('activePlanExit')) else 'REDUCE' if truth(m.get('activePlanReduce')) else 'DEGRADED' if truth(m.get('activePlanNoAdd')) else 'HEALTHY' if truth(m.get('activePlanHealthy')) else None
         snapshot['hard_gates']=str(sum(truth(m.get(k)) for k in ('gateInPlay','gateLevel','gateStructure','gateApproach','gateDistance')))+'/5'
         snapshot['target_freshness']='n/a' if not direction else 'CONSUMED / UNRESOLVED' if truth(m.get('targetConsumedUnresolved')) else 'BROKEN/RETEST' if truth(m.get('lockedLiquidityConsumed')) else 'FRESH'

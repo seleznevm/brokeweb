@@ -13,6 +13,7 @@ cd C:\dev\brokeweb
 Copy-Item .env.example .env  # только при первой установке
 # Для локальной проверки установите MAX_SYMBOLS=4 в .env.
 docker compose up -d --build
+# В составе Compose запускается отдельный backtest worker (BACKTEST_WORKERS=1).
 ```
 
 Открыть **http://localhost:8080/setups**. Порт привязан к localhost. API/БД/Redis не публикуются наружу.
@@ -45,6 +46,7 @@ DOCKER_CONFIG=/tmp/brokeweb-docker docker compose up -d --build
 ## Страницы
 - `/setups` — только `ACTION != WAIT SETUP`, поиск, сортировка и фильтры метрик; можно включить все состояния.
 - `/setups/BYBIT/{symbol}/{timeframe}` — свечи, зоны, frozen SL/T1, 42 строки Decision Panel, история атрибутов и событий.
+- `/backtest` — исторический BROKE_PB по монетам: сохранённые runs, очередь, ранжирование и CSV ([описание](docs/backtest.md)).
 - `/alerts` — вложенные AND/OR/NOT, условия, частота, preview совпадений, версии и журнал доставки.
 - `/settings` — все 323 Pine inputs и интервал snapshots.
 - `/health` — состояние потоков, прогрев и ошибки.

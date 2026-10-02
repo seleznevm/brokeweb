@@ -50,11 +50,12 @@ class BybitWebSocketManager:
     connected state. The consumer backfills native klines on reconnect and
     invalidates 30S trade coverage (trade gaps cannot be REST repaired).
     """
-    def __init__(self, callback: Callback, url='wss://stream.bybit.com/v5/public/linear', topics_per_shard=100, stale_seconds=45, connect=None):
+    def __init__(self, callback: Callback, url='wss://stream.bybit.com/v5/public/linear', topics_per_shard=100, stale_seconds=45, connect=None, max_event_lag_seconds=90):
         self.callback = callback
         self.url = url
         self.topics_per_shard = topics_per_shard
         self.stale_seconds = stale_seconds
+        self.max_event_lag_seconds = max_event_lag_seconds
         self.connect = connect or websockets.connect
         self.tasks: dict[int, asyncio.Task] = {}
         self.health: dict[int, ShardHealth] = {}
@@ -165,6 +166,13 @@ class BybitWebSocketManager:
                             continue
                         state.messages += 1
                         state.last_market_event = int(message.get('ts', received_at))
+                        # A busy consumer can keep recv() returning buffered data
+                        # forever without triggering the socket timeout. Reconnect
+                        # through the normal recovery path instead of draining an
+                        # obsolete stream while every trading decision stays STALE.
+                        lag = received_at - state.last_market_event
+                        if lag > self.max_event_lag_seconds * 1000:
+                            raise RuntimeError(f'Bybit buffered market data is stale ({lag} ms); REST recovery required')
                         failures = 0
                         if message['topic'].startswith('kline.'):
                             for bar in parse_kline(message, received_at):

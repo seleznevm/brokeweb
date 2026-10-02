@@ -3,7 +3,7 @@ import {useDisplayTime} from './Timezone';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { api } from './api';
+import { api, useLiveSetups } from './api';
 import { Badge, Empty, ErrorMessage, JsonView, Section, gateTone } from './common';
 import { CandleChart, MetricChart } from './Charts';
 import { format, formatField, valueOf } from './model';
@@ -14,6 +14,7 @@ const periods:Record<string,number>={'15m':900000,'1h':3600000,'6h':21600000,'24
 export function Detail(){
  const {timestamp,label,offset}=useDisplayTime();
  const {exchange='',symbol='',timeframe=''}=useParams();const [period,setPeriod]=useState('1h'),[from,setFrom]=useState(''),[until,setUntil]=useState(''),[end,setEnd]=useState(()=>Date.now());
+ useLiveSetups({exchange,symbol,timeframe});
  const base=`/api/setups/${encodeURIComponent(symbol)}/${encodeURIComponent(timeframe)}`,query=`exchange=${encodeURIComponent(exchange)}`;
  const fromTime=parseDisplayDate(from,offset),untilTime=parseDisplayDate(until,offset);
  const customValid=period!=='custom'||Boolean(Number.isFinite(fromTime)&&Number.isFinite(untilTime)&&fromTime<untilTime);

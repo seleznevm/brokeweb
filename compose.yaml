@@ -7,9 +7,22 @@ x-backend: &backend
     DATABASE_URL: postgresql+psycopg://brokeweb:${POSTGRES_PASSWORD:-brokeweb_local}@postgres:5432/brokeweb
     REDIS_URL: redis://redis:6379/0
     SNAPSHOT_INTERVAL_SEC: ${SNAPSHOT_INTERVAL_SEC:-15}
-    ACTIVE_TIMEFRAMES: ${ACTIVE_TIMEFRAMES:-30}
+    ACTIVE_TIMEFRAMES: ${ACTIVE_TIMEFRAMES:-30,5}
     BYBIT_ENV: ${BYBIT_ENV:-mainnet}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    BACKTEST_WORKERS: ${BACKTEST_WORKERS:-1}
+    BACKTEST_REQUESTS_PER_SECOND: ${BACKTEST_REQUESTS_PER_SECOND:-5}
+    BROKE_EXECUTION_GATE_ENABLED: ${BROKE_EXECUTION_GATE_ENABLED:-false}
+    BROKE_EXECUTION_NOTIONAL_USDT: ${BROKE_EXECUTION_NOTIONAL_USDT:-1000}
+    BROKE_EXECUTION_MAX_SPREAD_BPS: ${BROKE_EXECUTION_MAX_SPREAD_BPS:-10}
+    BROKE_EXECUTION_MAX_SLIPPAGE_BPS: ${BROKE_EXECUTION_MAX_SLIPPAGE_BPS:-15}
+    BROKE_EXECUTION_MAX_AGE_SEC: ${BROKE_EXECUTION_MAX_AGE_SEC:-5}
+    BROKE_EXECUTION_MAX_SYMBOLS: ${BROKE_EXECUTION_MAX_SYMBOLS:-40}
+    BROKE_FEE_RATE: ${BROKE_FEE_RATE:-0.00055}
+    BROKE_SLIPPAGE_BPS: ${BROKE_SLIPPAGE_BPS:-2}
+    BROKE_SPREAD_BPS: ${BROKE_SPREAD_BPS:-2}
+    BROKE_LATE_WATCH_ENABLED: ${BROKE_LATE_WATCH_ENABLED:-false}
+    BROKE_LATE_WATCH_WINDOW_BARS: ${BROKE_LATE_WATCH_WINDOW_BARS:-3}
     TRADINGVIEW_WEBHOOK_KEY: ${TRADINGVIEW_WEBHOOK_KEY:-}
     PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
     TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
@@ -54,6 +67,21 @@ services:
       interval: 15s
       timeout: 5s
       retries: 20
+  backtest:
+    <<: *backend
+    command: python -m backend.backtest.worker
+    stop_grace_period: 75s
+    depends_on:
+      api: {condition: service_healthy}
+
+  statistics:
+    <<: *backend
+    command: python -m backend.statistics.worker
+    depends_on:
+      api: {condition: service_healthy}
+    mem_limit: 256m
+    cpus: 0.5
+
   engine:
     <<: *backend
     command: python -m backend.worker

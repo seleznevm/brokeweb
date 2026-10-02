@@ -10,6 +10,7 @@ from backend.models.schema import Current
 from backend.ai_agent import settings as cfg_store
 from backend.ai_agent.llm import call_with_fallback
 from backend.ai_agent.prompt import build_prompt
+from backend.redaction import redact_telegram_tokens
 
 log = logging.getLogger(__name__)
 
@@ -221,8 +222,9 @@ async def poll_loop(repo: Repository):
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                log.warning('Telegram poll error: %s', exc)
-                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {'status': 'DEGRADED', 'error': str(exc)})
+                error=redact_telegram_tokens(str(exc))
+                log.warning('Telegram poll error: %s', error)
+                await asyncio.to_thread(repo.heartbeat, 'ai-agent', {'status': 'DEGRADED', 'error': error})
                 await asyncio.sleep(5)
 
 

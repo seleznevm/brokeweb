@@ -15,6 +15,21 @@ class ParameterSet(Base):
     values: Mapped[dict] = mapped_column(J)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+class SetupGeneration(Base):
+    __tablename__ = 'setup_generations'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    exchange: Mapped[str] = mapped_column(String(30))
+    symbol: Mapped[str] = mapped_column(String(60))
+    timeframe: Mapped[str] = mapped_column(String(16))
+    parameter_set_id: Mapped[str] = mapped_column(String(64))
+    generation: Mapped[str] = mapped_column(String(160))
+    direction: Mapped[str] = mapped_column(String(16))
+    mode: Mapped[str] = mapped_column(String(20))
+    started_at: Mapped[int] = mapped_column(BigInteger)
+    updated_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J, default=dict)
+    __table_args__ = (Index('ix_setup_generation_cohort', 'mode', 'started_at', 'symbol', 'timeframe'),)
+
 class Instrument(Base):
     __tablename__='instruments'
     exchange: Mapped[str] = mapped_column(String(30), primary_key=True)
@@ -236,3 +251,76 @@ class BrokePBPosition(Base):
         Index('ix_pb_pos_status_entry', 'status', 'entry_time'),
     )
 
+
+class LevelCampaign(Base):
+    __tablename__ = 'level_campaigns'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    trade_id: Mapped[int] = mapped_column(ForeignKey('broke_pb_positions.id'), unique=True)
+    symbol: Mapped[str] = mapped_column(String(60), index=True)
+    exchange: Mapped[str] = mapped_column(String(30))
+    # NULL when closed; the unique slot prevents concurrent opposite campaigns too.
+    active_slot: Mapped[str | None] = mapped_column(String(100), unique=True)
+    side: Mapped[str] = mapped_column(String(8))
+    state: Mapped[str] = mapped_column(String(16))
+    planned_size: Mapped[float] = mapped_column(Float)
+    opened_at: Mapped[int] = mapped_column(BigInteger)
+    updated_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)
+
+
+class CampaignTranche(Base):
+    __tablename__ = 'campaign_tranches'
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey('level_campaigns.id'), index=True)
+    number: Mapped[int] = mapped_column(Integer)
+    entry_price: Mapped[float] = mapped_column(Float)
+    original_qty: Mapped[float] = mapped_column(Float)
+    open_qty: Mapped[float] = mapped_column(Float)
+    structural_sl: Mapped[float] = mapped_column(Float)
+    current_sl: Mapped[float] = mapped_column(Float)
+    tp1: Mapped[float] = mapped_column(Float)
+    runner_target: Mapped[float | None] = mapped_column(Float)
+    tp1_done: Mapped[bool] = mapped_column(Boolean, default=False)
+    runner_done: Mapped[bool] = mapped_column(Boolean, default=False)
+    opened_at: Mapped[int] = mapped_column(BigInteger)
+    closed_at: Mapped[int | None] = mapped_column(BigInteger)
+    close_reason: Mapped[str | None] = mapped_column(String(80))
+    __table_args__ = (UniqueConstraint('campaign_id', 'number'),)
+
+
+class CampaignSymbolState(Base):
+    __tablename__ = 'campaign_symbol_states'
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    updated_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)
+
+
+class CampaignEvent(Base):
+    __tablename__ = 'campaign_events'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    symbol_key: Mapped[str] = mapped_column(String(100), index=True)
+    created_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)
+
+
+class CampaignOrder(Base):
+    __tablename__ = 'campaign_orders'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey('level_campaigns.id'), index=True)
+    tranche_id: Mapped[str] = mapped_column(String(80))
+    action: Mapped[str] = mapped_column(String(80))
+    qty: Mapped[float] = mapped_column(Float)
+    fill_price: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)
+
+
+class CampaignLedgerEntry(Base):
+    __tablename__ = 'campaign_ledger_entries'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey('level_campaigns.id'), index=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    # Positive = expense; negative = credit (e.g. received funding).
+    amount_usdt: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(J)

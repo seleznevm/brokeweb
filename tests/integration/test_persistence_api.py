@@ -291,11 +291,13 @@ def test_display_timezone_defaults_persists_and_preserves_other_settings(repo,cl
     from backend.models.schema import ServiceHealth
     with repo.session.begin() as session:
         session.add(ServiceHealth(name='settings',updated_at=now_ms(),payload={'snapshot_interval_sec':9}))
-    assert client.get('/api/settings').json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000}
+    from backend.engine.campaign_execution import DEFAULTS
+    from backend.setups_config import defaults as broke_defaults
+    assert client.get('/api/settings').json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,'campaign_enabled':True,'campaign_exit_policy':'CONTEXT_30M',**DEFAULTS,**broke_defaults()}
     saved=client.put('/api/settings',json={'timezone_offset_minutes':345})
     assert saved.status_code==200
-    assert saved.json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000}
-    assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()=={'snapshot_interval_sec':5,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000}
+    assert saved.json()=={'snapshot_interval_sec':9,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000,'campaign_enabled':True,'campaign_exit_policy':'CONTEXT_30M',**DEFAULTS,**broke_defaults()}
+    assert client.put('/api/settings',json={'snapshot_interval_sec':5}).json()=={'snapshot_interval_sec':5,'timezone_offset_minutes':345,'universe_min_turnover24h_usdt':10000000,'campaign_enabled':True,'campaign_exit_policy':'CONTEXT_30M',**DEFAULTS,**broke_defaults()}
     assert Repository(str(repo.engine.url)).settings()['timezone_offset_minutes']==345
     for invalid in (-721,841,421,True,'420',None):
         assert client.put('/api/settings',json={'timezone_offset_minutes':invalid}).status_code==422

@@ -188,7 +188,8 @@ def test_sharding_and_kline_end_normalization():
     assert parse_kline(message)[0].end==60000
 
 
-def test_websocket_dispatch_and_dynamic_unsubscribe_with_fake_transport():
+def test_websocket_dispatch_and_dynamic_unsubscribe_with_fake_transport(monkeypatch):
+    monkeypatch.setattr('backend.marketdata.websocket.time.time',lambda: .123)
     events=[]
     sent=[]
     class Socket:
@@ -293,5 +294,36 @@ def test_disconnect_callback_failure_cannot_kill_reconnect_loop(monkeypatch):
         try:
             await asyncio.wait_for(connected.wait(),4)
             assert manager.health[0].connected and manager.health[0].reconnects==1
+        finally:await manager.close()
+    run(scenario())
+
+
+def test_buffered_stale_messages_force_recovery_before_market_dispatch(monkeypatch):
+    monkeypatch.setattr('backend.marketdata.websocket.time.time',lambda: 200.)
+    monkeypatch.setattr('backend.marketdata.websocket.random.uniform',lambda *args:0)
+    async def scenario():
+        attempts=[];events=[];fresh=asyncio.Event()
+        class Socket:
+            def __init__(self):self.sent=False
+            async def send(self,payload):pass
+            async def recv(self):
+                if self.sent:await asyncio.Event().wait()
+                self.sent=True
+                return json.dumps({'topic':'publicTrade.XUSDT','ts':100000 if len(attempts)==1 else 200000,'data':[]})
+        class Connection:
+            async def __aenter__(self):attempts.append(True);return Socket()
+            async def __aexit__(self,*args):return False
+        async def callback(event):
+            events.append(event)
+            if event['type']=='trade':fresh.set()
+        manager=BybitWebSocketManager(callback,connect=lambda *a,**k:Connection())
+        await manager.update_subscriptions(['XUSDT'],['5'])
+        try:
+            await asyncio.wait_for(fresh.wait(),4)
+            markets=[e for e in events if e['type']=='trade']
+            assert len(markets)==1 and markets[0]['exchange_time']==200000
+            assert [(e['connected']) for e in events if e['type']=='health']==[True,False,True]
+            assert 'REST recovery required' in events[1]['error']
+            assert manager.health[0].reconnects==1
         finally:await manager.close()
     run(scenario())

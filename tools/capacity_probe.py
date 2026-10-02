@@ -11,7 +11,7 @@ def finite(value):
     return type(value) in (int,float) and math.isfinite(value)
 
 
-def assess(samples):
+def assess(samples,max_pipeline_lag_ms=5000):
     reasons=set();counts=[]
     if len(samples)<2:reasons.add('At least two samples required')
     for sample in samples:
@@ -22,8 +22,12 @@ def assess(samples):
         if not engines:reasons.add('No engine heartbeat')
         if engines:
             universes={e.get('universe') for e in engines.values()}
-            if len(universes)!=1 or not all(finite(n) and n>0 for n in universes) or sum(e.get('selected',0) for e in engines.values())!=next(iter(universes)):
-                reasons.add('Selected shards do not cover the reported universe')
+            excluded={e.get('liquidity_excluded',0) for e in engines.values()}
+            valid_universe=len(universes)==1 and all(finite(n) and n>0 for n in universes)
+            valid_excluded=len(excluded)==1 and all(finite(n) and n>=0 for n in excluded)
+            eligible=next(iter(universes))-next(iter(excluded)) if valid_universe and valid_excluded else None
+            if eligible is None or eligible<=0 or sum(e.get('selected',0) for e in engines.values())!=eligible:
+                reasons.add('Selected shards do not cover the liquidity-eligible universe')
             if {e.get('shard_index') for e in engines.values()}!=set(range(len(engines))):
                 reasons.add('Missing or duplicate shard indices')
         total=0
@@ -39,6 +43,10 @@ def assess(samples):
             if engine.get('status')!='HEALTHY' or engine.get('errors') or engine.get('reconciliation_errors'):reject('Engine is recovering or has errors')
             lag=engine.get('market_data_lag_ms')
             if not finite(lag) or not 0<=lag<=90000:reject('Market lag unavailable or above 90s')
+            pipeline=engine.get('pipeline_lag_ms_p95')
+            if not finite(pipeline) or not 0<=pipeline<=max_pipeline_lag_ms:reject('Pipeline p95 unavailable or above budget')
+            if not finite(engine.get('pending_calculations')) or engine['pending_calculations']<0:reject('Pending calculation count unavailable')
+            if engine.get('recovering_symbols')!=0:reject('Recovery incomplete')
             streams=engine.get('streams',[])
             if not streams or any(not s.get('connected') or not finite(s.get('last_market_event')) or now-s['last_market_event']>90000 for s in streams):reject('Market streams are not fresh')
             if engine.get('btc_recovering') or not engine.get('btc_stream',{}).get('connected'):reject('BTC stream unavailable')
@@ -63,6 +71,7 @@ def main():
     parser.add_argument('--samples',type=int,default=3)
     parser.add_argument('--interval',type=float,default=15)
     parser.add_argument('--output',type=Path,default=Path('artifacts/local/capacity-probe.json'))
+    parser.add_argument('--max-pipeline-lag-ms',type=float,default=5000)
     args=parser.parse_args()
     if not 2<=args.samples<=100 or not 0<args.interval<=60:parser.error('Use 2..100 samples and interval (0,60] seconds')
     samples=[]
@@ -74,7 +83,7 @@ def main():
         except (OSError,ValueError) as exc:sample['error']=str(exc)
         sample['captured_at']=time.time_ns()//1_000_000;samples.append(sample)
         print(f'Captured {index+1}/{args.samples}',flush=True)
-    result={**assess(samples),'samples':samples}
+    result={**assess(samples,args.max_pipeline_lag_ms),'samples':samples,'max_pipeline_lag_ms':args.max_pipeline_lag_ms}
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='samples'},indent=2))

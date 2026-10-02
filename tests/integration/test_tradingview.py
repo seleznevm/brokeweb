@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select,func
 from backend.api.main import create_app,WebhookAccessFilter
 from backend.models.repository import Repository,now_ms
-from backend.models.schema import TradingViewAlert,Signal,Rule,RuleVersion
+from backend.models.schema import TradingViewAlert,Signal,Rule,RuleVersion,CampaignOrder,LevelCampaign,Delivery
 from backend.tradingview import cleanup,parse_body,RETENTION_MS
 
 MESSAGE='WATCH ENTRY | EARLY | LONG | BYBIT:ETHFIUSDT.P | TF=30 | Close=0.731 | AVG=71.2 | F/E=72/65 | Ex/MAE=10/20 | Path=BREAKOUT | Fresh=Y | Add=N | SL=0.7 | TP=0.8 | RR=2.23'
@@ -59,6 +59,92 @@ def test_invalid_input_and_unknown_messages(setup):
 def test_native_dispatch_mapping(event,side,name):
     parsed=parse_body(f'{event} | {side} | BYBIT:BTCUSDT.P | TF=30 | Close=10 | AVG=n/a')
     assert parsed['name']==name and parsed['measurements']=={'price':10}
+
+
+def structured_message(**patch):
+    return {'schema':'scalping_sma.alert.v1','script':'1.18.8','alert':'RT | ARMED',
+            'event_id':'BYBIT:HBARUSDT.P_5_1790728500000_ARMED_SHORT',
+            'event':'ARMED','mode':'REALTIME','side':'SHORT','symbol':'BYBIT:HBARUSDT.P',
+            'tf':'5','close':0.10134,'avg':53.5246978099,'formation':75.52,
+            'execution':60.98,'geometry':58.71,'context':51.67,'exhaustion':7.72,
+            'mae':0,'sl':0.10295,'t1':0.09985,**patch}
+
+
+def test_versioned_pine_json_keeps_precision_and_source_bar(setup):
+    repo,client=setup
+    response=client.post('/api/webhooks/tradingview?key=test-secret',json=structured_message())
+    assert response.status_code==201 and response.json()['parse_status']=='parsed'
+    row=client.get('/api/tradingview/alerts').json()['items'][0]
+    assert (row['symbol'],row['exchange'],row['timeframe'],row['name'])==('HBARUSDT','BYBIT','5','SHORT ARMED')
+    assert row['bar_start']==1790728500000 and row['time_basis']=='source_event_id'
+    assert row['measurements']['avg_setup']==53.5246978099
+    assert row['measurements']['mae']==0
+
+
+@pytest.mark.parametrize('side',['SUPPORT','RESISTANCE'])
+def test_zone_cross_is_parsed_without_inventing_trade_direction(side):
+    row=parse_body(json.dumps(structured_message(event='ZONE CROSS',side=side,avg=None,sl=None,t1=None)))
+    assert row['name']=='ZONE CROSS' and row['side']==side and row['direction'] is None
+    assert 'avg_setup' not in row['measurements'] and 'sl' not in row['measurements']
+    # An ID belonging to ARMED SHORT cannot supply time for a different event.
+    assert 'bar_start' not in row
+
+
+def test_incomplete_campaign_reference_never_executes_or_sends(setup):
+    repo,client=setup
+    response=client.post('/api/webhooks/tradingview?key=test-secret',json=structured_message(
+        event='CAMPAIGN_ENTRY_1',side='LONG',event_id='BYBIT:HBARUSDT.P_5_1790728500000_CAMPAIGN_ENTRY_1_LONG'))
+    assert response.status_code==201
+    assert 'execution' not in response.json()
+    with repo.session() as s:
+        for model in (CampaignOrder,LevelCampaign,Delivery):
+            assert s.scalar(select(func.count()).select_from(model))==0
+
+
+@pytest.mark.parametrize('patch',[{'symbol':'HBARUSDT'}, {'tf':'1'}, {'side':'NONE'}, {'event':None}, {'mode':'invalid'}])
+def test_invalid_versioned_pine_json_is_rejected(setup,patch):
+    _,client=setup
+    assert client.post('/api/webhooks/tradingview?key=test-secret',json=structured_message(**patch)).status_code==422
+
+
+def test_reparse_repairs_metadata_only_and_is_idempotent(setup):
+    from tools.reparse_tradingview import reparse_alerts
+    repo,client=setup
+    raw=json.dumps(structured_message(event='CAMPAIGN_ENTRY_1'))
+    with repo.session.begin() as s:
+        s.add(TradingViewAlert(received_at=now_ms(),raw_body=raw,body_sha256='original-hash',
+            payload={'parse_status':'unparsed','time_basis':'received_at_only','measurements':{}}))
+    assert reparse_alerts(repo)=={'examined':1,'reparsed':1}
+    assert client.get('/api/tradingview/alerts').json()['items'][0]['parse_status']=='unparsed'
+    assert reparse_alerts(repo,apply=True)=={'examined':1,'reparsed':1}
+    assert reparse_alerts(repo,apply=True)=={}
+    row=client.get('/api/tradingview/alerts').json()['items'][0]
+    assert row['raw_body']==raw and row['body_sha256']=='original-hash'
+    assert row['name']=='CAMPAIGN_ENTRY_1'
+    with repo.session() as s:
+        assert s.scalar(select(func.count()).select_from(CampaignOrder))==0
+
+
+def test_native_realtime_prefix_preserves_signal_mapping():
+    assert parse_body('REALTIME | '+MESSAGE)['name']=='LONG WATCH ENTRY'
+
+
+def test_structured_execution_70_does_not_match_old_threshold_65():
+    row=parse_body(json.dumps(structured_message(event='EXECUTION_70')))
+    assert row['name']=='EXECUTION_70'
+
+
+def test_older_structured_confirmed_mode_is_supported():
+    row=parse_body(json.dumps(structured_message(mode='CONFIRMED',script='1.18.1')))
+    assert row['parse_status']=='parsed' and row['mode']=='BAR_CLOSE'
+    assert row['source_mode']=='CONFIRMED'
+
+
+def test_open_without_timeframe_has_explicit_reason():
+    row=parse_body('OPEN LONG | BYBIT:AVAXUSDT.P | C=11.390 | SL=11.350 | TP=11.457 | RR=1.68')
+    assert row['parse_status']=='unparsed'
+    assert 'Missing timeframe' in row['parse_reason']
+    assert 'timeframe' not in row
 
 def test_retention_boundary_does_not_touch_engine_signals(setup):
     repo,client=setup

@@ -48,7 +48,29 @@ GET API показывает только последние 30 суток. Вр
 а Uvicorn удаляет query string из access log этого маршрута. При включении логов
 дополнительного внешнего proxy его redaction нужно настроить отдельно.
 
+## JSON индикатора 1.18.x
+
+Поддерживается `schema=scalping_sma.alert.v1`: `symbol` в виде
+`BYBIT:BTCUSDT.P`, `tf=5/30`, `event`, `side`, `mode`, `close`, `avg`,
+`formation`, `execution`, `geometry`, `context`, `exhaustion`, `mae`, `sl`, `t1`.
+Null-метрики пропускаются, числовая точность сохраняется. `SUPPORT`/`RESISTANCE`
+остаются типом зоны, а не направлением сделки. Timestamp начала свечи читается
+из `event_id` только при совпадении symbol/TF/event/side и выравнивании времени.
+Источник времени отмечается `source_event_id`; время доставки не подставляется.
+
+Такие сообщения сохраняются как reference: даже `CAMPAIGN_ENTRY_1` не исполняет
+ордер без полноценного execution envelope с подтверждённым контекстом и геометрией.
+Существующий execution envelope Level Campaign продолжает работать отдельно.
+
+Для ремонта старых `unparsed` записей: `python -m tools.reparse_tradingview`
+показывает dry run, `python -m tools.reparse_tradingview --apply` сохраняет только
+распознанные метаданные. Raw body, SHA-256 и received_at сохраняются; исполнения
+и Telegram не повторяются. Native 30m сообщения с префиксом `REALTIME |`
+также корректно сопоставляются с названием сигнала.
+
 ## Файлы правил Alerts
+
+Level Campaign: `campaign_signal_mode` из настроек определяет разрешение C1/ADD для всех источников, даже если webhook передал иной `mode`. Защитные выходы не ждут закрытия сигнальной свечи. Подтверждённое сообщение допускает `event_time` на правой границе интервала. Устаревшая цена не исполняется; подтверждённый 30m контекст имеет отдельный watermark и срок годности. Подробности: [исправления менеджмента BROKE-PB](broke-pb-management-fixes-2026-10-01.md).
 
 «Сохранить правила в файл» выгружает все **сохранённые** правила в JSON:
 `{"format":"brokeweb-alert-rules","version":1,"rules":[...]}`.

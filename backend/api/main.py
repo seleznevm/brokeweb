@@ -9,11 +9,12 @@ from typing import Literal
 from fastapi import FastAPI,HTTPException,Query,Request,WebSocket,WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel,Field,ConfigDict,model_validator
-from sqlalchemy import select,text
+from sqlalchemy import select,text,func,cast,Float,BigInteger
 from backend.models.repository import Repository,now_ms,SCORES
 from backend.models.schema import Current,Snapshot,Signal,Instrument,Event,MarketBar,Rule,RuleVersion,Delivery,ResearchSample,ParityResult,ServiceHealth,BrokePBPosition
 from backend.models.schema import ArchiveBatch
 from backend.alerts.rules import AlertRuleInput,matches,validate_condition
+from backend.redaction import redact_telegram_tokens
 
 class ParametersInput(BaseModel): values:dict
 class SettingsInput(BaseModel):
@@ -25,6 +26,20 @@ class SettingsInput(BaseModel):
     telegram_chat_id:str|None=None
     telegram_topic_id:str|None=None
     broke_pb_position_usdt:float|None=Field(default=None,ge=1,le=1000000,allow_inf_nan=False)
+    campaign_enabled:bool|None=None
+    campaign_signal_mode:Literal['REALTIME','BAR_CLOSE']|None=None
+    campaign_exit_policy:Literal['CONTEXT_30M','STRUCTURAL']|None=None
+    campaign_execution_mode:Literal['PAPER','DEMO','LIVE']|None=None
+    campaign_risk_usdt:float|None=Field(default=None,gt=0,le=1000000,allow_inf_nan=False)
+    campaign_portfolio_risk_usdt:float|None=Field(default=None,gt=0,le=10000000,allow_inf_nan=False)
+    campaign_fee_rate:float|None=Field(default=None,ge=0,le=.02,allow_inf_nan=False)
+    campaign_slippage_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    campaign_spread_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    campaign_be_buffer_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    campaign_bias_max_age_sec:int|None=Field(default=None,ge=1800,le=86400)
+    campaign_price_max_age_sec:int|None=Field(default=None,ge=1,le=3600)
+    campaign_tp1_fraction:float|None=Field(default=None,gt=0,le=1,allow_inf_nan=False)
+    campaign_max_tranches:Literal[1,3]|None=None
     broke_pb_telegram_bot_token:str|None=None
     broke_pb_telegram_chat_id:str|None=None
     broke_pb_telegram_topic_id:str|None=None
@@ -32,14 +47,33 @@ class SettingsInput(BaseModel):
     broke_pb_pm_telegram_bot_token:str|None=None
     broke_pb_pm_telegram_chat_id:str|None=None
     broke_pb_pm_telegram_topic_id:str|None=None
+    broke_execution_gate_enabled:bool|None=None
+    broke_execution_notional_usdt:float|None=Field(default=None,gt=0,le=1000000,allow_inf_nan=False)
+    broke_execution_max_spread_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    broke_execution_max_slippage_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    broke_execution_max_age_sec:int|None=Field(default=None,ge=1,le=60)
+    broke_execution_max_symbols:int|None=Field(default=None,ge=1,le=100)
+    broke_fee_rate:float|None=Field(default=None,ge=0,le=.02,allow_inf_nan=False)
+    broke_slippage_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    broke_spread_bps:float|None=Field(default=None,ge=0,le=500,allow_inf_nan=False)
+    broke_late_watch_enabled:bool|None=None
+    broke_late_watch_window_bars:int|None=Field(default=None,ge=1,le=12)
 
     @model_validator(mode='before')
     @classmethod
     def check_not_null(cls, data):
         if isinstance(data, dict):
-            for k in ('universe_min_turnover24h_usdt', 'snapshot_interval_sec', 'timezone_offset_minutes', 'broke_pb_position_usdt'):
+            from backend.setups_config import DEFAULTS as broke_defaults
+            if any(k in data and data[k] is None for k in broke_defaults):
+                raise ValueError('BROKE settings cannot be null')
+            for k in ('universe_min_turnover24h_usdt', 'snapshot_interval_sec', 'timezone_offset_minutes', 'broke_pb_position_usdt',
+                      'campaign_fee_rate','campaign_slippage_bps','campaign_spread_bps','campaign_be_buffer_bps','campaign_bias_max_age_sec',
+                      'campaign_price_max_age_sec','campaign_tp1_fraction','campaign_max_tranches',
+                      'campaign_execution_mode','campaign_signal_mode','campaign_exit_policy','campaign_enabled'):
                 if k in data and data[k] is None:
                     raise ValueError(f'{k} cannot be null')
+            if data.get('campaign_execution_mode')=='LIVE':
+                raise ValueError('LIVE_EXECUTOR_UNAVAILABLE: use PAPER or DEMO')
         return data
 
 class SettingsFileInput(BaseModel):
@@ -94,6 +128,10 @@ def create_app(repository:Repository|None=None):
     app.include_router(router(repo))
     from backend.statistics.api import router as statistics_router
     app.include_router(statistics_router(repo))
+    from backend.setup_diagnostics_api import router as diagnostics_router
+    app.include_router(diagnostics_router(repo))
+    from backend.backtest.api import router as backtest_router
+    app.include_router(backtest_router(repo))
 
     @app.get('/api/health')
     def health():
@@ -101,18 +139,20 @@ def create_app(repository:Repository|None=None):
             with repo.session() as s:
                 s.execute(text('SELECT 1'))
                 rows=s.scalars(select(ServiceHealth).where(ServiceHealth.name!='settings')).all()
-            services={row.name:{**row.payload,'updated_at':row.updated_at,'stale':now_ms()-row.updated_at>90000} for row in rows}
+            services={row.name:{**redact_telegram_tokens(row.payload),'updated_at':row.updated_at,'stale':now_ms()-row.updated_at>90000} for row in rows}
             status='HEALTHY' if services and all(not row['stale'] and row.get('status')=='HEALTHY' for row in services.values()) else 'RECOVERING'
             return {'status':status,'services':{'database':{'status':'HEALTHY'},**services},'parity_status':'UNVERIFIED','time':now_ms()}
         except Exception:
             raise HTTPException(503,'Database unavailable')
 
     @app.get('/api/setups')
-    def setups(request:Request,active_only:bool=True,search:str='',direction:str|None=None,timeframe:str|None=None,action:str|None=None,fsm:str|None=None,candidate_path:str|None=None,signal:str|None=None,exchange:str|None=None,sort:str='avg_setup:desc',limit:int=Query(500,ge=1,le=10000),offset:int=Query(0,ge=0)):
-        with repo.session() as s: items=[row.payload for row in s.scalars(select(Current))]
+    def setups(request:Request,active_only:bool=True,search:str='',direction:str|None=None,timeframe:str|None=None,action:str|None=None,fsm:str|None=None,candidate_path:str|None=None,signal:str|None=None,exchange:str|None=None,readiness:Literal['READY','OBSERVE','MANAGE']|None=None,sort:str='avg_setup:desc',limit:int=Query(500,ge=1,le=10000),offset:int=Query(0,ge=0),compact:bool=False):
+        from backend.setup_diagnostics import current_readiness
+        stamp=now_ms()
+        with repo.session() as s: items=[current_readiness(payload,stamp) for payload in s.scalars(select(Current.payload))]
         if active_only: items=[r for r in items if r.get('action') and r['action']!='WAIT SETUP']
         if search: items=[r for r in items if search.upper() in r['symbol'].upper()]
-        for field,value in [('direction',direction),('timeframe',timeframe),('action',action),('fsm',fsm),('candidate_path',candidate_path),('exchange',exchange)]:
+        for field,value in [('direction',direction),('timeframe',timeframe),('action',action),('fsm',fsm),('candidate_path',candidate_path),('exchange',exchange),('readiness',readiness)]:
             if value is not None: items=[r for r in items if str(r.get(field))==value]
         if signal: items=[r for r in items if signal in r.get('signals',[])]
         for field in SCORES:
@@ -128,13 +168,18 @@ def create_app(repository:Repository|None=None):
             try: present.sort(key=lambda r:r[field],reverse=order=='desc')
             except TypeError: present.sort(key=lambda r:str(r[field]),reverse=order=='desc')
             items=present+missing
-        return {'items':items[offset:offset+limit],'total':len(items)}
+        page=items[offset:offset+limit]
+        if compact:
+            from backend.setup_summary import setup_summary
+            page=[setup_summary(item) for item in page]
+        return {'items':page,'total':len(items)}
 
     @app.get('/api/setups/{symbol}/{timeframe}')
     def detail(symbol:str,timeframe:str,exchange:str='BYBIT'):
-        with repo.session() as s: row=s.get(Current,(exchange,symbol,timeframe))
-        if row is None: raise HTTPException(404,'Setup not found')
-        return row.payload
+        with repo.session() as s: payload=s.scalar(select(Current.payload).where(Current.exchange==exchange,Current.symbol==symbol,Current.timeframe==timeframe))
+        if payload is None: raise HTTPException(404,'Setup not found')
+        from backend.setup_diagnostics import current_readiness
+        return current_readiness(payload,now_ms())
 
     @app.get('/api/setups/{symbol}/{timeframe}/history')
     def history(symbol:str,timeframe:str,exchange:str='BYBIT',since:int|None=None,until:int|None=None,limit:int=Query(1000,ge=1,le=10000)):
@@ -201,8 +246,14 @@ def create_app(repository:Repository|None=None):
         }
     @app.post('/api/settings/import')
     def import_settings(body:SettingsFileInput):
+        try:
+            validated=SettingsInput.model_validate(body.settings).model_dump(exclude_unset=True)
+            if body.parameters:
+                from backend.models.repository import validate_parameters
+                validate_parameters(body.parameters)
+        except (ValueError,TypeError) as exc: raise HTTPException(422,str(exc))
         if body.settings:
-            repo.set_settings(body.settings)
+            repo.set_settings(validated)
         if body.parameters:
             try: repo.set_parameters(body.parameters)
             except (ValueError,TypeError) as exc: raise HTTPException(422,f'Invalid parameters: {exc}')
@@ -314,6 +365,59 @@ def create_app(repository:Repository|None=None):
             ))
         return {'status':'queued', 'target': target, 'chat': chat, 'topic': topic or 'general'}
 
+    @app.get('/api/setup-campaigns')
+    def setup_campaigns(limit:int=Query(20,ge=1,le=1000),offset:int=Query(0,ge=0),
+            sort_by:Literal['symbol','direction','mode','opened_at','closed_at','entry_price','sl','t1','current_price','price_change_pct','close_reason']='closed_at',
+            sort_direction:Literal['asc','desc']='desc'):
+        from backend.setup_campaigns import campaigns
+        with repo.session() as s:return campaigns(s,limit,offset,sort_by,sort_direction)
+
+    @app.get('/api/level-campaign')
+    def level_campaigns(limit:int=Query(200,ge=1,le=1000),offset:int=Query(0,ge=0),
+            sort_by:Literal['symbol','side','opened_at','closed_at','tranches','realized_pnl','net_realized_pnl','close_reason','last_execution']='closed_at',
+            sort_direction:Literal['asc','desc']='desc'):
+        from backend.models.schema import LevelCampaign, CampaignSymbolState, CampaignTranche
+        from backend.engine.level_campaign import serialize_campaign, COUNTERS
+        with repo.session() as s:
+            active = s.scalars(select(LevelCampaign).where(LevelCampaign.state != 'CLOSED').order_by(LevelCampaign.opened_at.desc())).all()
+            closed = select(LevelCampaign).where(LevelCampaign.state == 'CLOSED')
+            history_total = s.scalar(select(func.count()).select_from(closed.subquery()))
+            sort_fields={'symbol':LevelCampaign.symbol,'side':LevelCampaign.side,'opened_at':LevelCampaign.opened_at,
+                'closed_at':func.coalesce(cast(LevelCampaign.payload['closed_at'].as_string(),BigInteger),LevelCampaign.updated_at),
+                'tranches':select(func.count()).select_from(CampaignTranche).where(CampaignTranche.campaign_id==LevelCampaign.id).correlate(LevelCampaign).scalar_subquery(),
+                'realized_pnl':cast(LevelCampaign.payload['realized_pnl'].as_string(),Float),
+                'net_realized_pnl':cast(LevelCampaign.payload['net_realized_pnl'].as_string(),Float),
+                'close_reason':LevelCampaign.payload['close_reason'].as_string(),
+                'last_execution':cast(LevelCampaign.payload['last_execution']['at'].as_string(),BigInteger)}
+            field=sort_fields[sort_by]
+            order=(field.asc() if sort_direction=='asc' else field.desc()).nulls_last()
+            history = s.scalars(closed.order_by(order,LevelCampaign.id.asc()).offset(offset).limit(limit)).all()
+            diagnostics = [{'key':r.key,'updated_at':r.updated_at,**r.payload} for r in s.scalars(select(CampaignSymbolState))]
+            counts = {k:sum(d.get('counters',{}).get(k,0) for d in diagnostics) for k in COUNTERS}
+            return {'active':[serialize_campaign(s,c) for c in active],
+                    'history':[serialize_campaign(s,c) for c in history],
+                    'history_total':history_total,
+                    'diagnostics':diagnostics,'counters':counts,
+                    'execution_mode':repo.settings(s).get('campaign_execution_mode','PAPER')}
+
+    @app.get('/api/level-campaign/{campaign_id}/orders')
+    def campaign_orders(campaign_id:str):
+        from backend.models.schema import LevelCampaign, CampaignOrder
+        with repo.session() as s:
+            if s.get(LevelCampaign,campaign_id) is None:raise HTTPException(404,'Campaign not found')
+            rows=s.scalars(select(CampaignOrder).where(CampaignOrder.campaign_id==campaign_id).order_by(CampaignOrder.created_at,cast(CampaignOrder.payload['sequence'].as_string(),BigInteger).asc().nulls_last(),CampaignOrder.id)).all()
+            return {'items':[{'id':r.id,'tranche_id':r.tranche_id,'action':r.action,'qty':r.qty,'fill_price':r.fill_price,'event_time':r.created_at,
+                             'fee_usdt':r.payload.get('fee_usdt'),'fill_model':r.payload.get('fill_model','LEGACY'),
+                             'trigger_price':r.payload.get('trigger_price'),'source_time':r.payload.get('source_time')} for r in rows]}
+
+    @app.get('/api/level-campaign/{campaign_id}/ledger')
+    def campaign_ledger(campaign_id:str):
+        from backend.models.schema import LevelCampaign,CampaignLedgerEntry
+        with repo.session() as s:
+            if s.get(LevelCampaign,campaign_id) is None:raise HTTPException(404,'Campaign not found')
+            rows=s.scalars(select(CampaignLedgerEntry).where(CampaignLedgerEntry.campaign_id==campaign_id).order_by(CampaignLedgerEntry.created_at,CampaignLedgerEntry.id))
+            return {'items':[{'id':r.id,'kind':r.kind,'amount_usdt':r.amount_usdt,'event_time':r.created_at,**r.payload} for r in rows]}
+
     @app.get('/api/broke-pb/positions')
     def pb_positions(status: str | None = None, symbol: str | None = None, limit: int = Query(200, ge=1, le=1000)):
         with repo.session() as s:
@@ -346,7 +450,12 @@ def create_app(repository:Repository|None=None):
                 remaining_frac = 0.5 if r.tp1_hit else (0.5 if r.reduced else 1.0)
                 realized = r.payload.get('realized_tp1_usdt', 0.0)
                 unrealized_usdt = (r.nominal_usdt * remaining_frac) * (unrealized_pct / 100.0)
+                if r.payload.get('campaign_id'):
+                    curr_price = r.payload.get('current_price',curr_price)
+                    unrealized_usdt = r.payload.get('unrealized_pnl',0.)
+                    realized = r.payload.get('realized_pnl',0.)
                 total_pnl = realized + unrealized_usdt
+                if r.payload.get('campaign_id'):total_pnl=r.payload.get('net_total_pnl',total_pnl)
                 total_pnl_pct = (total_pnl / r.nominal_usdt) * 100.0
 
                 items.append({
@@ -444,22 +553,30 @@ def create_app(repository:Repository|None=None):
         return '\n'.join(lines)+'\n'
 
     @app.websocket('/ws/setups')
-    async def websocket(ws:WebSocket):
+    async def websocket(ws:WebSocket,compact:bool=False,exchange:str|None=None,symbol:str|None=None,timeframe:str|None=None):
         await ws.accept()
+        from backend.setup_summary import setup_message
+        def frame(payload):
+            return setup_message(payload,compact=compact,exchange=exchange,symbol=symbol,timeframe=timeframe,now=now_ms())
         def initial():
+            query=select(Current.payload)
+            for field,value in [('exchange',exchange),('symbol',symbol),('timeframe',timeframe)]:
+                if value is not None: query=query.where(getattr(Current,field)==value)
             with repo.session() as s:
-                return [{'type':'snapshot','data':r.payload} for r in s.scalars(select(Current))]
+                return [frame(payload) for payload in s.scalars(query)]
         client=None; pubsub=None
         try:
             from redis.asyncio import Redis
             client=Redis.from_url(os.getenv('REDIS_URL','redis://localhost:6379/0'),decode_responses=True,socket_connect_timeout=3,socket_timeout=5)
             pubsub=client.pubsub(); await pubsub.subscribe('setups')
-            for item in await asyncio.to_thread(initial): await ws.send_json(item)
+            for item in await asyncio.to_thread(initial):
+                if item is not None: await ws.send_json(item)
             while True:
                 message=await pubsub.get_message(ignore_subscribe_messages=True,timeout=15)
                 if message:
                     payload=json.loads(message['data'])
-                    await ws.send_json(payload if payload.get('type') else {'type':'snapshot','data':payload})
+                    item=frame(payload)
+                    if item is not None: await ws.send_json(item)
                 else: await ws.send_json({'type':'heartbeat','time':now_ms()})
         except WebSocketDisconnect: pass
         except Exception:

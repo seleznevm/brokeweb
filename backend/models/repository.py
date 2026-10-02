@@ -48,6 +48,8 @@ class Repository:
         self.session=sessionmaker(self.engine,expire_on_commit=False)
         self.snapshot_interval_sec=float(os.getenv('SNAPSHOT_INTERVAL_SEC','15'))
     def initialize(self):
+        # Register historical research tables on the existing SQLAlchemy metadata.
+        from backend.backtest import models as backtest_models  # noqa: F401
         Base.metadata.create_all(self.engine)
         with self.session.begin() as s:
             if s.scalar(select(ParameterSet.id).where(ParameterSet.active.is_(True))) is None:
@@ -116,6 +118,7 @@ class Repository:
         return unpack_checkpoint(row.checkpoint_blob) if row.checkpoint_blob is not None else row.checkpoint
     def save_snapshot(self,snapshot,checkpoint=None):
         current=clean(snapshot); now=now_ms()
+        wt=current.pop('wt',None)
         current.setdefault('strategy','BROKE_SETUPS');current.setdefault('signal_source','engine')
         packed=(checkpoint.blob if isinstance(checkpoint,PackedCheckpoint)
                 else pack_checkpoint(clean(checkpoint)) if checkpoint is not None else None)
@@ -127,6 +130,11 @@ class Repository:
         key=tuple(current[x] for x in ('exchange','symbol','timeframe'))
         with self.session.begin() as s:
             old=s.get(Current,key,with_for_update=True); previous=old.payload if old else None
+            if current.get('strategy')=='BROKE_SETUPS' and current.get('metrics'):
+                from backend.setup_diagnostics import snapshot_checks,record_generation
+                parameters=s.get(ParameterSet,current['parameter_set_id'])
+                current.update(snapshot_checks(current,parameters.values if parameters else {}))
+                record_generation(s,current,previous,self.settings(s))
             changes={field:{'before':previous.get(field) if previous else None,'after':current.get(field)} for field in TRANSITIONS if previous is None or previous.get(field)!=current.get(field)}
             for field,change in changes.items():
                 s.add(Event(exchange=key[0],symbol=key[1],timeframe=key[2],event_time=current['event_time'],kind=field,payload={**change,'setup_generation_id':current['setup_generation_id'],'parameter_set_id':current['parameter_set_id']}))
@@ -145,9 +153,11 @@ class Repository:
                     s.add(Signal(dedupe_key=dedupe,symbol=key[1],timeframe=key[2],event_time=current['event_time'],name=name,parameter_set_id=current['parameter_set_id'],payload={**current,'event':name}))
                     s.add(Event(exchange=key[0],symbol=key[1],timeframe=key[2],event_time=current['event_time'],kind='signal',payload={**current,'event':name}))
             enqueue_matching(s,current,previous,now)
-            if not current.get('replay'):
-                from backend.engine.broke_pb import process_broke_pb_snapshot
-                process_broke_pb_snapshot(s, current, self.settings(s), now)
+            if wt:
+                from backend.wt import save_engine
+                save_engine(s,wt,now)
+            from backend.engine.level_campaign import process_campaign_snapshot
+            process_campaign_snapshot(s, current, self.settings(s), now)
             self._save_research(s,current)
             if old:
                 old.payload=current; old.updated_at=now
@@ -181,16 +191,14 @@ class Repository:
     def settings(self,session=None):
         if session is None:
             with self.session() as s: return self.settings(s)
-        defaults = {
-            'snapshot_interval_sec': self.snapshot_interval_sec,
-            'timezone_offset_minutes': 420,
-            'universe_min_turnover24h_usdt': 10000000,
-            'broke_pb_position_usdt': 500.0,
-            'broke_pb_pm_active': True,
-        }
-        row = session.get(ServiceHealth, 'settings')
-        return {**defaults, **(row.payload if row else {})}
+        row=session.get(ServiceHealth,'settings')
+        from backend.engine.campaign_execution import DEFAULTS
+        from backend.setups_config import defaults as broke_defaults
+        return {'snapshot_interval_sec':self.snapshot_interval_sec,'timezone_offset_minutes':420,'universe_min_turnover24h_usdt':10000000,
+                'campaign_enabled':True,'campaign_exit_policy':'CONTEXT_30M',**DEFAULTS,**broke_defaults(),**(row.payload if row else {})}
     def set_settings(self,value):
+        if value.get('campaign_execution_mode')=='LIVE':
+            raise ValueError('LIVE_EXECUTOR_UNAVAILABLE: use PAPER or DEMO')
         with self.session.begin() as s:
             row=s.get(ServiceHealth,'settings',with_for_update=True)
             merged={**self.settings(s),**value}
@@ -199,6 +207,26 @@ class Repository:
             else:
                 s.add(ServiceHealth(name='settings',updated_at=now_ms(),payload=merged))
         return merged
+
+    def campaign_symbols(self):
+        with self.session() as s:
+            active=set(s.scalars(select(LevelCampaign.symbol).where(LevelCampaign.active_slot.is_not(None),LevelCampaign.exchange=='BYBIT')))
+            legacy=set(s.scalars(select(BrokePBPosition.symbol).where(BrokePBPosition.status=='OPEN',BrokePBPosition.exchange=='BYBIT')))
+            return active|legacy
+
+    def manage_campaign_price(self,snapshot):
+        return self.manage_campaign_prices([snapshot])[-1]
+
+    def manage_campaign_prices(self,snapshots):
+        from backend.engine.level_campaign import process_campaign_snapshot
+        with self.session.begin() as s:
+            settings=self.settings(s);received=now_ms()
+            return [process_campaign_snapshot(s,{**snapshot,'price_only':True},settings,received) for snapshot in snapshots]
+
+    def mark_campaign_coverage(self,symbols,quality):
+        with self.session.begin() as s:
+            for c in s.scalars(select(LevelCampaign).where(LevelCampaign.symbol.in_(symbols),LevelCampaign.exchange=='BYBIT',LevelCampaign.active_slot.is_not(None)).with_for_update()):
+                c.payload={**c.payload,'execution_quality':quality}
     def exclude_from_universe(self,symbols):
         # Preserve history/checkpoints, but never expose a stopped calculation
         # as an actionable current setup. No alert/outbox event is generated.

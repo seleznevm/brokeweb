@@ -16,11 +16,47 @@ def worker_shell():
     worker.ready={'XUSDT'};worker.recovering=set();worker.full={'XUSDT'}
     worker.instruments={'XUSDT':SimpleNamespace(symbol='XUSDT',tick_size=.01)}
     worker.timeframes=['1'];worker.engines={};worker.errors={}
-    worker.locks=defaultdict(asyncio.Lock)
+    worker.locks=defaultdict(asyncio.Lock);worker.pending={}
     worker.contexts={};worker.context_views={};worker.context_limit=100;worker.history_span_ms=600000
     worker.parameters={};worker.replay_origins={};worker.replay_skip_until={};worker.calculate=AsyncMock()
     worker.repo=SimpleNamespace(save_bar=lambda bar:None,save_bars=lambda bars:None,load_checkpoint=lambda *args:None)
     return worker
+
+
+@pytest.mark.asyncio
+async def test_calculation_queue_tracks_wait_and_cancel_without_leaking():
+    worker=worker_shell()
+    engine=SimpleNamespace(runtime=SimpleNamespace(last_start=None))
+    worker.engines['XUSDT','1']=engine
+    worker.persist=AsyncMock()
+    bar={'symbol':'XUSDT','timeframe':'1','start':60000}
+    async with worker.locks['XUSDT']:
+        task=asyncio.create_task(Worker.calculate(worker,bar,True))
+        await asyncio.sleep(0)
+        assert len(worker.pending)==1 and not next(iter(worker.pending.values()))['active']
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):await task
+        assert not worker.pending
+    worker.persist.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('failure',[False,True])
+async def test_calculation_queue_tracks_running_and_cleans_up_on_error(failure):
+    worker=worker_shell()
+    engine=SimpleNamespace(runtime=SimpleNamespace(last_start=None))
+    worker.engines['XUSDT','1']=engine
+    started=asyncio.Event();release=asyncio.Event()
+    async def persist(*args):
+        started.set();await release.wait()
+        if failure:raise RuntimeError('persistence failed')
+    worker.persist=persist
+    task=asyncio.create_task(Worker.calculate(worker,{'symbol':'XUSDT','timeframe':'1','start':60000},True))
+    await started.wait()
+    assert len(worker.pending)==1 and next(iter(worker.pending.values()))['active']
+    release.set();await task
+    assert not worker.pending
+    assert ('XUSDT' in worker.recovering)==failure
 
 
 @pytest.mark.parametrize('case', ['fresh','stopped','lagged','missing_timestamp','recovering','missing_engine','disconnected','stream_lagged','empty','btc_missing'])

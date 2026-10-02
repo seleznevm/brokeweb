@@ -17,6 +17,7 @@ from collections import defaultdict
 from dataclasses import asdict
 from contextlib import suppress
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor
 from redis.asyncio import Redis
 from backend.engine.runtime import PineEngine, ENGINE_VERSION, PINE_HASH
 from backend.engine.context_bars import ContextBars
@@ -27,6 +28,8 @@ from backend.marketdata import BybitAdapter,BinanceBtcContextAdapter
 from backend.marketdata.websocket import BybitWebSocketManager
 from backend.marketdata.trades import TradeAggregator
 from backend.marketdata.binance_websocket import BinanceBtcWebSocket
+from backend.marketdata.orderbook import DepthFeed,check_frozen_geometry
+from backend.setups_config import defaults as broke_defaults
 from backend.models.repository import Repository,now_ms
 from backend.models.checkpoints import PackedCheckpoint
 from backend.models.schema import Current,MarketBar
@@ -34,6 +37,14 @@ from sqlalchemy import select
 from backend.logging_config import configure_logging
 
 log=logging.getLogger(__name__)
+def consumer_timeframes(requested,settings,active_campaigns=False):
+    result=list(dict.fromkeys(requested))
+    if settings.get('campaign_enabled',True) or active_campaigns:
+        result=list(dict.fromkeys([*result,'30','5']))
+    for tf in result:tf_seconds(tf)
+    if not result:raise ValueError('At least one timeframe is required')
+    return result
+
 def bar_dict(b):
     out=b.to_dict() if hasattr(b,'to_dict') else dict(b)
     out['received_at']=out.get('received_at') or now_ms()
@@ -101,8 +112,14 @@ class Worker:
         testnet=os.getenv('BYBIT_ENV','mainnet')=='testnet'
         self.bybit=BybitAdapter(base_url='https://api-testnet.bybit.com' if testnet else 'https://api.bybit.com');self.btc=BinanceBtcContextAdapter()
         self.ws=BybitWebSocketManager(self.on_market,url='wss://stream-testnet.bybit.com/v5/public/linear' if testnet else 'wss://stream.bybit.com/v5/public/linear')
+        self.campaign_ws=BybitWebSocketManager(self.on_campaign_market,url=self.ws.url)
+        self.campaign_executor=ThreadPoolExecutor(max_workers=2,thread_name_prefix='campaign-risk')
         self.btc_ws=BinanceBtcWebSocket(self.on_btc);self.btc_refresh_lock=asyncio.Lock();self.btc_recovering=True;self.btc_last_events={}
-        self.timeframes=[s.strip() for s in os.getenv('ACTIVE_TIMEFRAMES','30').split(',') if s.strip()]
+        self.timeframes=[s.strip() for s in os.getenv('ACTIVE_TIMEFRAMES','30,5').split(',') if s.strip()]
+        self.requested_timeframes=list(self.timeframes)
+        self.broke_settings=broke_defaults()
+        self.depth=DepthFeed(self.ws.url)
+        self.pipeline_lags=[]
         for tf in self.timeframes:tf_seconds(tf)
         self.engines={};self.contexts={};self.instruments={};self.native_turnover24h={};self.aggregators={};self.full_charts={};self.full_since={};self.full=set();self.ready=set();self.recovering=set();self.locks=defaultdict(asyncio.Lock)
         self.messages=0;self.calculations=0;self.errors={};self.status='RECOVERING';self.universe_count=0;self.selected_count=0;self.last_events={};self.reconnects=0;self.latencies=[];self.parameter_id=None;self.parameters={};self.pending={};self.replay_skip_until={};self.replay_origins={};self.context_last=0;self.reconciliation_errors=0;self.db_latencies=[];self.backfilled={};self.previous_calculations=0;self.previous_heartbeat=time.monotonic()
@@ -134,6 +151,41 @@ class Worker:
                 log.error('background_recovery_failed',exc_info=done.exception())
         task.add_done_callback(finished)
         return task
+
+    async def campaign_blocking(self,function,*args):
+        task=asyncio.get_running_loop().run_in_executor(self.campaign_executor,function,*args)
+        try:return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            await task
+            raise
+
+    async def on_campaign_market(self,event):
+        if self.stopping:return
+        if event['type']=='health':
+            if not event['connected']:
+                symbols={t.split('.')[-1] for t in event['topics']}
+                await self.campaign_blocking(self.repo.mark_campaign_coverage,symbols,'UNVERIFIED')
+            return
+        if event['type']!='trade':return
+        observations=[]
+        for trade in sorted(event['trades'],key=lambda t:int(t['T'])):
+            timestamp=int(trade['T'])
+            observations.append({'exchange':'BYBIT','symbol':event['symbol'],'timeframe':'5',
+                'bar_start':timestamp//300000*300000,'event_time':timestamp,'price':float(trade['p']),
+                'event_id':'public-trade:'+str(trade['i']),'data_health':'HEALTHY'})
+        if observations:
+            await self.campaign_blocking(self.repo.manage_campaign_prices,observations)
+
+    async def protect_campaigns(self):
+        """Independent socket/thread pool; no Pine, BTC context or checkpoint wait."""
+        while not self.stopping:
+            try:
+                symbols=await self.campaign_blocking(self.repo.campaign_symbols)
+                owned={s for s in symbols if int(hashlib.sha256(s.encode()).hexdigest(),16)%self.shard_count==self.shard_index}
+                await self.campaign_ws.update_subscriptions(sorted(owned),[],owned)
+            except Exception:
+                log.exception('campaign_protection_failed')
+            await asyncio.sleep(2)
 
     def put_context(self,key,bar):
         self.context_views.pop(key,None)
@@ -188,9 +240,21 @@ class Worker:
             elapsed=max(time.monotonic()-self.previous_heartbeat,.001)
             payload.update(btc_stream=asdict(self.btc_ws.health),btc_recovering=self.btc_recovering,btc_timeframe_events=self.btc_last_events,calculations_per_second=(self.calculations-self.previous_calculations)/elapsed,calculation_latency_ms=payload['calculation_ms_p95'],db_write_latency_ms=sum(self.db_latencies)/len(self.db_latencies) if self.db_latencies else None,last_successful_rest_backfill=self.backfilled,streams=[asdict(state) for state in self.ws.health.values()])
             payload.update(self.runtime_health())
+            payload.update(requested_timeframes=getattr(self,'requested_timeframes',self.timeframes),
+                pending_calculations=len(self.pending),recovering_symbols=len(self.recovering),
+                active_calculations=sum(item['active'] for item in self.pending.values()),
+                queued_calculations=sum(not item['active'] for item in self.pending.values()),
+                oldest_pending_age_ms=max((now_ms()-item['queued_at'] for item in self.pending.values()),default=0),
+                pipeline_lag_ms_p95=sorted(self.pipeline_lags)[int(.95*(len(self.pipeline_lags)-1))] if self.pipeline_lags else None,
+                orderbook={'enabled':self.broke_settings.get('broke_execution_gate_enabled',False),
+                    'connected':self.depth.connected,'subscribed_symbols':len(self.depth.desired),
+                    'synced_symbols':len(self.depth.books),'reconnects':self.depth.reconnects,'error':self.depth.error})
             payload.update(universe_min_turnover24h_usdt=getattr(self,'universe_min_turnover',None),liquidity_excluded=getattr(self,'liquidity_excluded_count',0))
             payload['checkpoint_export_latency_ms']=sum(self.checkpoint_latencies)/len(self.checkpoint_latencies) if self.checkpoint_latencies else None
             payload['checkpoint_pack_latency_ms']=sum(self.checkpoint_pack_latencies)/len(self.checkpoint_pack_latencies) if self.checkpoint_pack_latencies else None
+            if hasattr(self,'campaign_ws'):
+                payload['campaign_protection']={'streams':[asdict(h) for h in self.campaign_ws.health.values()],
+                    'subscribed_symbols':len({t.split('.')[-1] for topics in self.campaign_ws.topics.values() for t in topics})}
             self.status=payload['status']
             self.previous_heartbeat=time.monotonic();self.previous_calculations=self.calculations
             await self.blocking(self.repo.heartbeat,'engine' if self.shard_count==1 else f'engine:{self.shard_index}',payload)
@@ -213,6 +277,11 @@ class Worker:
         snapshot['market_data_lag_ms']=age
         # Historical replay persists results for research but must never enqueue alerts.
         snapshot['replay']=not realtime
+        if hasattr(self,'depth'):
+            depth_check=self.depth.check(engine.symbol,snapshot.get('direction'),self.broke_settings,now_ms())
+            snapshot['execution_check']=check_frozen_geometry(depth_check,snapshot,self.parameters)
+            if not realtime and self.broke_settings.get('broke_execution_gate_enabled'):
+                snapshot['execution_check']={'enabled':True,'allowed':False,'status':'REPLAY_NO_DEPTH'}
         self.calculations+=1;self.latencies.append(snapshot['calculation_ms']);self.latencies=self.latencies[-1000:]
         # Intrabar state (especially varip) is checkpointed as well as closed bars.
         if not realtime and bar['start'] <= self.replay_skip_until.get((engine.symbol,engine.timeframe),-1):return snapshot
@@ -229,7 +298,10 @@ class Worker:
             self.checkpoint_pack_latencies.append((time.perf_counter()-pack_started)*1000)
             self.checkpoint_pack_latencies=self.checkpoint_pack_latencies[-1000:]
         write_started=time.perf_counter()
-        await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
+        saved=await self.blocking(self.repo.save_snapshot,snapshot,checkpoint)
+        if isinstance(saved,dict):snapshot=saved;engine.snapshot=snapshot
+        if hasattr(self,'pipeline_lags'):
+            self.pipeline_lags.append(max(0,now_ms()-bar.get('received_at',now_ms())));self.pipeline_lags=self.pipeline_lags[-1000:]
         self.db_latencies.append((time.perf_counter()-write_started)*1000);self.db_latencies=self.db_latencies[-1000:]
         if realtime:await self.redis.publish('setups',json.dumps({'type':'snapshot','data':snapshot},ensure_ascii=False))
         return snapshot
@@ -461,14 +533,20 @@ class Worker:
         if self.stopping:return
         symbol=bar['symbol'];key=(symbol,bar['timeframe']);engine=self.engines.get(key)
         if engine is None or symbol in self.recovering:return
-        async with self.locks[symbol]:
-            if self.engines.get(key) is not engine:return
-            if engine.runtime.last_start is not None and bar['start']<=engine.runtime.last_start:return
-            if engine.runtime.last_start is not None and bar['start']>engine.runtime.last_start+tf_seconds(bar['timeframe'])*1000:
-                self.recovering.add(symbol);self.launch(self.bootstrap(self.instruments[symbol],True));return
-            try:await self.persist(engine,bar,realtime)
-            except Exception as exc:
-                self.errors[symbol]=str(exc);self.recovering.add(symbol);log.exception('calculation_failed',extra={'symbol':symbol,'timeframe':bar['timeframe']})
+        token=object()
+        self.pending[token]={'queued_at':now_ms(),'active':False}
+        try:
+            async with self.locks[symbol]:
+                self.pending[token]['active']=True
+                if self.engines.get(key) is not engine:return
+                if engine.runtime.last_start is not None and bar['start']<=engine.runtime.last_start:return
+                if engine.runtime.last_start is not None and bar['start']>engine.runtime.last_start+tf_seconds(bar['timeframe'])*1000:
+                    self.recovering.add(symbol);self.launch(self.bootstrap(self.instruments[symbol],True));return
+                try:await self.persist(engine,bar,realtime)
+                except Exception as exc:
+                    self.errors[symbol]=str(exc);self.recovering.add(symbol);log.exception('calculation_failed',extra={'symbol':symbol,'timeframe':bar['timeframe']})
+        finally:
+            self.pending.pop(token,None)
     async def subscriptions(self):
         own,_=context_requirements(self.parameters,self.timeframes)
         pinned={s.strip() for s in os.getenv('PINNED_SYMBOLS','').split(',') if s.strip()}
@@ -524,6 +602,16 @@ class Worker:
         while True:
             try:
                 await self.refresh_btc()
+                settings=await self.blocking(self.repo.settings)
+                active=await self.blocking(self.repo.campaign_symbols)
+                effective=consumer_timeframes(self.requested_timeframes,settings,bool(active))
+                if effective!=self.timeframes:
+                    log.info('timeframe_consumers_changed_replay_required');os._exit(75)
+                self.broke_settings=settings
+                hot=[engine.snapshot for engine in self.engines.values() if engine.snapshot and engine.snapshot.get('fsm',0)>=2 and not engine.snapshot.get('replay')]
+                hot.sort(key=lambda s:(-(s.get('fsm') or 0),-(s.get('execution') or 0),s['symbol']))
+                symbols=list(dict.fromkeys(s['symbol'] for s in hot))[:settings['broke_execution_max_symbols']]
+                self.depth.select(symbols if settings['broke_execution_gate_enabled'] else [])
                 current=await self.blocking(self.repo.parameters)
                 if current['id']!=self.parameter_id:
                     log.info('parameter_version_changed_replay_required')
@@ -543,6 +631,8 @@ class Worker:
         # close() waits for receiver callbacks, including shielded DB writes.
         # Intentional close must not schedule recovery or rewrite every setup.
         await self.ws.close();await self.btc_ws.close()
+        if hasattr(self,'campaign_ws'):await self.campaign_ws.close()
+        if hasattr(self,'campaign_executor'):self.campaign_executor.shutdown(wait=True)
         await self.bybit.close();await self.btc.close()
         if beat:
             beat.cancel()
@@ -571,6 +661,12 @@ class Worker:
         beat=None;maintenance=None
         try:
             await self.blocking(self.repo.initialize)
+            settings=await self.blocking(self.repo.settings)
+            active=await self.blocking(self.repo.campaign_symbols)
+            self.timeframes=consumer_timeframes(self.requested_timeframes,settings,bool(active))
+            self.broke_settings=settings
+            self.launch(self.depth.run())
+            self.launch(self.protect_campaigns())
             params=await self.blocking(self.repo.parameters);self.parameters=params['values'];self.parameter_id=params['id']
             self.history_span_ms=max(required_history(self.parameters,tf)*tf_seconds(tf)*1000 for tf in self.timeframes)
             self.context_limit=max(5000,int(self.history_span_ms/30000)+1000)
